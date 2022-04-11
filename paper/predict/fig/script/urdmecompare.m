@@ -4,7 +4,7 @@
 % existingposterior plot.
 
 % R. Eriksson 2022-01-27
-savetofile = true;
+savetofile = false;
 % load posterior
 Nsample = 1e4;
 path = postpath;
@@ -12,7 +12,7 @@ prefix = 'SLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1';
-ending_ = '';%_100';
+ending_ = '_100';
 ending = [ending ending_];
 regionList = regions;
 % $$$ % select through list and a search...
@@ -23,14 +23,14 @@ regionList = regions;
 
 % ...or directly by specifying here
 %reg = [16 11 5 7 9 13 14 15];
-reg = 1:21;
+reg = [1:21;
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
 
 % pull all bootstrapped samples
 files_urdme = cell(0,1);
 for k = 1:3
-  
+
   ending_urdme = ['_1_URDME',num2str(k) ending_];
   if strcmp(ending_,''), prefix_urdme = 'URDME/'; else, prefix_urdme = ''; end
   files_urdme = cat(1,files_urdme,strcat(prefix_urdme,'slam',date,'_',regname,'_monthly', ending_urdme, '.mat'));
@@ -64,7 +64,7 @@ try
     hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
     hypfile = hypfile{:};
   end
-    
+
 catch
   hypfile = [];
 end
@@ -97,11 +97,11 @@ for i = 1:numel(rateNamesSubset)
     set(0,'DefaultTextFontname','CMU Serif');
     set(0,'DefaultAxesFontName','CMU Serif');
     set(gca,'TickLabelInterpreter','latex');
-    
+
     name = rateNamesSubset{i};
     prior = ratesPrior.(name)(end,:);
     prmean = meansPrior.(name)(end);
-    
+
     % true data
     posterior = mean(ratesPosterior.(name),1);%temporal mean
     pomean = mean(posterior);
@@ -131,11 +131,11 @@ for i = 1:numel(rateNamesSubset)
         posterior_urdme = posterior_urdme*24;
         pomean_urdme = pomean_urdme*24;
     end
-    
+
 %     disp(name)
 %     disp(quantile(posterior,[0.025,0.975]))
 %     disp(pomean)
-    
+
     % posterior | real data
     [fp,xip] = ksdensity(posterior,'Function','pdf');
     xx = [xip,flip(xip,1)];
@@ -143,7 +143,7 @@ for i = 1:numel(rateNamesSubset)
     h_post = fill(xx,ff,[0 0 1]);
     hold on
     set(h_post,'facealpha',.1)
-    
+
     % posterior | URDME data
     [fp,xip] = ksdensity(posterior_urdme,'Function','pdf');
     xx = [xip,flip(xip,1)];
@@ -151,16 +151,16 @@ for i = 1:numel(rateNamesSubset)
     h_boot = fill(xx,ff,[0 1 0]);
     hold on
     set(h_boot,'facealpha',.1)
-    
+
     % prior
     [f,xi] = ksdensity(prior,'Function','pdf');
     xx = [xi flip(xi,1)];
     ff = [f flip(f,1)];
     h_prior = fill(xx,ff,[1 0 0]);
     set(h_prior,'facealpha',.1)
-    
+
     xlabel(rateNamesSubset_tex{i},'interpreter','latex');
-    
+
     % mean vertical line, with annotation.
     hline_prior = xline(prmean,'--','LineWidth',1,'Color', [1 0.2 0.2]);%[0.9844 0.5820 0.5703]);
     hline_post = xline(pomean,'-','LineWidth',2,'Color', [0 0.4470 0.7410]);
@@ -172,7 +172,7 @@ for i = 1:numel(rateNamesSubset)
       'FaceAlpha',0.01,...
       'EdgeColor','None','Margin',0,'FontSize',8,...
       'Color',[0 0.4470 0.7410]);
-    
+
     hline_boot = xline(pomean_urdme,':b','LineWidth',2,'Color', [0.4102 0.6992 0.4844]);
     str_urdme = ['$=$ ' num2str(round(pomean_urdme,2,'significant'))];
     b(i) = annotation('textbox','String',str_urdme,'Position',ha(i).Position,...
@@ -182,11 +182,11 @@ for i = 1:numel(rateNamesSubset)
       'FaceAlpha',0.01,...
       'EdgeColor','None','Margin',0,'FontSize',8,...
       'Color',[0.4102 0.6992 0.4844]);
- 
-    
-   
+
+
+
     set(gcf,'color','w');
-    
+
     % minor improvements on axis
     switch name
       case 'R0'
@@ -206,7 +206,7 @@ for i = 1:numel(rateNamesSubset)
     set(gca,'ytick',[]);
     set(get(gca,'Xruler'),'Exponent',0)
     hold off
-    
+
 
 end
 
@@ -214,8 +214,8 @@ legend([h_post(1), h_prior(1), h_boot(1)], ...
   'Posterior','Prior','Boostrapped Posterior', ...
   'Orientation','horizontal','interpreter','latex', ...
   'Position',[0.47 0.95 0.1 0.03],'FontSize',14);
-  
-  
+
+
 % legend('Posterior','Bootstrapped Posterior', 'Prior', ...
 %   'Orientation','horizontal','interpreter','latex', ...
 %   'Position',[0.47 0.95 0.1 0.03],'FontSize',14);

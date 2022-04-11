@@ -57,8 +57,8 @@ datastore.tablerows= {};
 for i = reg
     region = regionList{i}; % to character
     region_ = regionList_nonnordic{i};
-    
-    
+
+
     % construct posterior file name
     % folder for posteriors
     abspath = mfilename('fullpath');
@@ -69,12 +69,12 @@ for i = reg
     else
         posterior = '';
     end
-    
+
     posterior = [posterior 'slam' posteriordate '_' region '_monthly_' ...
         ending];
     rates = posteriorenger([],[prefix posterior]);
-    
-    
+
+
     % load weekly prediction.
     try
         load([abspath(1:end-35) 'weekly/save/runs/' posterior]);
@@ -91,20 +91,20 @@ for i = reg
       error('MATLAB:ambiguousSyntax',['does not find prediction file. Did you run weekly_predict?'...
         '\nTry: \n' code]);
     end
-    
+
     if any(meta.postHash ~= rates.meta.hash)
         error('the saved data do not match the data or posterior');
     end
-    
+
     % Separating R from the rest of Z
     ixR = size(Z,1)-2*(numel(lan))+1:size(Z,1)-numel(lan);
     ZR = Z(ixR,:,:);
     stdZR = covZ.stdZ(ixR,:,:);
-    
-    
-    
+
+
+
     %% Compute (R)ecovered.
-    
+
     % Population data
     load Ncounties
     Npop = sum(N,1);
@@ -114,10 +114,10 @@ for i = reg
         'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
         'Jämtland' 'Västerbotten' 'Norrbotten'};
     regi = find(ismember(regionList,region));
-    
+
     YR = sum(ZR,1);
     YR = max(YR,1e-2);
-    
+
     if strcmp(region,'Sweden')
         YR = YR / sum(Npop);
         stdYR = sum(stdZR,1) / sum(Npop);
@@ -125,32 +125,32 @@ for i = reg
         YR = YR / Npop(regi);
         stdYR = stdZR / Npop(regi);
     end
-    
+
     % Uncertainty
     sigmahat_R = sqrt(mean(log1p((stdYR./YR).^2),3));
     muhat_R = mean(log(YR),3);
-    
+
     sigmahat_tot = sqrt(sigmahat_R.^2+var(log(YR),0,3));
-    
-    
+
+
     datastore.(region_).YR = YR;
     datastore.(region_).muhat = muhat_R;
     datastore.(region_).sigmahat = sigmahat_tot;
     datastore.(region_).DATES = DATES;
     datastore.(region_).tspan_filter = tspan_filter;
-    
+
     %% process for table
-    low95 = exp(datastore.(region_).muhat - 1.96*datastore.(region_).sigmahat);
-    low68 = exp(datastore.(region_).muhat - 1.0*datastore.(region_).sigmahat);
+    low95 = exp(datastore.(region_).muhat - 2*datastore.(region_).sigmahat);
+    low68 = exp(datastore.(region_).muhat - 1*datastore.(region_).sigmahat);
     mid = exp(datastore.(region_).muhat);
-    high68 = exp(datastore.(region_).muhat + 1.0*datastore.(region_).sigmahat);
-    high95 = exp(datastore.(region_).muhat + 1.96*datastore.(region_).sigmahat);
-    
-    
-    
+    high68 = exp(datastore.(region_).muhat + 1*datastore.(region_).sigmahat);
+    high95 = exp(datastore.(region_).muhat + 2*datastore.(region_).sigmahat);
+
+
+
     dates = DATES(tspan_data);
     t = 1:numel(DATES);
-    
+
     % for abbreviations, see https://www.bydewey.com/monthdayabb.html
     if isempty(doi)
         strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
@@ -163,7 +163,7 @@ for i = reg
         % what month:
         months = mod(floor(dates/1e2),1e2);
         coltitle = strcat(strmonths(months(xxdates(1:end-1))), ' 1');
-        
+
         coltitle = [coltitle, strcat(strmonths(months(xxdates(end))), ...
             [' ' num2str(mod(dates(end),100))])];
     else
@@ -173,38 +173,38 @@ for i = reg
         xxdates = t(ixdates);
         coltitle = cellstr(num2str(dates(ixdates)))';
     end
-    
+
     %  plot([low95; low68; mid; high68; high95]','b')
     %  xlim([0 numel(dates)-1])
     %  xticks(xxdates);
     %  xticklabels(slabtitle);
     %  xtickangle(45);
-    
-    
+
+
     %  % find in 2021
     %  years21 = find(mod(floor(dates(ixdates)/1e4),1e4) == 21);
     %  ixdates = ixdates(years21);
-    
-    
+
+
     low95  = low95(ixdates);
     low68  = low68(ixdates);
     mid    = mid(ixdates);
     high68 = high68(ixdates);
     high95 = high95(ixdates);
-    
-    
-    
+
+
+
     % store for the final table.
     datastore.table = cat(1, datastore.table, mid);
     % store the CI as well, for future reference.
     table_ci = sprintf('\\CI{%4.2f}{%4.2f}{%4.2f}{%4.2f}{%4.2f}\n',...
         [low95;low68;mid;high68;high95]*1e2);
-    
+
     table_ci(end) = '';
     table_ci = split(table_ci,newline);
     datastore.table_ci = [datastore.table_ci, table_ci];
-    
-    
+
+
     %l_getci(low95,low68,mid,high68,high95,'68'));
     datastore.tablecols = coltitle;
     datastore.tablerows = cat(2,datastore.tablerows,region);
@@ -243,7 +243,7 @@ end
 %%
 
 if illustrate
-    
+
     %% load data from paper 1
     % Seropositivity in blood donors and pregnant women during the first year
     % of SARS-CoV-2 transmission in Stockholm, Sweden
@@ -252,7 +252,7 @@ if illustrate
     paper_dates=l_week2date(paper(:,1),paper(:,2));
     paper_pred = [paper_dates, paper(:,3:end)];
     xx_paper = find(ismember(dates,paper_dates));
-    
+
         % at what dates do they mark measurements?
     measurements = [ (17:25),(30:34),(45:50),(4:8)
                     repmat(2020,1,20),repmat(2021,1,5)];
@@ -272,7 +272,7 @@ if illustrate
     xx_study1 = find(ismember(dates,study1_dates));
 
     %% load data from study 2
-    % Påvisning av antikroppar mot SARS-CoV 2 hos blodgivare 
+    % Påvisning av antikroppar mot SARS-CoV 2 hos blodgivare
     % https://www.folkhalsomyndigheten.se/contentassets/376f9021a4c84da08de18ac597284f0c/pavisning-antikroppar-mot-sars-cov-2-blodgivare.pdf
     study2=csvread('fhmAntiGivare.csv',1);
     study2_dates=l_week2date(study2(:,2),study2(:,1));
@@ -280,7 +280,7 @@ if illustrate
     % exlude final one, includes many vaccinated ind.
     study2_pred = study2_pred(1:end-1,:);
     xx_study2 = find(ismember(dates,study2_dates));
-    
+
     %% including vaccination numbers
     data_vac=loadData('FHM_vac');
     xx_vac = find(ismember(dates,data_vac.date));
@@ -291,14 +291,14 @@ if illustrate
         figure(1), clf;
         % Sample trajectories
         Nsamples = 0;
-        
+
           yy =squeeze(datastore.(region).YR(1,:,1:Nsamples));
           tspan_filter_short = datastore.(region).tspan_filter(1:end);
-          
+
           % linear fit fit get a good start on 5 April
           lm = polyfit(1:10,paper_pred(1:10,4),1);
           start = polyval(lm,-0.7); % found this to work good.
-          
+
           %
           yy = yy + start;
         if Nsamples > 0
@@ -306,33 +306,33 @@ if illustrate
             'Color',[0 0 1 0.1], 'HandleVisibility','off')
         end
         hold on
-        
-        
+
+
         % Mean
         mu = datastore.(region).muhat(1:end);
         sigma = datastore.(region).sigmahat(1:end);
         plot(tspan_filter_short,exp(mu)+start,'b')
-        
-        
-        
+
+
+
         tt = [tspan_filter_short,fliplr(tspan_filter_short)];
-        
+
         Y_R70 = [exp(mu-1.0364*sigma),fliplr(exp(mu+1.0364*sigma))] + start;
         Y_R95 = [exp(mu-1.9600*sigma),fliplr(exp(mu+1.9600*sigma))] + start;
-            
-        
+
+
         patch(tt, Y_R70,...
             [0.9 0.9 0.9],'FaceAlpha',0.15, ...
             'LineStyle','none','FaceColor','b');
-        
+
         patch(tt,Y_R95, ...
             [0.9 0.9 0.9],'FaceAlpha',0.05, ...
             'LineStyle','none','FaceColor','b');
-                
+
         % plot presented paper prediction
         plot(datastore.(region).tspan_filter(xx_paper),paper_pred(:,4),'r')
         plot(datastore.(region).tspan_filter(xx_paper_m),paper_pred(xx_paper_m_points,4),'or')
-        
+
         pred_R70 = [paper_pred(:,3)', fliplr(paper_pred(:,5)')];
         pred_R95 = [paper_pred(:,2)', fliplr(paper_pred(:,6)')];
         pred_tt =  [datastore.(region).tspan_filter(xx_paper) ...
@@ -340,13 +340,13 @@ if illustrate
         patch(pred_tt, pred_R70,...
             [0.9 0.9 0.9],'FaceAlpha',0.15, ...
             'LineStyle','none','FaceColor','r');
-        
+
         patch(pred_tt,pred_R95, ...
             [0.9 0.9 0.9],'FaceAlpha',0.05, ...
             'LineStyle','none','FaceColor','r');
-          
-  
-        
+
+
+
         fhmcolor1 = [256, 0, 256];%[0 0 0];%
         fhmcolor2 = [100, 0, 256];%[0 0 0];%
         fhmalpha = 0.5;
@@ -359,7 +359,7 @@ if illustrate
             line([x x], [study1_pred(k,3), study1_pred(k,4)],...
               'LineStyle',linestyle,'Color',[fhmcolor1 fhmalpha*256]/256,'lineWidth',1.5)
         end
-        
+
         % plot presented FHM serology study 2
         plot(datastore.(region).tspan_filter(xx_study2)+2,study2_pred(:,2),...
           'o','Color',[fhmcolor2 1]/256)
@@ -369,23 +369,23 @@ if illustrate
             line([x+2 x+2], [study2_pred(k,3), study2_pred(k,4)],...
               'LineStyle',linestyle,'Color',[fhmcolor2 fhmalpha*256]/256,'lineWidth',1.5)
         end
-        
+
 %         study_R95 = [study_pred(:,3)', fliplr(study_pred(:,4)')];
 %         pred_tt =  [datastore.(region).tspan_filter(xx_study) ...
 %             fliplr(datastore.(region).tspan_filter(xx_study))];
-%        
+%
 %         patch(pred_tt,study_R95, ...
 %             [0.9 0.9 0.9],'FaceAlpha',0.05, ...
 %             'LineStyle','none','FaceColor','k');
-        
+
 
         plot(datastore.(region).tspan_filter(xx_vac),data_vac.V1(xx_vac_rev,i)/Npop(i),':k')
         plot(datastore.(region).tspan_filter(xx_vac),data_vac.V2(xx_vac_rev,i)/Npop(i),'-.k')
 
-        
+
         pos = 5;
         ylims = [0 0.3];
-        
+
 
         a1 = annotation('textarrow',...
           [datastore.(region).tspan_filter(xx_vac(pos))*0.82 datastore.(region).tspan_filter(xx_vac(pos))*0.90]/tspan_data(end),...
@@ -399,31 +399,31 @@ if illustrate
         a2.LineStyle='-.';
 
         hold off
-        
+
         axis([tspan_data([1 end]) ylims]);
-        
+
         %title(['(R)ecovered' ' | ' region])
         xtk = fliplr(tspan_data(end:-28:1));
         ylabel('Recovered [\%]','interpreter','latex')
         ax = gca;
         ax.TickLabelInterpreter = 'latex';
 %         set(gca,'xtick',xtk);
-%         
+%
 %         xlabs = string(DATES(xtk));
 %         % thin the xticks
 %         xlabs(2:2:end) = "";
-%         
-%         
-%         
+%
+%
+%
 %         set(gca,'xticklabel',xlabs);
 %         xtickangle(45);
-%         
-          
+%
+
         % wanted xticks
         % for abbreviations, see https://www.bydewey.com/monthdayabb.html
         strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
           'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
-        
+
         % 15th each month:
         ixdates = find(mod(DATES(tspan_filter),100) == 1);
         xxdates = tspan_filter(ixdates);
@@ -433,19 +433,19 @@ if illustrate
         months = mod(floor(dates/1e2),1e2);
         slabtitle = strmonths(months);
         slabtitle(2:2:end) = {''}; % only every 2nd
-        
+
         % xticks & -labels
         xticklabels(slabtitle);
         xtickangle(45);
-        
+
 
         % 2021 delimiter
         xline(find(DATES(tspan_filter) == 210101)+tspan_filter(1)-1,'--k','2021', ...
           'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
           'interpreter','latex','HandleVisibility','off');
-        
-        
-        
+
+
+
         grid on
         box on
         leg = {'Median','70\%','95\%'};%,'[JIM 2021] Median','70\%','95\%'};
@@ -453,26 +453,26 @@ if illustrate
             'Location','northwest','interpreter','latex','FontSize',12,...
             'Orientation','horizontal',...
             'NumColumns', 1);
-        
+
         % change y to \%
         yticklabels(num2cell(100*yticks))
         %%
-        % save 
+        % save
         figname = [abspath(1:end-21) 'fig/Recov_' region];
-       
+
         if savetofile
             h = gcf;
-          
+
             set(h,'PaperPositionMode','auto');
             set(h,'Position',[100 100 500 350]);
-            
+
             print('-dpdf', figname)
-            
+
             disp(['saved figure: ' figname])
         else
           disp(['didn''t save figure: ' figname])
         end
-        
+
     end
 end
 
@@ -519,7 +519,7 @@ for row = 1:size(TAB,1)
         else
             ROW = [ROW TAB{row,col} '& '];
         end
-        
+
     end % end cold
     tex = [tex newline ROW];
     if row == 1 % after first row, add additional line

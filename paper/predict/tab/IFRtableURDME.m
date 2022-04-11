@@ -59,16 +59,16 @@ reglist = [1 2 22];
 
 % for each URDME comparison we want to repeat the below code.
 TAB_outer = cell(0,0);
-for k = URDME_k 
+for k = URDME_k
   ending_URDME = ['_1_URDME' num2str(k) ending_];
-  
+
   post_URDME = strcat(prefix_URDME,'slam',postdate,'_',regname,'_monthly', ending_URDME, '.mat');
   filename_URDME = strcat(postpath,prefix,post_URDME);
 
-  
+
   % seperate the replicate output and the true posterior
   TAB = cell(0,0);
-  TAB_boot = cell(0,0); 
+  TAB_boot = cell(0,0);
   intervals_quantiles = zeros(0,1+1+5+2); %reg + mean + quantiles + dates
   for reg = reglist
 
@@ -84,14 +84,14 @@ for k = URDME_k
     end
     P_URDME = posteriorenger([],file_URDME,Weights,true);
     P = posteriorenger([],file,Weights,true);
-    
+
     if Rweight
       Weights_R = Weights;
     else
       Weights_R = ones(size(Weights));
     end
     P_ = posteriorenger(1e5,file,Weights_R,false); % do a weighted fixed sample size draw
-    
+
     % Perform below once for the URDME replicate and once on the actual
     % posterior
     penger = {P_URDME, P};
@@ -160,32 +160,32 @@ for k = URDME_k
       % last few months
       % im = find(2005 <= months & months < 2105);
       im = find(2004 <= months & months < 2106);
-      
+
       %
       TAB_ = sprintf('\\CI{%4.2f}{%4.2f}{%4.2f}{%4.2f}{%4.2f}\n',...
         round(IFR(im,:),2,'significant')'*1e2);
       TAB_(end) = '';
       TAB_ = split(TAB_,newline);
-      if kk == 1 % store 
+      if kk == 1 % store
         TAB_boot = [TAB_boot TAB_];
       elseif kk == 2
         TAB = [TAB TAB_];
       end
 
     end
-    
+
     % collect the average for the interval dates
     for j = 1:numel(intervals)
       % first find what slabs we want to look at.
       sel = find(ismember(P.meta.date(P.meta.slabstop),intervals{j}));
       sel = sel-1; % slabstop always includes 1, remove it.
-      
+
       sel = sel(1):sel(2);
-      if sel(1) == 0, sel=1;end    
+      if sel(1) == 0, sel=1;end
       val = P_.IFR(sel,:);
-      
-      
-        
+
+
+
       % if Dinc weighted slabs
       if Dweight
         % Count the incidence death per slab
@@ -194,19 +194,19 @@ for k = URDME_k
         else
           Dinc_reg = sum(Dinc,2);
         end
-        
+
         % Find the cumulative Dinc per slab
         Dinc_cum = zeros(1,numel(P.meta.slabstop)-1);
         for i = 2:numel(P.meta.slabstop)
           Dinc_cum(i-1) = sum(Dinc(P.meta.slabstop(i-1):P.meta.slabstop(i)));
         end
-        
+
         % Give zero weight to excluded slabs, and partial weight to partial slabs.
         Dinc_cum = Dinc_cum(sel) / sum(Dinc_cum(sel));
         val = Dinc_cum*val; % Weight the slabbed IFR
       end
-      
-      
+
+
       % quantile
       quant = [mean(val(:)) quantile(val(:), [0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2])];
       % output: [region id, mean, quantiles, dates]
@@ -235,7 +235,7 @@ for k = URDME_k
   asterisk = l_IQRcomp(ifr_t,ifr_b,[2 4], TOL_iqr);
   % (dagger): if bias >= 0.5*diam(A)
   dagger = l_biascomp(ifr_t,ifr_b,[2 4]);
-  
+
   TAB_tex = l_texify(TAB_outer,asterisk, dagger, TOL_iqr)
 end
 %%
@@ -243,7 +243,7 @@ interval_averages = l_intervalwrap(intervals_quantiles, regname, Dweight, Rweigh
 %%
 %%
 % save .tex tables
-tabname = [abspath(1:end-13) 'tableIFRBootstrap.tex'];
+tabname = [abspath(1:end-13) '/../tableIFRBootstrap.tex'];
 if savetofile
   %fileID = fopen(tabname,'w');
   [fileID, message] = fopen(tabname,'w');
@@ -261,7 +261,7 @@ return;
 figure(1), clf, hold on
 for k = 1:size(P_.IFR,1)
   ifr = P_.IFR(k,:)*100;
-  
+
   ifr_q = quantile(ifr,[0.5 0.025 0.975]);
   iqr = diff(ifr_q(2:3));
   disp([num2str(k) ': ' num2str(ifr_q) ', iqr: ' num2str(iqr)])
@@ -280,9 +280,9 @@ figure(1), clf, hold on
       sel = sel-1; % slabstop always includes 1, remove it.
       if sel(1) == 0, sel(1)=1;end
       sel = sel(1):sel(2);
-      %if sel(2) == 0, sel=1;end    
+      %if sel(2) == 0, sel=1;end
       val = P_.IFR(sel,:);
-      
+
       [y,x] = ksdensity(val(:));
       plot(x,y)
   end
@@ -313,28 +313,28 @@ for row = 1:size(TAB,1)
   % per column, append a '&' sign
   for col = 1:size(TAB,2)
     val = TAB{row,col};
-    
+
     if row > 1 & col > 1 & asterix(row-1,col-1)
       val = ['\footnotemark[3]' val];
     end
     if row > 1 & col > 1 & dagger(row-1,col-1)
       val = ['\footnotemark[4]' val];
     end
-    
-    
-    
+
+
+
     if col == size(TAB,2) % final column, add '\\' instead of '&'
       ROW = [ROW val ' \\'];
     else
       ROW = [ROW val '& '];
     end
-    
+
   end % end cold
   tex = [tex newline ROW];
   if row == 1 % after first row, add additional line
     tex = [tex '\hline'];
   end
-  
+
 end % end row
 
 tex = [tex newline ...
@@ -351,7 +351,7 @@ tex = [tex newline ...
       '\end{tabular}' newline ...
       '\end{flushleft}' newline ...
       '\end{table}\vspace{-0.5cm}'];
-  
+
 end
 
 function val = l_unwrap(TAB)

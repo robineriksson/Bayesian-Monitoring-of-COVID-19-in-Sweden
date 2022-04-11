@@ -6,7 +6,9 @@
 
 % change these for saving, replicas, and regions
 savetofile = true;
+includeUDS = false;
 Nreplicas = 25;
+regplot = [2 1 10 12 8 9 19];
 reg = 1:21;
 
 % note: comment away 'solver', 'reg', and consider to pre-compile once
@@ -64,7 +66,7 @@ if Psamples > 1
   Rates.gammaI = P.gammaI;
   Rates.gammaH = P.gammaH;
   Rates.gammaW = P.gammaW;
-  
+
   Rates.F0 = P.F0ave;
   Rates.F1 = P.F1ave;
   Rates.F2 = P.F2ave;
@@ -120,42 +122,47 @@ Wcol = [6];
 % end
 
 alpha=0.1;
-for regid=1:numel(reg)
+for regid=regplot
   %nexttile;
   H = squeeze(sum(D.U(:,Hcol,regid,:),[2 3]));
   W = squeeze(sum(D.U(:,Wcol,regid,:),[2 3]));
   plot(H,'Color',[0 0 1 alpha],'HandleVisibility','off'), hold on
   plot(W,'Color',[1 0 0 alpha],'HandleVisibility','off')
-  
-  Hmean = sum(D.EulFwd(:,Hcol,regid),[2 3]);
-  Wmean = sum(D.EulFwd(:,Wcol,regid),[2 3]);
+
+  if includeUDS
+      Hmean = sum(D.EulFwd(:,Hcol,regid),[2 3]);
+      Wmean = sum(D.EulFwd(:,Wcol,regid),[2 3]);
+  else
+      Hmean = mean(sum(D.U(:,Hcol,regid,:),[2 3]),4);
+      Wmean = mean(sum(D.U(:,Wcol,regid,:),[2 3]),4);
+  end
   plot(Hmean,'b')
   plot(Wmean,'r')
-  
+
   data = loadData('RU');
   tspan_post = find(data.date == D.date(1)):find(data.date == D.date(end));
   plot(sum(data.H(tspan_post,reg(regid)),2),'.b')
   plot(sum(data.W(tspan_post,reg(regid)),2),'.r')
   title(l_getlatex(reg(regid)),'Interpreter', 'Latex')
-  
+
   % Apply correct formating
   ax = gca;
   ax.TickLabelInterpreter = 'latex';
-  
+
   x0 = 1:numel(tspan_post);
   xtk = fliplr(x0(end:-28:1));
   %xtk = fliplr(tspan_post(end:-28:1));
-  
+
   set(gca,'xtick',xtk);
-  
-  
+
+
   % wanted xticks
   % for abbreviations, see https://www.bydewey.com/monthdayabb.html
   strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
     'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
-  
+
   % 15th each month:
-  
+
   ixdates = find(mod(D.date,100) == 1);
   tspan_urdme = 1:numel(D.date);
   xxdates = tspan_urdme(ixdates);
@@ -165,31 +172,41 @@ for regid=1:numel(reg)
   months = mod(floor(dates/1e2),1e2);
   slabtitle = strmonths(months);
   slabtitle(2:2:end) = {''}; % only every 2nd
-  
+
   % xticks & -labels
   xticklabels(slabtitle);
   xtickangle(45);
-  
-  
+
+
   % 2021 delimiter
   xline(find(D.date == 210101),'--k','2021', ...
     'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
     'interpreter','latex','HandleVisibility','off');
-  
-  
+
+
   legentries = {'Hospital [H]','Intensive [W]'};
   leg= legend(legentries, ...
     'Location','northwest','interpreter','latex','FontSize',12,...
     'Orientation','horizontal',...
     'NumColumns', 1);
-  
-  
-  
+
+
+
   grid on
   axis tight
+ 
+  switch regions{regid}
+    case 'Gotland'
+      ylim([0,25]);
+    case 'Blekinge'
+      ylim([0,60]);
+    case 'Jämtland'
+      ylim([0,35]);
+  end
+
   hold off
-  
-  
+
+
   %
   % ***************************************
   % *** save to files ***
@@ -200,25 +217,25 @@ for regid=1:numel(reg)
   savepath = strrep(savepath,'å','a');
   savepath = strrep(savepath,'ä','a');
   savepath = strrep(savepath,'ö','o');
-  
-  
+
+
   if savetofile % true if we should compute the error table
-    
-    
-    
-    
+
+
+
+
     set(gcf,'PaperPositionMode','auto');
     set(gcf,'Position',[100 100 500 350]);
-    
-    
+
+
     print('-dpdf', savepath)
     disp(['saved figure: ' savepath]);
-    
-    
+
+
   else
     disp(['did not save figure:' savepath])
   end
-  
+
 end
 disp(' ... done with plots');
 

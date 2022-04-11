@@ -1,8 +1,8 @@
 %POSTERIOR_CLUSTER is a script that visualizes the similarity or
 %   discrepencies between the posterior found for different regions.
 
-% Robin Marin (Eriksson) 2020-3-7
-save2file = true;
+% Robin Marin (Eriksson) 2020-03-07
+save2file = false;
 
 %clear ratenames
 % load data
@@ -12,9 +12,7 @@ if ~exist('ratenames','var')
                'R0' 'thetaA_' 'thetaE_','half_life',...
                'E2I','HOSP','IC_HOSP','IFR'  };
   inverted = {'sigma', 'gammaI', 'gammaH' 'gammaW'};
-%   titles = {'$\sigma^{-1}$', '$\gamma_I^{-1}$', '$\gamma_H^{-1}$', '$\gamma_W^{-1}$', ...
-%             '$R_t$' '$\theta_A$', '$\theta_E$','half life', ...
-%             '$E_2I$','HOSP','IC HOSP', 'IFR'};
+
   titles= {'$\sigma^{-1}$ [days]' ...
                       '$\gamma_I^{-1}$ [days]' ...
                       '$\gamma_H^{-1}$ [days]'...
@@ -28,60 +26,89 @@ if ~exist('ratenames','var')
                       'IC HOSP [$H \rightarrow W$, \%]' ...
                       'IFR [$E \rightarrow D$, \%]'};
   postdate = '210531';
-  ending = '_1';
+  ending = '_1_100';
   [meanpost, stdpost, regionList] = l_getpost(postdate,ratenames,ending,inverted);
-  
+
 else
   disp('using in-memory');
 end
 
+
+load('inference/results/SLAM/marginal_bias.mat', 'marginal')
+tag = l_biascomp(meanpost,stdpost,marginal,ratenames); %indicate bias problem
 % bar plot
 regionid = 1:numel(regionList);
 tiledlayout(3,4)
 
+meanpost_plot = meanpost;
+stdpost_plot = stdpost;
+
+blue = [0 0 1]/256;
+red = [1 0 0]/256;
 for k = 1:12
   nexttile
-%   if ~ismember(k,[5,12])
-%     i = i+1;
-%   
-  %subplot(2,5,i)
-  bar(regionid, meanpost(k,:));
+
+  if ismember(ratenames{k}, {'E2I','HOSP','IC_HOSP','IFR'})
+      meanpost_plot(k,:) = meanpost(k,:)*100;
+      stdpost_plot(k,:) = stdpost(k,:)*100;
+  else
+    meanpost_plot(k,:) = meanpost(k,:);
+    stdpost_plot(k,:) = stdpost(k,:);
+  end
+
+  toDagger = tag(k,:);
+
+  bar(regionid, meanpost_plot(k,:));
   hold on
-  er = errorbar(regionid,meanpost(k,:), 1*stdpost(k,:), -1*stdpost(k,:));
+  bar(regionid(~toDagger), meanpost_plot(k,~toDagger));
+  bar(regionid(toDagger), meanpost_plot(k,toDagger));
+
+  % % indicate bias problems
+  % clr = b.CData;
+
+  % if numel(toDagger) > 0
+  %     disp(['in here: ' num2str(k)])
+  %     clr(toDagger,1) = 1
+  %     b.CData = clr;
+  % end
+
+
+
+  er = errorbar(regionid,meanpost_plot(k,:), 1*stdpost_plot(k,:), -1*stdpost_plot(k,:));
   er.Color = [0 0 0];
   er.LineStyle = 'none';
   title(titles{k},'interpreter','latex');
   xticks(regionid);
-  
-  ylim([max(0,min(meanpost(k,:)-3*stdpost(k,:))) ...
-        max(0,max(meanpost(k,:)+3*stdpost(k,:)))])
-        
 
-      
+  ylim([max(0,min(meanpost_plot(k,:)-3*stdpost_plot(k,:))) ...
+        max(0,max(meanpost_plot(k,:)+3*stdpost_plot(k,:)))])
+
+
+
   xticklabels(regionList);
   xtickangle(90);
-  
-  
+
+
 
   %set(gca,'fontsize',5)
 
-  
- 
-  
+
+
+
   ax = gca;
   ax.XAxis.FontSize = 5;
   ax.TickLabelInterpreter = 'latex';
 %   else
 %     set(gca,'visible','off')
 %   end
-%     
+%
 end
 
 % polish target output size
 set(gcf,'PaperPositionMode','auto');
 %%
 set(gcf,'Position',[100 100 900 500]);
-%%  
+%%
 if save2file
   printpath = mfilename('fullpath');
   printpath=[printpath(1:end-23) 'errorbars.pdf'];
@@ -98,12 +125,12 @@ if save2file
 end
 
 
-function [meanpost, stdpost, regionList_tex] = l_getpost(postdate, ratenames, ending, inverted) 
+function [meanpost, stdpost, regionList_tex] = l_getpost(postdate, ratenames, ending, inverted)
 %L_GETPOST(POSTDATE,RATENAMES,ENDING) get the posterior and return the mean and
 %   standard deviation for a specific date (POSTDATE) and rates
 %   (RATENAMES).
 %   ENDING   - {_1, _8, _15, _22}.
-%   INVERTED - name of rate that should be presented with its inverse. 
+%   INVERTED - name of rate that should be presented with its inverse.
 
 regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
   'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
@@ -142,3 +169,25 @@ for i = 1:numel(regionList)
 end
 end
 
+
+function tag = l_biascomp(mu,sig,bias,ratenames)
+%L_BIASCOMP estimates if the bias is to large or not for the uncertainty
+%  given by 2*sig or not.
+
+    bias_ = zeros(numel(ratenames),21);
+    for i = 1:numel(ratenames)
+        name = ratenames{i};
+        rows = ismember(bias(:,2,1),name);
+        if ismember(name,{'R0','IFR'})
+            bias_(i,:) = mean(cell2mat(bias(rows,1,:)),1);
+        else
+            bias_(i,:) = cell2mat(bias(rows,1,:));
+        end
+    end
+
+
+    for reg = 1:21
+        d = 2*sig;
+        tag = sqrt(bias_) >= 0.5*d;
+    end
+end

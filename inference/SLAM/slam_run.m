@@ -8,8 +8,8 @@
 %
 % R.Eriksson 2021/01/21.
 
-region='Uppsala';
-nMCMC = 1e2;
+region='Stockholm';
+nMCMC = 1e3;
 smc=0; % SMC-sampler? > 0 means yes, and the number of generations.
 verb = true; % debug text
 nslab=1; % {1: 1st, 8: 8th, 15: 15th, 22:22nd} monthly slabs
@@ -46,11 +46,13 @@ prefix = [prefix '/SLAM/perRegion/'];
 %posterior = 'perRegion/slam200601_Uppsala_monthly_1_100.mat';
 %posterior = 'perRegion/slam210526_Uppsala_monthly_22.mat';
 %posterior = 'perRegion/slam210526_Stockholm_monthly_22.mat';
-posterior = 'slam210531_Uppsala_monthly_1_URDME1_100.mat';
+%posterior = 'slam210531_Uppsala_monthly_1_URDME1_100.mat';
+%posterior = 'slam210531_Uppsala_monthly_1_100.mat';
+posterior = 'slam210531_Stockholm_monthly_1_100.mat';
 
 scaleS=0.05; % > 1 if smc.
 
-register='RU';
+register='C19';%URDME1';
 
 lsmoothing = false;
 
@@ -69,7 +71,7 @@ init = getInit(useinit,[prefix posterior],false);
 
 % use initial state to start at a later date
 state0 = getInitState(useState0,210331,region);
-  
+
 
 rng(0)
 [thetas, sl, slab, amparam, amfunc, outverb,Ydata] = slam_init(region,nMCMC,...
@@ -85,13 +87,13 @@ tosave=false;
 [rates,rates100,ratesR0] = savePosterior(thetas, sl, slab, ...
   amparam, burnin, jump, ...
   true, useCSSS, tosave, fix, nslab,smc,[],{'full' '100'});
-    
+
 return;
 %% continue chain
 % If the above has been runned, this code can be used to reuse the
 % variables already used, and increase the length of the parameter chain.
 start = size(thetas,2);
-nMCMC2 = 1e5;
+nMCMC2 = 1e4;
 stop = start + nMCMC2;
 
 thetas = [thetas, zeros(size(thetas,1), nMCMC2)];

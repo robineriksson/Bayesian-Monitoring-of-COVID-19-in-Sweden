@@ -9,6 +9,7 @@
 % S. Engblom 2020-10-24
 
 save2file=true;
+includeBias=false;
 
 % load posterior
 Nsample = 1e4;
@@ -16,7 +17,7 @@ path = postpath;
 prefix = 'SLAM/perRegion/';
 % "super-posterior"
 date = '210531';
-ending = '_1';
+ending = '_1_100';
 regionList = regions;
 % $$$ % select through list and a search...
 % $$$ reg = {'Gävleborg' 'Uppsala' 'Södermanland' 'Östergötland' 'Gotland' ...
@@ -36,8 +37,9 @@ filename = strcat(path,prefix,files);
 
 Weights = sum(N(:,reg));
 ratesPosterior = posteriorenger(Nsample,filename,Weights,true);
-load([postpath 'SLAM/marginal_bias'],'marginal');
-
+if includeBias
+    load([postpath 'SLAM/marginal_bias'],'marginal');
+end
 % filetrue = [postpath 'SLAM/slam210531_mean_monthly' ending];
 % rates=ratesPosterior;
 % save(filetrue,'rates')
@@ -77,7 +79,7 @@ try
     hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
     hypfile = hypfile{:};
   end
-    
+
 catch
   hypfile = [];
 end
@@ -109,46 +111,51 @@ for i = 1:numel(rateNamesSubset)
     set(0,'DefaultTextFontname','CMU Serif');
     set(0,'DefaultAxesFontName','CMU Serif');
     set(gca,'TickLabelInterpreter','latex');
-    
+
     name = rateNamesSubset{i};
     prior = ratesPrior.(name)(end,:);
     prmean = meansPrior.(name)(end);
     posterior = mean(ratesPosterior.(name),1);
     pomean = mean(posterior);
-    
-    pobias = sqrt(mean(cell2mat(marginal(fsetop('ismember',marginal(:,2,1),{name}),1,reg))));
-    if any(strcmp({'R0','IFR'},name))
-      pobias = pobias(end);
+    if includeBias
+        pobias = sqrt(mean(cell2mat(marginal(fsetop('ismember',marginal(:,2,1),{name}),1,reg))));
+        if any(strcmp({'R0','IFR'},name))
+            pobias = pobias(end);
+        end
     end
-    
+
     switch name
       case {'F0' 'HOSP' 'IC_HOSP' 'IFR' 'E2I'}
         prior = prior.*100;
         prmean = prmean*100;
         posterior = posterior.*100;
         pomean = pomean*100;
-        pobias = pobias*100;
+        if includeBias, pobias = pobias*100; end,
       case {'sigma' 'gammaI' 'gammaH' 'gammaW'}
         prior = 1./prior;
         prmean = 1/prmean;
         posterior = 1./posterior;
         pomean = mean(posterior); % (need not commute)
-        % if inverse, we need to 'correct' the bias
-        temp = 1/pomean + pobias;
-        pobias = abs(1/temp - pomean);
-        
+        if includeBias
+            % if inverse, we need to 'correct' the bias
+            temp = 1/pomean + pobias;
+            pobias = abs(1/temp - pomean);
+        end
+
       case 'half_life'
         prior = prior*24;
         prmean = prmean*24;
         posterior = posterior*24;
         pomean = pomean*24;
-        pobias= pobias*24;
+        if includeBias
+            pobias= pobias*24;
+        end
     end
-    
+
 %     disp(name)
 %     disp(quantile(posterior,[0.025,0.975]))
 %     disp(pomean)
-    
+
     % posterior
     [fp,xip] = ksdensity(posterior,'Function','pdf');
     xx = [xip,flip(xip,1)];
@@ -156,20 +163,23 @@ for i = 1:numel(rateNamesSubset)
     h_post = fill(xx,ff,[0 0 1]);
     hold on
     set(h_post,'facealpha',.1)
-    
+
     % prior
     [f,xi] = ksdensity(prior,'Function','pdf');
     xx = [xi flip(xi,1)];
     ff = [f flip(f,1)];
     h_prior = fill(xx,ff,[1 0 0]);
     set(h_prior,'facealpha',.1)
-    
+
     xlabel(rateNamesSubset_tex{i},'interpreter','latex');
-    
+
     % mean vertical line, with annotation.
     hline_prior = xline(prmean,'--','LineWidth',1,'Color', [1 0.2 0.2]);
     hline_post = xline(pomean,'-','LineWidth',2,'Color', [0 0.4470 0.7410]);
-    str = ['$=$ ' num2str(round(pomean,2,'significant')) '$\pm$' num2str(round(pobias,2,'significant'))];
+    str = ['$=$ ' num2str(round(pomean,2,'significant'))];
+    if includeBias
+        str = [str '$\pm$' num2str(round(pobias,2,'significant'))];
+    end
     b(i) = annotation('textbox','String',str,'Position',ha(i).Position,...
       'Vert','top','HorizontalAlignment','right',...
       'FitBoxToText','on','interpreter','latex',...
@@ -178,7 +188,7 @@ for i = 1:numel(rateNamesSubset)
       'EdgeColor','None','Margin',0,'FontSize',8,...
       'Color',[0 0.4470 0.7410]);
     set(gcf,'color','w');
-    
+
     % minor improvements on axis
     switch name
       case 'R0'
@@ -198,7 +208,7 @@ for i = 1:numel(rateNamesSubset)
     set(gca,'ytick',[]);
     set(get(gca,'Xruler'),'Exponent',0)
     hold off
-    
+
 
 end
 
@@ -206,7 +216,7 @@ legend([h_post(1), h_prior(1)], ...
   'Posterior','Prior',...
   'Orientation','horizontal','interpreter','latex', ...
   'Position',[0.47 0.95 0.1 0.03],'FontSize',14);
-%   
+%
 % legend('Posterior','Prior', ...
 %   'Orientation','horizontal','interpreter','latex', ...
 %   'Position',[0.47 0.95 0.1 0.03],'FontSize',14);

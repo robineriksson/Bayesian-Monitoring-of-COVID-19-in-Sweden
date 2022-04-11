@@ -5,6 +5,11 @@
 
 toprint = false; % print to file false/true
 
+
+printNtest = true; % write out the number of tests in period 200805-210526
+
+
+
 % posterior dates to plot
 dateend_ = '210531';
 dateend_dyn = '210531';
@@ -14,25 +19,35 @@ datestart = 200401; % where to start the plot
 regions_ = regions();
 % pick one region (if not these specified)
 % Uppsala:2, largest:1,10,12; smallest: 8,9,19
-for reg = [8]%[2 1 10 12 8 9 19]
+reglist = [8];%[2 1 10 12 8 9 19];
+for reg = reglist
   region = regions_{reg}
-  
+
   % construct posterior files
   postname = ['/slam' dateend_ '_' region '_monthly' ...
     shiftstr '_100.mat'];
-  
-  
-  dynoptname = ['dynOptPosterior' dateend_dyn '_all'];
-  postname = strcat([postpath 'SLAM/perRegion/'],postname);
-  dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
-  
+
+
+
   % dynamic beta data
-  load(dynoptname,'R_all','dates');
-  R_post = R_all(reg,:);
-  
-  
-  
-  
+  %  if true%reg == 2
+    dynoptname = ['dynOptPosterior' dateend_dyn '_' region];
+    postname = strcat([postpath 'SLAM/perRegion/'],postname);
+    dynoptname = strcat([postpath 'dynOpt/temp/'],dynoptname);
+
+
+    load(dynoptname,'R_post','dates');
+  % else
+  %   dynoptname = ['dynOptPosterior' dateend_dyn '_all'];
+  %   postname = strcat([postpath 'SLAM/perRegion/'],postname);
+  %   dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
+
+  %   load(dynoptname,'R_all','dates');
+  %   R_post = R_all(reg,:);
+  % end
+
+
+
   % create a common time frame
   date0 = 200301; % start of common time
   dateend = dates(end); % end of common time from dynOpt
@@ -46,7 +61,7 @@ for reg = [8]%[2 1 10 12 8 9 19]
   DATES = datevec(DATES);
   dates = DATES(:,1:3)*[1e4 1e2 1]'-2e7;
   t = 1:numel(dates);
-  
+
   % (1) the boxplot
   figure(1), clf, hold on;
   boxw = 15;
@@ -55,7 +70,7 @@ for reg = [8]%[2 1 10 12 8 9 19]
   %boxc = color_lightblue; % color of boxes
   boxc = [0 0 1];
   color_FHMgray = [[120 120 120]/255 0.5];
-  
+
   % find centerpoint of each slab
   temp = load(postname);
   rates = temp.rates;
@@ -71,7 +86,7 @@ for reg = [8]%[2 1 10 12 8 9 19]
   if size(slabstop,1) > 1
     slabstop = slabstop(:,1)';
   end
-  
+
   midpoint = slabstop(1:end-1) + round(diff(slabstop/2));
   if temp.amparam.date(1) == 200319
     xdates = midpoint + 18; % adjusted to include Mars 1 (from 200319)
@@ -80,17 +95,17 @@ for reg = [8]%[2 1 10 12 8 9 19]
   else
     error('not defined starting date');
   end
-  
+
   boxplot(rates.R0','positions',xdates,...
     'widths',boxw,'colors',boxc,'symbol','','Whisker',1.5);
   hbox = findobj(gca,'tag','Box');
-  
+
   % (2) dynamic R
   hline = plot(t(end-numel(R_post)+1:end),R_post,'r');
-  
+
   % (3) FHM's R-estimates
   FHM_R = loadData('FHM_R');
-  
+
   % of FHM_R and C19/RU are of different length. The following code will
   % adress that and make sure that the correct data is plotted.
   dates_FHM = [find(dates == FHM_R.date(1)) 0];
@@ -101,13 +116,13 @@ for reg = [8]%[2 1 10 12 8 9 19]
     dates_FHM(2) = find(dates == FHM_R.date(end));
     FHM_final = numel(FHM_R.date);
   end
-  
-  
+
+
   %dates_FHM = [1 303];
   hFHM = plot(t(dates_FHM(1):dates_FHM(2)),...
     FHM_R.mid(1:FHM_final,reg),'color',color_FHMgray);
   hold off
-  
+
   xlabel('','Interpreter','Latex');
   ylabel('$R_{t}$','Interpreter','Latex');
   switch reg
@@ -121,11 +136,11 @@ for reg = [8]%[2 1 10 12 8 9 19]
       region_latex = region;
   end
   h = title(region_latex,'Interpreter', 'Latex');
-  
+
   ax = gca;
   ax.TickLabelInterpreter = 'latex';
   yline(1,'--k');
-  
+
   % for abbreviations, see https://www.bydewey.com/monthdayabb.html
   strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
     'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
@@ -137,21 +152,21 @@ for reg = [8]%[2 1 10 12 8 9 19]
   months = mod(floor(dates/1e2),1e2);
   slabtitle = strmonths(months(xticks));
   slabtitle(1:2:end) = {''}; % only every 2nd
-  
+
   % 2021 delimiter
   xline(t(dates == 210101),'--k','2021', ...
     'LabelVerticalAlignment','bottom','LabelOrientation','horizontal', ...
     'interpreter','latex','HandleVisibility','off');
-  
+
   % xticks & -labels
   xticklabels(slabtitle);
   xtickangle(45);
-  
+
   % yticks & -labels
   yticklabel = split(num2str(0:0.1:2.4));
   yticklabel(2:2:end) = {''};
   set(gca,'ytick',0:0.1:2.4,'yticklabel',yticklabel);
-  
+
   % axis fit & legend
   grid on
   if reg == 2 % uppsala can be tighter
@@ -162,11 +177,11 @@ for reg = [8]%[2 1 10 12 8 9 19]
   axis([t(dates == datestart) t(end) ylim_1 2.0])
   legend([hbox(1) hline hFHM],'Posterior','Quasi-ML', ...
     'PHA','interpreter','latex');
-  
+
   % polish target output size
   set(gcf,'PaperPositionMode','auto');
   set(gcf,'Position',[100 100 500 350]);
-  
+
   % print to file
   if toprint
     figure(1)
@@ -182,4 +197,20 @@ for reg = [8]%[2 1 10 12 8 9 19]
     %unix(['epstopdf ' printpath '.eps']);
     disp(['saved figure: ' printpath])
   end
+
+end
+%%
+if printNtest
+  load 'Ncounties'
+  N100k = sum(N,1)/1e5;
+  test = loadData('FHM_test');
+  tspan_test = find(test.date == 200805):find(test.date == 210526);
+  Ntest = sum(test.Nper100k(tspan_test,reglist).*N100k(reglist),1);
+  Ntest_c = sprintfc('%d',round(Ntest,4,'significant')');
+  Ntest100k = sum(test.Nper100k(tspan_test,reglist),1);
+  Ntest100k_c = sprintfc('%d',round(Ntest100k,5,'significant')');
+  names = regions();
+  cat(2,names(reglist),Ntest_c, Ntest100k_c)
+
+
 end

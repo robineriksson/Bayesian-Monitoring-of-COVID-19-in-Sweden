@@ -21,7 +21,7 @@ end
 spectral; % fetch ODE CFR:s and D_SS_IHW
 
 % load data
-Data = loadData('RU');
+Data = loadData('C19');
 Data = polishData(Data,'D','Dinc',1);
 Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
 
@@ -79,7 +79,7 @@ D_post_IHW_sig = squeeze(covZ.stdZ(sel_D,Data.date(tspan_data) == stopdate,:));
 D_post_IHW_mu = squeeze(D_post_IHW);
 
 xx = linspace(0,1e4,1e3);
-[mu_IHW, sig_IHW] = l_MoG(D_post_IHW,D_post_sig)
+[mu_IHW, sig_IHW] = l_MoG(D_post_IHW,D_post_IHW_sig)
 
 pd = normpdf(xx,mu_IHW,sig_IHW);
 
@@ -224,15 +224,15 @@ xlabel('%')
 
 %% Format intervals for LaTeX use
 disp('D split distribution')
-D_Kalman_IHW = l_formatCI(mu_IHW + [-2*sig_IHW, - sig_IHW, zeros(3,1), sig_IHW, 2*sig_IHW])
+D_Kalman_IHW = l_formatCI(mu_IHW + [-2*sig_IHW, - sig_IHW, zeros(3,1), sig_IHW, 2*sig_IHW], 4)
 D_SS_IHW
 
 disp('CFR calculation')
-IHW_D_Kalman = l_formatCI([mu_Id;mu_Hd;mu_Wd] + ...
+CFR_Kalman_IHW = l_formatCI([mu_Id;mu_Hd;mu_Wd] + ...
                           [-2*sig_Id, - sig_Id, 0, sig_Id, 2*sig_Id;...
                            -2*sig_Hd, - sig_Hd, 0, sig_Hd, 2*sig_Hd;...
-                           -2*sig_Wd, - sig_Wd, 0, sig_Wd, 2*sig_Wd])
-ID_ODE = l_formatCI([ID_q;HD_q;WD_q])
+                           -2*sig_Wd, - sig_Wd, 0, sig_Wd, 2*sig_Wd],2)
+ID_ODE = l_formatCI([ID_q;HD_q;WD_q],2)
 
 
 
@@ -266,17 +266,19 @@ sig = getsig(mu,mu_Z,sig_Z);
 
 end
 
-function [CI] = l_formatCI(X)
+function [CI] = l_formatCI(X,Nsig)
 %L_FORMATCI converts numeric array X into a string \CI{...} format ready
 %for LaTeX use.
 
 CI = cell(size(X,1),1);
+X = round(X,Nsig,'significant');
 for k = 1:size(X,1)
- CI{k} = ['\CI' '{' num2str(X(k,1)) '}'...
-                 '{' num2str(X(k,2)) '}'...
-                 '{' num2str(X(k,3)) '}'...
-                 '{' num2str(X(k,4)) '}'...
-                 '{' num2str(X(k,5)) '}'];
+ CI{k} = ['\text{\CIedge' ...
+   '{' num2str(X(k,1)) '}'...
+   '{' num2str(X(k,2)) '}'...
+   '{' num2str(X(k,3)) '}'...
+   '{' num2str(X(k,4)) '}'...
+   '{' num2str(X(k,5)) '}}'];
 
 end
 end

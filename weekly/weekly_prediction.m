@@ -33,11 +33,11 @@ if 0
   % defaults
   posteriordate = '210531'; % change here
   ending        = '1_100'; % at what date does the slabs start.
-  datadate     = [200401 210531] % change end date here 
-  
-  datasource   = 'RU'; % Employs C19 if not Uppsala, then Uppsala Region
+  datadate     = [200401 210531] % change end date here
+
+  datasource   = 'C19'; % Employs C19 if not Uppsala, then Uppsala Region
   useCSSS      = false;
-  
+  saveall      = true;
   % run all regions
   type = 1, lag = 14;
   regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
@@ -50,21 +50,23 @@ if 0
     FINALRUN = true;
     weekly_prediction
   end
-  
-  
-  
+
+
+
   %   % lag14-plot, Uppsala
   %   FINALRUN = true;
   %   type = 1, lag = 14;
   %   region = 'Uppsala'
   %   weekly_prediction
-  
+
   % lag7-plot, Uppsala
   FINALRUN = true;
   type = 2, lag = 7;
   region = 'Uppsala'
   weekly_prediction
-  
+
+
+
   %   % lag14-plot, Stockholm
   %   FINALRUN = true;
   %   type = 1, lag = 14;
@@ -76,19 +78,19 @@ if 0
   type = 2, lag = 7;
   region = 'Stockholm'
   weekly_prediction
-  
+
   % lag14-plot, Sweden
   FINALRUN = true;
   type = 1, lag = 14;
   region = 'Sweden'
   weekly_prediction
-  
+
   % lag7-plot, Sweden
   FINALRUN = true;
   type = 2, lag = 7;
   region = 'Sweden'
   weekly_prediction
-  
+
   disp('*** Done ***');
 end
 % *** change here BEGIN { **********************************************
@@ -96,29 +98,33 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % type =
   %   1: without historic lag, but prediction lag days ahead
   %   2: with historic lag
-  type = 1
+  type = 2
   if type == 1
     lag = 14;
   else
     lag = 7;
   end
-  
+
   % use CSSS?
   useCSSS=false;
-  
-  
+
+  % save all states
+  saveall=true;
+
   % for reference
   region = 'Uppsala'
-  
+
   % posterior file date
   posteriordate = '210531';
   ending         = '1_100'; % at what date does the slabs start.
-  
+
   % dates that "date" the data used
   datadate     = [200401 210531]; % change end date here
-  
-  
-  datasource = 'RU';
+
+  % exclude the network (only affects 'Sweden')
+  noNetwork = 1;
+
+  datasource = 'C19';
 else
   disp('*** Running as script... ***');
   FINALRUN = false;
@@ -144,7 +150,7 @@ test = find(strcmp(region,regionList)) + 3;
 if isempty(test)
   if strcmp(region,'Sweden')
     test = 0;
-    
+
     % construct the Sweden posteriorfile
     if ~exist([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'file')
       regs = 1:21;
@@ -152,15 +158,15 @@ if isempty(test)
       for r = 1:numel(regs)
         files{r} = [prefix 'perRegion/slam' posteriordate '_' regionList{regs(r)} '_monthly_' ending '.mat'];
       end
-      
+
       Weights = slweight(files);
       rates = posteriorenger(100,files,Weights);
       save([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'rates')
-      
-      
+
+
     end
-    
-    
+
+
   else
     error(['Missing region: ' region]);
   end
@@ -197,6 +203,9 @@ end
 % transmission matrix D
 load Dcounties
 
+if noNetwork
+  D = sparse(zeros(size(D))); 
+end
 
 test_ = test; % for plotting keep test_
 
@@ -204,16 +213,16 @@ test_ = test; % for plotting keep test_
 if strcmp(datasource,'URDME') % synthetic data
   filename = mfilename('fullpath');
   Data_raw = load([filename(1:end-24) 'data/sources/URDME/' 'URDME210418_Stockholm_Uppsala.mat']);
-  
+
   Data = struct();
   Data.regions = Data_raw.D.region;
   Data.date = Data_raw.D.date;
   Data.H = Data_raw.D.U(:,5,1);
   Data.W = Data_raw.D.U(:,6,1);
   Data.D = Data_raw.D.U(:,7,1);
-  
+
   Data.I = Data_raw.D.U(:,1,1); % currently for plotting.
-  
+
   Data.hash = -1;
   Data.rev = -1;
   Data.reg = 'URDME210418_Stockholm_Uppsala';
@@ -225,7 +234,7 @@ else
   Data = loadData(datasource);
   Data = polishData(Data,'D','Dinc',1);
   Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
-  
+
   % this is to allow for perRegion posteriors
   if test >= 4
     D = 1;
@@ -280,7 +289,7 @@ if useCSSS
   % correction factor in xmod = fac*x
   load Fcases_interp
   fac = sum(Eave(3:end))/sum(Iave(3:end));
-  
+
   % CSSS-data
   if strcmp(region,'Uppsala')
     csss = loadData('CSSS_RU');
@@ -295,13 +304,13 @@ if useCSSS
   end
   ixcsss = find(DATES == csss.date(1)):find(DATES == csss.date(end));
   tspan_csss = TSPAN(ixcsss);
-  
+
   %   Ihi = csss.Ihi;
   %   Ilo = csss.Ilo;
   %   Imid = csss.Imid;
-  
+
   Imid(csss.date > 201231) = NaN; % data post 31 Dec 2020, is "bad".
-  
+
   % settle on a relative variance from given asymmetric 95% CI
   varI = mean(((Ihi-Ilo)/2./Imid).^2); % generally larger
   %varI = max(varI);
@@ -309,7 +318,7 @@ if useCSSS
   %   varI(isnan(varI)) = [];
   %   varI = mean(varI);
   %   %varI = mean(((Ihi-Ilo)/4./Imid))^2;
-  
+
   % specify observation model
   obsrates.states = {5 6 7}; % state #5, #6, #7
   obsrates.indobs = {1}; % CSSS data for the I-compartment
@@ -317,7 +326,7 @@ if useCSSS
   obsrates.nstate = 8;
   obsrates.R0 = [ones(3,1); 1e-4];
   obsrates.rdiag = [(1e-3)^2*ones(3,1); varI];
-  
+
   % insert CSSS data
   Idata = permute([NaN(ixcsss(1)-ixdata(1),numel(lan)); Imid; ...
     NaN(ixdata(end)-ixcsss(end),numel(lan))],[3 2 1]);
@@ -341,21 +350,22 @@ H = getC19obs(obsrates); % i.e., "H", "W", "D" ("I" if CSSS)
 %T = sparse([1 2 3*ones(1,numel(lan))],[1 2 1:numel(lan)],ones(1,2+numel(lan)));
 
 % Add incidence compartment
-rates.IStates = [1];
-obsrates.nstate=9;
-if true
+rates.IStates = [1 7];
+obsrates.nstate=10;
+if saveall
   T = sparse(1,1:numel(lan),1);
-  % I A E  PHI H W D R (Ii)
+  % I A E  PHI H W D R (Ii, Di)
   G = sparse(...
-    [0 0 0 0 1 0 0 0 0;   % H
-     0 0 0 0 0 1 0 0 0;   % W
-     0 0 0 0 0 0 1 0 0;   % D
-     0 0 0 0 0 0 0 0 1;   % Ii
-     0 0 0 1 0 0 0 0 0;  % PHI
-     0 0 0 0 0 0 0 1 0;   % R
-     1 0 0 0 0 0 0 0 0]);   % I
-     
-     
+    [0 0 0 0 1 0 0 0 0 0;   % H
+     0 0 0 0 0 1 0 0 0 0;   % W
+     0 0 0 0 0 0 1 0 0 0;   % D
+     0 0 0 0 0 0 0 0 1 0;   % Ii
+     0 0 0 0 0 0 0 0 0 1;   % Di
+     0 0 0 1 0 0 0 0 0 0;  % PHI
+     0 0 0 0 0 0 0 1 0 0;   % R
+     1 0 0 0 0 0 0 0 0 0]);   % I
+
+
   G = kron(T,G);
 else
   T = [speye(numel(lan)); sparse(1,1:numel(lan),1)];
@@ -380,7 +390,6 @@ exception.AbsMagn = 1e4;
 switch type
   case 1
     % without:
-    
     if true%~exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '.mat'],'file')
       [Z,covZ,~,L] = C19filt([],[],G,rates,D,obsrates,Ydata,slabs, ...
         numel(ixfilter),[],Q, exception);
@@ -393,23 +402,23 @@ switch type
       covZ.lastPostY = covZ.lastPostY(:,unique(rows));
       covZ.lastPriorYCov = covZ.lastPriorYCov(:,:,unique(rows));
       covZ.lastPostYCov = covZ.lastPostYCov(:,:,unique(rows));
-      
-      
-      
-      
+
+
+
+
       % when loading, are we loading the posterior we think we're doing?
       meta = struct();
       meta.postHash = rates.meta.hash; % same posterior
       meta.dataHash = Data.hash;  % same data
       save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4)],...
         'Z','covZ','meta','Ydata','tspan_filter','tspan_data','lan',...
-        'useCSSS','datasource','DATES','TSPAN','lag','slabs');
+        'useCSSS','datasource','DATES','TSPAN','lag','slabs','Data');
     else
       warning(['Already saved prediction for ' posterior(1:end-4)]);
     end
-    
-    
-    
+
+
+
   case 2
     % with:
     if true%~exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
@@ -419,7 +428,7 @@ switch type
         numel(ixfilter),lag,Q);
       covZ.covZ = []; % save some space
       covZ_.covZ = [];
-      
+
       % when loading, are we loading the posterior we think we're doing?
       meta = struct();
       meta.postHash = rates.meta.hash; % same posterior
@@ -427,14 +436,13 @@ switch type
       save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag'],...
         'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
         'tspan_data','lan','useCSSS','datasource','DATES','TSPAN',...
-        'lag','slabs');
+        'lag','slabs','Data');
     else
       warning(['Already saved lag prediction for ' posterior(1:end-4)]);
-      
-    end
-    
-    
-    
-    
-end
 
+    end
+
+
+
+
+end

@@ -7,9 +7,12 @@ posteriordate = '210531'; % change here
 ending        = '1_100'; % at what date does the slabs start.
 datadate     = [200401 210531] % change end date here
 
-datasource   = 'RU'; % Employs C19 if not Uppsala, then Uppsala Region
+datasource   = 'C19'; % Employs C19 if not Uppsala, then Uppsala Region
 useCSSS      = false;
 
+saveall      = true;
+
+noNetwork    = true;
 % run all regions
 type = 1, lag = 14;
 regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...

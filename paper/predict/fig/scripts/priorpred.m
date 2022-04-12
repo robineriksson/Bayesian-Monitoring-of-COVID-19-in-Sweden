@@ -1,74 +1,66 @@
 %WEEKLY_PREDICTION Script for generating predictions.
 rng(0)
 
+if ~exist('Nprior','var')
+    Nprior = 1e3;
+end
+if ~exist('savetofile','var')
+    savetofile = false;
+end
+if ~exist('regen','var')
+    regen=false;
+end
+if ~exist('reg','var')
+    reg = 1;
+end
+
+smoothD = true;
 plotfun = @plot;
 
-regen = false;
+
+regionList = regions();
+region = regionList{reg};
+
 abspath = mfilename('fullpath');
-
 if ~regen
-    disp('loading priorpred.mat')
-    load([abspath(1:end-9) 'priorpred.mat'])
-    savetofile = true;
-    smoothD = true;
+    disp(['loading priorpred_' region '.mat'])
+    try
+        load([abspath(1:end-9) 'priorpred_' region '.mat'])
+    catch
+        error('file seems to be missing, run again with regen=true');
+    end
 else
-    Nprior = 1e3;
-    savetofile = false;
-    smoothD = true;
-    disp('generating priorpred.mat')
-
+    disp(['generating priorpred_' region '.mat']);
 
     lag = 7;
 
-
-
     useCSSS=false;    % use CSSS?
-
-
-
-
-    region = 'Uppsala'% for reference
-
-
-
     posteriordate = '210531'; % posterior file date
     ending         = '1_100'; % at what date does the slabs start.
 
     % dates that "date" the data used
-        datadate     = [200401 210531]; % change end date here
-
-
+    datadate     = [200401 210531]; % change end date here
     datasource = 'C19';
-
     saveall      = true;
-
     noNetwork    = true;
 
     % folder for posteriors
-
     prefix = [postpath 'SLAM/'];
 
     % Population data
-        load Ncounties
+    load Ncounties
     Npop = sum(N,1);
 
 
     % convert region into "test" for data extraction, later.
-        regionList = regions();
     test = find(strcmp(region,regionList)) + 3;
 
-
     posterior = 'perRegion/';
-
-
-
     posterior = [posterior 'slam' posteriordate '_' region '_monthly'];
-
-
     posterior = [posterior '_' ending '.mat'];
 
     % sample rates
-        rng(0);
+    rng(0);
     rates = posteriorenger([],[prefix posterior]);
 
     try
@@ -85,7 +77,7 @@ else
     rates.meta.date = datadate;
     posterior = 'perRegion/prior_Uppsala.mat';
     % transmission matrix D
-        load Dcounties
+    load Dcounties
 
 
     test_ = test; % for plotting keep test_
@@ -97,39 +89,39 @@ else
     Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
 
     % this is to allow for perRegion posteriors
-        if test >= 4
-    D = 1;
-    lan = 1;
-    Data.D = Data.D(:,strcmp(Data.regions, region));
-    Data.W = Data.W(:,strcmp(Data.regions, region));
-    Data.H = Data.H(:,strcmp(Data.regions, region));
-    Npop = Npop(strcmp(Data.regions, region));
-    Data.regions = Data.regions(test-3);
-    test = 0;
+    if test >= 4
+        D = 1;
+        lan = 1;
+        Data.D = Data.D(:,strcmp(Data.regions, region));
+        Data.W = Data.W(:,strcmp(Data.regions, region));
+        Data.H = Data.H(:,strcmp(Data.regions, region));
+        Npop = Npop(strcmp(Data.regions, region));
+        Data.regions = Data.regions(test-3);
+        test = 0;
     end
 
 
     % define filter evaluation period
-        ixdata = find(Data.date == datadate(1)):find(Data.date == datadate(2));
+    ixdata = find(Data.date == datadate(1)):find(Data.date == datadate(2));
     if datadate(1) < rates.meta.date(1) % data starts earlier than posterior
-            warning(['data starts before posterior, assume earlier data i slab 1'...
-                     ', this will probably cause errors.']);
+        warning(['data starts before posterior, assume earlier data i slab 1'...
+                 ', this will probably cause errors.']);
         slabs = [repmat(slabs(1),1,find(Data.date(ixdata)==rates.meta.date(1))-1)...
                  slabs];
     end
     if numel(slabs) < numel(ixdata)
         % (posterior is from a shorter period of time)
-            warning('Extending final slabs to match data.');
+        warning('Extending final slabs to match data.');
         slabs = [slabs repmat(slabs(end),1,numel(ixdata)-numel(slabs))];
     end
     ixfilter = [ixdata ixdata(end)+(1:lag)];
 
     % change data format
-        Ydata = cat(3,Data.H(ixdata,:),Data.W(ixdata,:),Data.D(ixdata,:));
+    Ydata = cat(3,Data.H(ixdata,:),Data.W(ixdata,:),Data.D(ixdata,:));
     Ydata = permute(Ydata,[3 2 1]);
 
     % define a common time frame, including dates
-        TSPAN = 1:max(ixfilter);
+    TSPAN = 1:max(ixfilter);
     DATES = datenum(2e3+floor(Data.date(1)/1e4), ...
                     mod(floor(Data.date(1)/1e2),1e2) ,...
                     mod(Data.date(1),1e2));
@@ -138,27 +130,27 @@ else
     DATES = DATES(:,1:3)*[1e4 1e2 1]'-2e7; % finally!
                                            % selections of the above:
     tspan_filter = TSPAN(ixfilter); % filter output
-        tspan_data = TSPAN(ixdata);  % data used
-        tspan_alldata = TSPAN(1:min(ixfilter(end),numel(Data.date))); % *all* data
+    tspan_data = TSPAN(ixdata);  % data used
+    tspan_alldata = TSPAN(1:min(ixfilter(end),numel(Data.date))); % *all* data
 
 
     % specify observation model
-        obsrates.states = {5 6 7}; % state #5, #6, #7
-        obsrates.indobs = {}; % No indirect measurements
-        obsrates.indobspars = {};
+    obsrates.states = {5 6 7}; % state #5, #6, #7
+    obsrates.indobs = {}; % No indirect measurements
+    obsrates.indobspars = {};
     obsrates.nstate = 8;
     obsrates.R0 = 1*ones(3,1);
     obsrates.rdiag = (1e-3)^2*ones(3,1);
 
     % specify output model
-        H = getC19obs(obsrates); % i.e., "H", "W", "D" ("I" if CSSS)
-                                 % Add incidence compartment
-        rates.IStates = [1 7];
+    H = getC19obs(obsrates); % i.e., "H", "W", "D" ("I" if CSSS)
+                             % Add incidence compartment
+    rates.IStates = [1 7];
     obsrates.nstate=10;
     if saveall
         T = sparse(1,1:numel(lan),1);
         % I A E  PHI H W D R (Ii, Di)
-            G = sparse(...
+        G = sparse(...
             [0 0 0 0 1 0 0 0 0 0;   % H
              0 0 0 0 0 1 0 0 0 0;   % W
              0 0 0 0 0 0 1 0 0 0;   % D
@@ -176,13 +168,13 @@ else
     end
 
     % uncertainty parameters
-        Q = struct();
+    Q = struct();
     Q.Q0 = speye(numel(lan)*obsrates.nstate);
     Q.qdiag = 0.05^2;
 
 
     % these were used durring inference (some regions are sensitive)
-        exception.LB = -1e2;
+    exception.LB = -1e2;
     exception.UB = 1e7;
     exception.SDFAC = 0.25;
     exception.AbsMagn = 1e4;
@@ -191,71 +183,42 @@ else
 
     disp(['qdiag: ' num2str(Q.qdiag)]);
     [Z_,covZ_,Z,covZ] = ...
-    C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
-                numel(ixfilter),lag,Q);
+        C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
+                    numel(ixfilter),lag,Q);
     covZ.covZ = []; % save some space
-        covZ_.covZ = [];
+    covZ_.covZ = [];
 
     % when loading, are we loading the posterior we think we're doing?
-        meta = struct();
+    meta = struct();
     meta.postHash = rates.meta.hash; % same posterior
-        meta.dataHash = Data.hash;  % same data
+    meta.dataHash = Data.hash;  % same data
 
-    savetofile_ = savetofile;
-    if savetofile
-        clear savetofile
-    end
-    save([abspath(1:end-9) 'priorpred.mat']);
-    savetofile=savetofile_;
+    save([abspath(1:end-9),'priorpred_' region '.mat'],...
+         'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
+         'tspan_data','lan','useCSSS','datasource','DATES','TSPAN',...
+         'lag','slabs','Data');
     disp('saved priorpred.mat')
 end
 
-% %if Iplotting
-% % Separating I from the rest
-% ZI = Z(end-numel(lan)+1:end,:,:);
-% stdZI = covZ.stdZ(end-numel(lan)+1:end,:,:);
-% Z(end-numel(lan)+1:end,:,:) = [];
-% covZ.stdZ(end-numel(lan)+1:end,:,:) = [];
-% Z_(end-numel(lan)+1:end,:,:) = [];
-% covZ_.stdZ(end-numel(lan)+1:end,:,:) = [];
-% %end
 
-% %if Rplotting
-% % separating R from the rest
-% ZR = Z(end-numel(lan)+1:end,:,:);
-% stdZR = covZ.stdZ(end-numel(lan)+1:end,:,:);
-% Z(end-numel(lan)+1:end,:,:) = [];
-% covZ.stdZ(end-numel(lan)+1:end,:,:) = [];
-% Z_(end-numel(lan)+1:end,:,:) = [];
-% covZ_.stdZ(end-numel(lan)+1:end,:,:) = [];
-% %end
-% %if phiplotting
-% % separating phi from the rest
-% Zphi = Z(end-numel(lan)+1:end,:,:);
-% stdZphi = covZ.stdZ(end-numel(lan)+1:end,:,:);
-% Z(end-numel(lan)+1:end,:,:) = [];
-% covZ.stdZ(end-numel(lan)+1:end,:,:) = [];
-% Z_(end-numel(lan)+1:end,:,:) = [];
-% covZ_.stdZ(end-numel(lan)+1:end,:,:) = [];
-% %end
 
 %%
-    figure(1), clf;
+figure(1), clf;
 stdZ = covZ.stdZ; % for brevity
 
 % ***************************
 % *** Postprocessing code ***
 % ***************************
 % 1:H 2:W 3:D 4:Ii 5:Di 6:PHI 7:R 8:I
-    Hcomp = 1; Wcomp = 2; Dcomp = 3; Dicomp = 5;
+Hcomp = 1; Wcomp = 2; Dcomp = 3; Dicomp = 5;
 
 Icomp= [];
 
 % Full simulation (Sweden) or single region (no transport).
-    Ydata_swe = squeeze(sum(Ydata,2));
+Ydata_swe = squeeze(sum(Ydata,2));
 
 % summed counties
-    end_ = size(Z,1);
+end_ = size(Z,1);
 
 ind = [Hcomp, Wcomp, Dicomp];
 
@@ -263,7 +226,7 @@ Y_swe = Z(ind,:,:);
 stdY_swe = stdZ(ind,:,:);
 
 % scaling for plots
-    Ydata_swe_plot = Ydata_swe;
+Ydata_swe_plot = Ydata_swe;
 smoothing = @(x) sgolayfilt(x,0,7);
 Ydata_swe_plot(Dcomp,:) = Data.Dinc(tspan_data,find(strcmp(regions,region)));
 if smoothD
@@ -280,19 +243,19 @@ if strcmp(datasource,'URDME')
 end
 filtval = 1e-1;
 Y_sweF = max(Y_swe,filtval); % filtered values
-         Y_sweF_plot = max(Y_swe_plot,filtval); % filtered values
+Y_sweF_plot = max(Y_swe_plot,filtval); % filtered values
 
 
 
 % number of samples to draw (illustration only)
-    Nsamples_ = 0;
+Nsamples_ = 0;
 
 
 % define colors for the compartments
-    color = [[0 0 1]; % H
-             [1 0 0]; % W
-             [160 5 30]/256; % D
-             [0 1 0]]; % I
+color = [[0 0 1]; % H
+         [1 0 0]; % W
+         [160 5 30]/256; % D
+         [0 1 0]]; % I
 
 alpha = 0.1;
 if Nsamples_ > 0
@@ -313,10 +276,10 @@ comp_vec = [Hcomp Wcomp Dcomp Icomp];
 
 for i = comp_vec
     % note: lognormal interpretation
-        if any(i == [Hcomp Icomp])
-    yyaxis left, hold on
-        else
-            yyaxis right, hold
+    if any(i == [Hcomp Icomp])
+        yyaxis left, hold on
+    else
+        yyaxis right, hold
     end
     if i == Dcomp
         plotfun(tspan_filter,mean(squeeze(Y_sweF_plot(i,:,:)),2),'-','Color',color(i,:));
@@ -336,16 +299,16 @@ end
 % formulas (help lognrnd)
 %   mean = exp(muhat + sigmahat^2/2)
 %   std = mean * sqrt(exp(sigmahat^2) - 1)
-          sigmahat = sqrt(mean(log1p((stdY_swe./Y_sweF).^2),3));
+sigmahat = sqrt(mean(log1p((stdY_swe./Y_sweF).^2),3));
 sigmahat_plot = sqrt(mean(log1p((stdY_swe_plot./Y_sweF_plot).^2),3));
 % (muhat,sigmahat) is then the normal transform of the Kalman filtered
 % result
 
 % then compute the prior uncertainty and add both these sources
-    muhat = mean(log(Y_sweF),3);
+muhat = mean(log(Y_sweF),3);
 muhat_plot = mean(log(Y_sweF_plot),3);
 %sigmahat = sqrt(0*sigmahat.^2+var(log(Y_sweF),0,3));
-    sigmahat_plot_ = sigmahat_plot;
+sigmahat_plot_ = sigmahat_plot;
 sigmahat = sqrt(sigmahat.^2+var(log(Y_sweF),0,3));
 sigmahat_plot = sqrt(sigmahat_plot.^2+var(log(Y_sweF_plot),0,3));
 
@@ -359,7 +322,7 @@ Ylo_plot = exp(muhat_plot-kappa*sigmahat_plot);
 Yhi_plot = exp(muhat_plot+kappa*sigmahat_plot);
 
 % minor filtering to avoid issues in log-scale and patch
-    Ylo = real(Ylo); Ylo(Ylo < 0) = 0;
+Ylo = real(Ylo); Ylo(Ylo < 0) = 0;
 Yhi = real(Yhi); Yhi(Yhi < 0) = 0;
 
 Ylo_plot = real(Ylo_plot); Ylo_plot(Ylo_plot < 0) = 0;
@@ -370,22 +333,22 @@ tt = [tspan_filter fliplr(tspan_filter)];
 
 for i = comp_vec
     % note: lognormal interpretation
-        if any(i == [Hcomp Icomp])
-    yyaxis left
-        else
-            yyaxis right
+    if any(i == [Hcomp Icomp])
+        yyaxis left
+    else
+        yyaxis right
     end
     %patch(tt,max(1,[Ylo_plot(i,:) fliplr(Yhi_plot(i,:))]), ...
-        patch(tt,max(0,[Ylo_plot(i,:) fliplr(Yhi_plot(i,:))]), ...
-              [0.9 0.9 0.9],'FaceAlpha',0.15, ...
-              'LineStyle','none','FaceColor',color(i,:),...
-              'HandleVisibility','off');
+    patch(tt,max(0,[Ylo_plot(i,:) fliplr(Yhi_plot(i,:))]), ...
+          [0.9 0.9 0.9],'FaceAlpha',0.15, ...
+          'LineStyle','none','FaceColor',color(i,:),...
+          'HandleVisibility','off');
 end
 
 
 
 % data used in filter
-    yyaxis left
+yyaxis left
 plotfun(tspan_data,Ydata_swe_plot(1,:),'.','Color',color(1,:),'HandleVisibility','off')
 yyaxis right
 plotfun(tspan_data,Ydata_swe_plot(2,:),'.','Color',color(2,:),'HandleVisibility','off')
@@ -394,7 +357,7 @@ plotfun(tspan_data,Ydata_swe_plot(3,:),'.','Color',color(3,:),'HandleVisibility'
 
 
 % slab limiters
-    slabstops = find(diff(slabs))+1;
+slabstops = find(diff(slabs))+1;
 if strcmp(region,'Sweden')
     slabstop = slabstops(:,1);
 end
@@ -406,11 +369,19 @@ hold off,
 
 xlim(tspan_data([1 end]))
 xtk = fliplr(tspan_data(end:-28:1));
-yyaxis right % no negative axis
+
+if reg == 2
+    yyaxis right % no negative axis
     ylim([0 40])
 
-yyaxis left
-ylim([0,200])
+    yyaxis left
+    ylim([0,200])
+else
+  yyaxis left
+  ylim([0,1200])
+  yyaxis right
+  ylim([0, 220])
+end
 
 
 
@@ -420,28 +391,28 @@ set(gca,'xtick',xtk);
 
 % wanted xticks
 % for abbreviations, see https://www.bydewey.com/monthdayabb.html
-    strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
-                 'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
+strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
+             'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
 
 % 15th each month:
-    ixdates = find(mod(DATES(tspan_filter),100) == 1);
+ixdates = find(mod(DATES(tspan_filter),100) == 1);
 xxdates = tspan_filter(ixdates);
 dates=DATES(xxdates);
 xticks(xxdates);
 % what month:
-    months = mod(floor(dates/1e2),1e2);
+months = mod(floor(dates/1e2),1e2);
 slabtitle = strmonths(months);
 slabtitle(2:2:end) = {''}; % only every 2nd
 
 % xticks & -labels
-    xticklabels(slabtitle);
+xticklabels(slabtitle);
 xtickangle(45);
 
 
 % 2021 delimiter
-    xline(find(DATES(tspan_filter) == 210101)+tspan_filter(1)-1,'--k','2021', ...
-          'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
-          'interpreter','latex','HandleVisibility','off');
+xline(find(DATES(tspan_filter) == 210101)+tspan_filter(1)-1,'--k','2021', ...
+      'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
+      'interpreter','latex','HandleVisibility','off');
 
 
 
@@ -463,27 +434,22 @@ hold off
 
 
 savepath = abspath(1:end-17);
-figname = [savepath 'priorpred.pdf'];
+figname = [savepath 'priorpred_' region '.pdf'];
 if savetofile % true if we should compute the error table
 
 
 
     % finalize the plot
-        h = gcf;
+    h = gcf;
     ax = gca;
     ax.TickLabelInterpreter = 'latex';
-    %      set(h,'PaperOrientation','landscape');
-    %      set(h,'PaperUnits','normalized');
-    %      set(h,'PaperPosition',[0 0 1 1]);
-    %      set(h,'PaperUnits','centimeter')
-    %      set(h,'PaperSize',[20 16])
-    %
+
     % polish target output size
-        set(h,'PaperPositionMode','auto');
+    set(h,'PaperPositionMode','auto');
     set(h,'Position',[100 100 500 350]);
 
     %print(h, ['~/Desktop/lag_' region '.eps'], '-depsc')
-        print(h, figname, '-dpdf')
+    print(h, figname, '-dpdf')
     disp(['saved figure:' figname])
 else
     disp(['didn''t save figure:' figname])

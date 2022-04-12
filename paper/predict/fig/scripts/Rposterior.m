@@ -3,12 +3,16 @@
 % S. Engblom 2021-08-21 (minor revision)
 % H. Runvik 2021-08-20
 
-toprint = false; % print to file false/true
-
+if ~exist('savetofile','var')
+    savetofile = true; % print to file false/true
+end
+% pick one region (if not these specified)
+% Uppsala:2, largest:1,10,12; smallest: 8,9,19
+if ~exist('reg','var')
+    reg = [2 1 10 12 8 9 19];
+end
 
 printNtest = true; % write out the number of tests in period 200805-210526
-
-
 
 % posterior dates to plot
 dateend_ = '210531';
@@ -17,11 +21,10 @@ shiftstr = '_1';
 datestart = 200401; % where to start the plot
 
 regions_ = regions();
-% pick one region (if not these specified)
-% Uppsala:2, largest:1,10,12; smallest: 8,9,19
-reglist = [8];%[2 1 10 12 8 9 19];
-for reg = reglist
-  region = regions_{reg}
+
+for rid = reg
+
+  region = regions_{rid}
 
   % construct posterior files
   postname = ['/slam' dateend_ '_' region '_monthly' ...
@@ -30,21 +33,10 @@ for reg = reglist
 
 
   % dynamic beta data
-  %  if true%reg == 2
-    dynoptname = ['dynOptPosterior' dateend_dyn '_' region];
-    postname = strcat([postpath 'SLAM/perRegion/'],postname);
-    dynoptname = strcat([postpath 'dynOpt/temp/'],dynoptname);
-
-
-    load(dynoptname,'R_post','dates');
-  % else
-  %   dynoptname = ['dynOptPosterior' dateend_dyn '_all'];
-  %   postname = strcat([postpath 'SLAM/perRegion/'],postname);
-  %   dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
-
-  %   load(dynoptname,'R_all','dates');
-  %   R_post = R_all(reg,:);
-  % end
+  dynoptname = ['dynOptPosterior' dateend_dyn '_' region];
+  postname = strcat([postpath 'SLAM/perRegion/'],postname);
+  dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
+  load(dynoptname,'R_post','dates');
 
 
 
@@ -120,12 +112,12 @@ for reg = reglist
 
   %dates_FHM = [1 303];
   hFHM = plot(t(dates_FHM(1):dates_FHM(2)),...
-    FHM_R.mid(1:FHM_final,reg),'color',color_FHMgray);
+    FHM_R.mid(1:FHM_final,rid),'color',color_FHMgray);
   hold off
 
   xlabel('','Interpreter','Latex');
   ylabel('$R_{t}$','Interpreter','Latex');
-  switch reg
+  switch rid
     case 10
       region_latex = 'Sk\aa{}ne';
     case 12
@@ -169,7 +161,7 @@ for reg = reglist
 
   % axis fit & legend
   grid on
-  if reg == 2 % uppsala can be tighter
+  if rid == 2 % uppsala can be tighter
     ylim_1 = 0.5;
   else
     ylim_1 = 0.2;
@@ -183,7 +175,7 @@ for reg = reglist
   set(gcf,'Position',[100 100 500 350]);
 
   % print to file
-  if toprint
+  if savetofile
     figure(1)
     printpath = mfilename('fullpath');
     printpath = [printpath(1:end-10) '..' printpath(end-10:end)];
@@ -205,12 +197,12 @@ if printNtest
   N100k = sum(N,1)/1e5;
   test = loadData('FHM_test');
   tspan_test = find(test.date == 200805):find(test.date == 210526);
-  Ntest = sum(test.Nper100k(tspan_test,reglist).*N100k(reglist),1);
+  Ntest = sum(test.Nper100k(tspan_test,reg).*N100k(reg),1);
   Ntest_c = sprintfc('%d',round(Ntest,4,'significant')');
-  Ntest100k = sum(test.Nper100k(tspan_test,reglist),1);
+  Ntest100k = sum(test.Nper100k(tspan_test,reg),1);
   Ntest100k_c = sprintfc('%d',round(Ntest100k,5,'significant')');
   names = regions();
-  cat(2,names(reglist),Ntest_c, Ntest100k_c)
+  cat(2,names(reg),Ntest_c, Ntest100k_c)
 
 
 end

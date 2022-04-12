@@ -118,17 +118,55 @@ bootstraptable;
 
 # Examples (paper/predict/)
 All the examples are referenced to a presented figure in the paper.
+
+Prior to generating the figure, simulation files are needed for some
+the figures/examples listed below. In order to run the properly we
+suggest you first generate them by first running the `laggen` script.
+It will take a while, but it needs only to be called once. The `laggen` call should be
+called as follows
+```
+% *suggested approach* to reproduce the Figures in the paper.
+type = 1;
+reg = [1 2 22];
+laggen;
+type = 2;
+reg = [2]
+laggen;
+
+
+% if all data is wanted
+type = 1;
+reg = 1:22;
+laggen; % filter output + 14 days of prediciton
+
+type = 2;
+laggen % Continous 7-day ahead prediction
+
+```
+
 ## Figures (paper/predict/img/script)
 ### Fig. 2:
 Illustrate the marginal prior and posterior with
 `prior_posterior`. The illustration can be the weighted national
 average or any combination of regional posteriors, see the variable
 `reg` which include all if set to `[1:21]` or only Uppsala if `[2]`.
-
+```
+prior_posterior; % generates the weighted national average, as in the paper.
+clear reg
+reg = [2]
+prior_posterior; % generates the same but only for Uppsala.
+```
 ### Fig. 3:
 7-day ahead predictions per region, and exemplified for Uppsala in
 `lagplot`. The function unpacks prediction samples generated using
-`laggen` and `weekly_predict`.
+`weekly_predict` wrapper `laggen`
+
+```
+generateData=0; % if the laggen call was already made
+reg = [2]; % Uppsala figure, [1] for Stockholm and so on.
+lagplot;
+
+```
 
 ### Fig. 4:
 The proportion of recovered invididuals per region, and Stockholm in
@@ -136,6 +174,10 @@ particular `recovered`. Stockholm in particular because we have
 included validating sources which themselves only consider that
 region. The validating sources are included by .csv: [`fhmAnti`,
 `fhmAntiGivare`, `RecPaperEstimate`], see the paper for the sources.
+The call is simply
+```
+recovered; % generates the recoverd plot in the paper.
+```
 
 ### Fig. 5 (& S2)
 The posterior reproduction number (4-week) and the marginal boostrap
@@ -144,6 +186,12 @@ region of interest is specified by `reglist`. In Fig. 5 `= [2]`, and
 in Fig. S2 `= [1 10 12 8 9 19]`. The 4-week posterior is illustrated
 using a boxplot, the daily as a red line, and for comparison (or
 validation) we also include the estimate given by PHA per region.
+```
+Rposterior; % generates the figures for the 7 regions in the paper
+clear reg
+reg = [2]
+Rposterior; % only generates the figure for Uppsala
+```
 
 ### Fig. S1:
 As the posterior Kalman filter can give an estimate of the proportion
@@ -152,7 +200,16 @@ estimate of the number of symptomatic or the symptomatic
 incidence. The latter is often what servailence studies (testing)
 tries to uncover. In `IincFac` we do exactly this, we recover the
 symtomatic incidence and compare it to the positive tests by PHA in
-Stockholm and Uppsala.
+Stockholm and Uppsala. Figures can be generates in batch, or by region.
+```
+savetofile = false;
+reg = [1] % Stockolm
+IincFac;
+
+savetofile = true; % the figure names are re-used and we suggest saving.
+reg = [1 2] % Stockholm and Uppsala
+IincFac;
+```
 
 ### Fig. S4:
 The pre-processing of the data (as discussed under Results → Data)
@@ -162,6 +219,13 @@ it is telling to be a data entry issue as nothing intrisict about the
 infection should decide that one day is >5 times likely to have more
 reported deaths on. The illustration is reproducable in
 `weekday_smoothing`.
+```
+reg = 1; % Stockholm
+weekday_smoothing;
+
+reg = 2; % Uppsala
+weekday_smoothing;
+```
 
 ### Fig. S5:
 Our effort of exploring the prior predictive distribution is given in
@@ -172,11 +236,27 @@ first run generates the prior sample predictions and save the file (it
 can be large, therefore we do not include it). After it has been
 generated, the file can simply be loaded the the predictive
 distribution can be explored further.
+```
+regen=1; % generate the samples
+reg=2; % Uppsala | can be swapped for othe regions, e.g., Stockholm (1).
+Nprior=1e3; % number of prior samples
+priorpred;
+
+regen=0;
+priorpred; % same figure, but loading the prior samples from file.
+```
 
 ### Fig. S6:
 The daily estimate of β is expensive to run; superlinear in the number
-of days K. We illustrate the splitting of horizions to make the
-calculations feasable in `HorizonSplitCompare`.
+of days *K*. We illustrate the splitting of horizions to make the
+calculations feasable in `HorizonSplitCompare`. *WARNING* this script
+takes a long time to compute.
+```
+reg=2; % Uppsala region, as in paper.
+savetofile=false;
+HorizonSplitCompare;
+
+```
 
 ### Fig. S7:
 The posterior for all regions is tricker to visualize all at once. In

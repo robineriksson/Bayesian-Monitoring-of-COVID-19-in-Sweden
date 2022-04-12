@@ -159,7 +159,7 @@ if isempty(test)
         files{r} = [prefix 'perRegion/slam' posteriordate '_' regionList{regs(r)} '_monthly_' ending '.mat'];
       end
 
-      Weights = slweight(files);
+      Weights = Npop;
       rates = posteriorenger(100,files,Weights);
       save([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'rates')
 
@@ -204,7 +204,7 @@ end
 load Dcounties
 
 if noNetwork
-  D = sparse(zeros(size(D))); 
+  D = sparse(zeros(size(D)));
 end
 
 test_ = test; % for plotting keep test_

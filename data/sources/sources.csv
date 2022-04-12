@@ -1,0 +1,23 @@
+file,source,date,hash
+C19/C19.csv,C19/online.csv,2022-03-10 15:33:10,2397239212
+RU/C19RU.csv,RU/regionUU.csv,2022-02-03 19:05:04,4223410637
+RU/C19RU_old.csv,RU/C19RU.csv,2022-03-31 16:41:24,0
+FHM/FHM_weekly.csv,FHM/Folkhalsomyndigheten_Covid19.xlsx,2022-03-28 12:40:34,0
+FHM/FHM_daily.csv,FHM/Folkhalsomyndigheten_Covid19.xlsx,2022-03-28 12:40:34,0
+FHM/FHM_daily_swe.csv,FHM/Folkhalsomyndigheten_Covid19.xlsx,2022-03-28 12:40:34,0
+FHM/FHM.csv,FHM/FHM2_IVA.csv,2021-05-17 11:08:03,0
+FHM/FHM_mutate.csv,FHM/FHM_mutate0.csv,2021-05-03 14:07:51,0
+FHM/FHM_R.csv,FHM/FHM_skattning_R.xlsx,2022-01-13 16:05:49,1638115871
+FHM/FHM_vac.csv,FHM/Folkhalsomyndigheten_Covid19_vaccin.xlsx,2021-10-14 14:33:52,0
+FHM/FHM_test.csv,FHM/tester.ods,2022-03-31 14:44:34,1569131418
+SS/SS.csv,SS/statistik-covid19-inskrivna.xlsx,2022-03-22 09:07:58,0
+SS/SS_swe_mort.csv,SS/statistik-covid19-avlidna.xlsx,2022-03-22 09:07:58,825579464
+SIR/SIR.csv,SIR/W_region.xls,2021-05-03 14:07:51,0
+SIR/SIR_weekly.csv,SIR/online.csv,2021-05-03 15:33:46,0
+SIR/SIR_swe_mort.csv,SIR/online_mort.csv,2021-05-03 15:34:14,3648134192
+SIR/SIR_swe.csv,SIR/online_daily.csv,2021-05-03 15:34:06,3364801977
+CSSS/CSSS.csv,CSSS/TUP/PredBlekinge.txt,2021-05-03 14:07:51,0
+CSSS/CSSS_public.csv,CSSS/csss_raw.csv,2021-05-03 14:07:51,0
+CSSS/CSSS_swe.csv,CSSS/Riket.txt,2021-05-03 14:07:51,0
+UWW/UWW.csv,UWW/WW_from_web.csv,2022-01-31 08:04:31,0
+OWID/OWID.csv,OWID/daily-tests-per-thousand-people-smoothed-7-day.csv,2022-03-31 10:42:10,0

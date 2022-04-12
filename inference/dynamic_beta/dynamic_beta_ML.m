@@ -6,7 +6,7 @@
 regionList = regions();
 
 %% Options
-for reg = [9 19];% [2 10 12 8 9 19]%[1:21]
+for reg = [6 11 21]%[1:21]
   region=reg; % region to estimate beta for
   startdate = 200319;
   enddate = 210531;
@@ -14,7 +14,7 @@ for reg = [9 19];% [2 10 12 8 9 19]%[1:21]
 
 
   wbeta=300000;
-  if ismember(reg, [8 9 19]), wbeta = wbeta/3000; end;
+  if ismember(reg, [6 8 9 11 21]), wbeta = wbeta/3000; end;
   windowlength=150;
   steplength=20;
 

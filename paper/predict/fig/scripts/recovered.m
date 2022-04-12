@@ -22,7 +22,9 @@ ending        = '1_100'; % at what date does the slabs start.
 
 % this controls the update of .tex- and .pdf-files (so not
 % .mat-files):
-savetofile = true;
+if ~exist('savetofile','var')
+    savetofile = false;
+end
 
 % construct figures?
 illustrate = true;
@@ -79,15 +81,10 @@ for i = reg
     try
         load([abspath(1:end-35) 'weekly/save/runs/' posterior]);
     catch % missing file. Recompute?
-      code =  ['posteriordate=' '''' num2str(posteriordate) ''', ' ...
-        'ending=' '' ending, '' ...
-        'datadate=[200319 ' num2str(DATES(end-14)) ']' ...
-        'datasource=' '''RU'', ' ...
-        'useCSSS=false,'...
-        'FINALRUN=true, '...
-        'type=1, lag=14, ' ...
-        'region=''' region ''', ' ...
-        'weekly_prediction'];
+        code =  ['reg=' num2str(rid) ', ', ...
+                 'type=1, '...
+                 'laggen'];
+
       error('MATLAB:ambiguousSyntax',['does not find prediction file. Did you run weekly_predict?'...
         '\nTry: \n' code]);
     end
@@ -97,7 +94,7 @@ for i = reg
     end
 
     % Separating R from the rest of Z
-    ixR = size(Z,1)-2*(numel(lan))+1:size(Z,1)-numel(lan);
+    ixR = 7; % see weekly_prediction.m
     ZR = Z(ixR,:,:);
     stdZR = covZ.stdZ(ixR,:,:);
 
@@ -173,18 +170,6 @@ for i = reg
         xxdates = t(ixdates);
         coltitle = cellstr(num2str(dates(ixdates)))';
     end
-
-    %  plot([low95; low68; mid; high68; high95]','b')
-    %  xlim([0 numel(dates)-1])
-    %  xticks(xxdates);
-    %  xticklabels(slabtitle);
-    %  xtickangle(45);
-
-
-    %  % find in 2021
-    %  years21 = find(mod(floor(dates(ixdates)/1e4),1e4) == 21);
-    %  ixdates = ixdates(years21);
-
 
     low95  = low95(ixdates);
     low68  = low68(ixdates);

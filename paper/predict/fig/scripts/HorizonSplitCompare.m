@@ -1,6 +1,13 @@
-ntime = 365;
+rng(0)
 
-region=2; % region to estimate beta for
+if ~exist('reg','var')
+    reg=2; % region to estimate beta for
+end
+if ~exist('savetofile','var')
+    savetofile = false;
+end
+
+ntime = 365;
 startdate = 200319;
 enddate = 210531;
 prevresdate = 210531; % previous result for initial guess
@@ -20,8 +27,7 @@ postrates = posteriorenger(inf,[prefix posterior]);
 slab = postrates.meta.slabs;
 
 % load filter data
-datasource = 'RU_old';
-%datasource = 'C19';
+datasource = 'C19';
 Data = loadData(datasource);
 Data = polishData(Data,'D','Dinc',1);
 Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
@@ -33,8 +39,8 @@ slab(numel(ixdata)+1:end) = [];
 ixfilter = ixdata;
 
 % change data format
-Ydata = cat(3,Data.H(ixdata,region),Data.W(ixdata,region),...
-    Data.D(ixdata,region));
+Ydata = cat(3,Data.H(ixdata,reg),Data.W(ixdata,reg),...
+    Data.D(ixdata,reg));
 Ydata = permute(Ydata,[3 2 1]);
 
 % specify observation model
@@ -61,8 +67,9 @@ beta0 = 0.1*ones(1,ntime);
 
 %%
 options = optimoptions(@fmincon,'MaxFunctionEvaluations',2700000,...
-    'MaxIterations',6000,'Display','off',...%'iter-detailed',...
-    'OptimalityTolerance',2e-5);
+                       'MaxIterations',6000,'Display',...
+                       'iter-detailed',...                       %'off',...
+                       'OptimalityTolerance',2e-5);
 
 F=cell(nslab,1);
 for m = 1:nslab
@@ -102,4 +109,18 @@ ylabel('$\beta_t$','Interpreter','Latex')
 xlabel('$t$','Interpreter','Latex')
 legend({'Batch optimization','Divided horizon'},'Interpreter','Latex')
 
-print(gcf, 'horizonTest.pdf', '-dpdf')
+savepath = mfilename('fullpath');
+savepath2 = [savepath(1:end-27) 'horizonTest'];
+if savetofile
+    % finalize the plot
+    h2 = gcf;
+    ax = gca;
+    ax.TickLabelInterpreter = 'latex';
+    % polish target output size
+    set(h2,'PaperPositionMode','auto');
+    set(h2,'Position',[100 100 500 350]);
+    print('-dpdf', savepath2)
+    disp(['saved figure: ' savepath2]);
+else
+    disp(['didn''t save figure: ' savepath2]);
+end

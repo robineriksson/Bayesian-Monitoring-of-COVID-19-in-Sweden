@@ -27,7 +27,11 @@ regionList = regions;
 
 % ...or directly by specifying here
 %reg = [16 11 5 7 9 13 14 15];
-reg = 1:21;
+
+if ~exist('reg','var')
+    reg = 1:21;
+end
+
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
 load Ncounties;

@@ -151,8 +151,9 @@ Illustrate the marginal prior and posterior with
 average or any combination of regional posteriors, see the variable
 `reg` which include all if set to `[1:21]` or only Uppsala if `[2]`.
 ```
+reg = [1:21]
 prior_posterior; % generates the weighted national average, as in the paper.
-clear reg
+
 reg = [2]
 prior_posterior; % generates the same but only for Uppsala.
 ```
@@ -187,8 +188,9 @@ in Fig. S2 `= [1 10 12 8 9 19]`. The 4-week posterior is illustrated
 using a boxplot, the daily as a red line, and for comparison (or
 validation) we also include the estimate given by PHA per region.
 ```
-Rposterior; % generates the figures for the 7 regions in the paper
 clear reg
+Rposterior; % generates the figures for the 7 regions in the paper
+
 reg = [2]
 Rposterior; % only generates the figure for Uppsala
 ```
@@ -263,6 +265,12 @@ The posterior for all regions is tricker to visualize all at once. In
 `errorbarsRegion` we give the posterior mean ± 1 std per region. This
 quick illustration gives a quick overview of potential outlier regions
 but also the similarity between regional results.
+```
+clear ratenames
+errorbarsRegion; % load data into memory and generate figure.
+
+errorbarsRegion; % from memory generate figure.
+```
 
 ### Fig. S8:
 The bootstrap samples are, as mentioned, generated using URDME. The
@@ -273,16 +281,36 @@ assumed as the posterior we use in the simulations is a national
 average (except per the reproduction number) and therefore if the
 regional posterior differed significantly from the weighted national
 average, we then expect the simulations to differ more.
+```
+reg = [1:21]; % national average
+regplot = [2];
+URDMEsampling; % Only the Uppsala figure
+
+clear regplot
+URDMEsampling; % All the figures in the paper.
+```
 
 ### Fig. S9:
 The reproduced posterior samples on the bootstrap replicate data can
 we visualized together with the weighted national average (as Fig 2)
-as another marginal density in `urdmecompare`.
+as another marginal density in `prior_posteriorURDME`.
+```
+reg = [1:21]; % national average
+prior_posteriorURDME; % same figure as in the paper
+
+reg = [2];
+prior_posteriorURDME; % only for Uppsala.
+```
 
 ### Fig. S10:
 Similarly as the boostrap replicate posterior was compared to the the
 marginal posterior and prior in Fig. S9, we can include the replicate
-mean for the reproduction number in `RposteriorURDME`.
+mean for the reproduction number in `RposteriorURDME`. We only include
+the files necessary for the Uppsala region plot, as given in the
+paper. The following results in the same figure.
+```
+RposteriorURDME;
+```
 
 ### Fig. S11:
 To compare the the Posterior Kalman filter predictor with something,
@@ -293,7 +321,15 @@ predictions. The performance is then evaluated on the frequency of
 Kalman filter. The reasoning for only doing it on the recorded dates
 is that it makes sure that the Kalman filter had not seen "future"
 data when making predictions. The code also generates the Tab. S5.
+```
+reg=2; % Uppsala region
+arx_fit; % first time loads solution into memory
 
+arx_fit; % no new fitting, only plotting
+clear ypred;
+reg=1; % Stockholm data
+arx_fit; % fit anew.
+```
 
 ## Tables (paper/predict/tab/script)
 ### Tab. 1
@@ -301,6 +337,10 @@ We describr in the paper how the research underlying the paper was
 used, and developed, for weekly prediction in reports published for
 the local authorities. The result from those reports are summarized in
 a table and `weekly_eval` extracts the results.
+```
+weekly_eval; % reads the table
+tableWeekly % the summarized and stored .tex table
+```
 
 ### Tab. 2
 The Infection Fatality rate (IFR), like the reproduction number, is a
@@ -314,6 +354,20 @@ also give the weighted national average. The posterior CrI is computed
 as the marginal quantiles. The table include footnotemarks (§ and ‡)
 and we use these marks to indicate that the estimate should be
 considered with care.
+```
+clear reg, bimonthly
+IFRtableURDME; % generates the same table as in the paper
+
+reg = [2]
+IFRtableURDME; % only for Uppsala
+
+reg = [1:22]; % all regions and Sweden
+IFRtableURDME
+
+reg = [2];
+bimonthly = false;
+IFRtableURDME; %Uppsala but IFR per month.
+```
 
 ### Tab. S4
 With the estimated bias, we compute the uncertainty statistics:
@@ -323,6 +377,12 @@ normalized root mean square error (NRMSE), per region in
 using the known bias of the bootstrap replicates. The bias is computed
 per parameter, and as a robust estimator of the bias for the entire
 region (over all parameters) we give the median instead of the mean.
+Deeper investigation into the working of the table construction is to
+be done by examining `posterror` which processes the posterior files
+that `bootstraptable` supplies it with.
+```
+bootstraptable; % generates the table in the paper.
+```
 
 # Dependencies
 * stenglib: https://github.com/stefanengblom/stenglib
@@ -331,5 +391,6 @@ region (over all parameters) we give the median instead of the mean.
 
 ## Tested on
 * Linux (Pop!_OS 20.10, 64 bit) [not yet]
+* Linux (Pop!_OS 21.10, 64 bit) [not yet]
 * macOS (version?) [not yet]
 * Windows (version?) [not yet]

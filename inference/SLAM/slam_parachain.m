@@ -1,13 +1,13 @@
 %% Generate the data
 rng(0)
 
-nMCMC    = 1e4;
+nMCMC    = 5e4;
 smc      = 0;
 verb     = false; % debug text
 nslab    = 1; % {1: 1st, 8: 8th, 15: 15th, 22:22nd} monthly slabs
 date     = [200401 210531];
 scaleS   = 0.04; %0.1 in Uppsala gives acceptance rate ~ 10-20%
-register = 'URDME1';
+register = 'C19';
 
 useinit      = true; % use old posterior as initalization
 useinitstate = false; % use new origo
@@ -20,7 +20,7 @@ fix      = false;
 
 
 
-reg = [1]; %1:21;
+reg = [2]; %1:21;
 regionList = regions();
 
 
@@ -68,29 +68,28 @@ try
     regid = reg_(i);
     region = regionList{regid};
     disp(['starting: ' region ', id: ' num2str(roundid)])
-
-    %posterior = ['slam210531_' region '_monthly_1_100.mat'];
-    posterior = ['slam210531_Uppsala_monthly_1_100.mat'];
+    
+    posterior = ['slam210531_' region '_monthly_1_100.mat'];
     if ismember(regid,[1 10 12])
       scaleS = 0.025;
     else
       scaleS = 0.04;
     end
-
+    
     %  init = getInit(useinit, ...
     %  [prefix posterior region '_monthly_15_100.mat'],false);
     init = getInit(useinit, [prefix posterior],false);
     state0 = getInitState(useinitstate,210331,region);
-
-
-
-
+    
+    
+    
+    
     [thetas, sl, slab, amparam, amfunc, outverb] = ...
       slam_init(region, nMCMC, verb, nslab, date,...
       init,scaleS,register,useCSSS,perslab,...
       fix,smc,state0);
-
-
+    
+    
     disp(['completed: ' region ', id: ' num2str(roundid) ...
       ', early reject rate: ' ...
       num2str(outverb.early_reject_rate) ...
@@ -102,9 +101,9 @@ try
       num2str(outverb.early_reject_rate_90_100) ...
       ', accept rate: ' ...
       num2str(outverb.accept_rate)])
-
-
-
+    
+    
+    
     rates = savePosterior(thetas, sl, slab, amparam, burnin, ...
       jump, true, useCSSS, true, fix,nslab,smc,roundid,{'full'});
 
@@ -112,8 +111,8 @@ try
   stopped = 0;
 catch
   disp(['*** CATCH ***']);
-
-
+        
+        
   p = gcp; delete(p);
   stopped = true;
 end
@@ -148,19 +147,15 @@ for i = reg
         X = cat(3,X,xrates(:,burnin:end));
       end
     end
-
-    subset = {'sigma' 'gammaI' 'gammaH' 'gammaW' 'thetaE_'};
+    
+    subset = {'sigma' 'gammaI' 'gammaH' 'gammaW'};
     for nid = 1:numel(subset)
       ix = ismember(ratenames,subset(nid));
       subplot(numel(subset),1,nid)
-      if strcmp(subset{nid}, 'thetaE_')
-          plot(squeeze(X(ix,:,:)))
-      else
-          plot(1./squeeze(X(ix,:,:)))
-      end
-      title(subset{nid})
+      plot(1./squeeze(X(ix,:,:)))
+      title(ratenames{nid})
     end
-
+    
     % Gelman-Rubin statistic
     % chain mean
     mx = squeeze(mean(X,2));
@@ -170,11 +165,11 @@ for i = reg
     J = size(X,3);
     % between chain variance
     B = L/(J-1) * sum( (mx - mmx).^2,2);
-
+    
     % within chain variance
     s = squeeze(var(X,[],2));
     W = mean(s,2);
-
+    
     % GR-statistic
     R = (W*(L-1)/L + B/L) ./ W;
     R_mean = mean(R)
@@ -191,7 +186,7 @@ return;
 date_ = num2str(date(end));
 ending = num2str(nslab);
 burnin = 1e3;
-saveit=false; % false if testing
+saveit=true; % false if testing
 
 for i = reg
   region = regionList{i};
@@ -203,8 +198,8 @@ for i = reg
         file{i} = [file{i} '_' register];
       end
     end
-
-
+    
+    
     for i = 1:numel(file)
       try
         load(file{i},'rates','sl_burn');
@@ -220,7 +215,7 @@ for i = reg
         warning(['did not find: ' file{i}])
       end
     end
-
+    
     load(file{1},'amparam','slabs');
     [rates,rates100,ratesR0] = savePosterior(mat, sl, slabs, amparam, 1e0, ...
       1e0, true, useCSSS, saveit, fix,nslab,smc,[],{'full' '100'});

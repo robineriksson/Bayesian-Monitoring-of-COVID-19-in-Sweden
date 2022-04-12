@@ -1,13 +1,16 @@
 %ARX_FIT constructs a prediction model using an expanding window formulation.
 
 % R. Marin 2022-04-07
-
-save2file = true;
-
+if ~exist('savetofile','var')
+    savetofile=false;
+end
+if ~exist('reg','var')
+    reg=2;
+end
 inferDincPlot = false; % true if generate Dinc as diff(D)
 
 register = 'C19'; % data source
-reg = 'Uppsala'; % data region
+
 startdate = 200401;
 enddate = 210531;
 kalmancompare = 0;
@@ -37,7 +40,8 @@ if ~exist('ypred','var')
         if mod(stop,10)==0
             disp([num2str(round(100*stop/len)) '%'])
         end
-        z = iddata([data_all.H(1:stop,2), data_all.W(1:stop,2), data_all.D(1:stop,2)],[],1,'TimeUnit','days','Tstart',1);
+        z = iddata([data_all.H(1:stop,reg), data_all.W(1:stop,reg),...
+                    data_all.D(1:stop,reg)],[],1,'TimeUnit','days','Tstart',1);
 
 
         % delinearize for better fit
@@ -250,7 +254,7 @@ savepath = savepath(1:end-15);
 tabname = [savepath '../tab/' 'tablePolyfit.tex'];
 figname1 = [savepath 'arx.pdf'];
 
-if save2file
+if savetofile
   fileID = fopen(tabname,'w');
   fprintf(fileID,'%s\n',tablePoly);
   fclose(fileID);

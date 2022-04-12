@@ -2,7 +2,10 @@
 %   discrepencies between the posterior found for different regions.
 
 % Robin Marin (Eriksson) 2020-03-07
-save2file = false;
+if ~exist('savetofile','var')
+    savetofile=false;
+end
+
 
 %clear ratenames
 % load data
@@ -56,24 +59,10 @@ for k = 1:12
     stdpost_plot(k,:) = stdpost(k,:);
   end
 
-  toDagger = tag(k,:);
+
 
   bar(regionid, meanpost_plot(k,:));
   hold on
-  bar(regionid(~toDagger), meanpost_plot(k,~toDagger));
-  bar(regionid(toDagger), meanpost_plot(k,toDagger));
-
-  % % indicate bias problems
-  % clr = b.CData;
-
-  % if numel(toDagger) > 0
-  %     disp(['in here: ' num2str(k)])
-  %     clr(toDagger,1) = 1
-  %     b.CData = clr;
-  % end
-
-
-
   er = errorbar(regionid,meanpost_plot(k,:), 1*stdpost_plot(k,:), -1*stdpost_plot(k,:));
   er.Color = [0 0 0];
   er.LineStyle = 'none';
@@ -89,19 +78,10 @@ for k = 1:12
   xtickangle(90);
 
 
-
-  %set(gca,'fontsize',5)
-
-
-
-
   ax = gca;
   ax.XAxis.FontSize = 5;
   ax.TickLabelInterpreter = 'latex';
-%   else
-%     set(gca,'visible','off')
-%   end
-%
+
 end
 
 % polish target output size
@@ -109,15 +89,10 @@ set(gcf,'PaperPositionMode','auto');
 %%
 set(gcf,'Position',[100 100 900 500]);
 %%
-if save2file
+if savetofile
   printpath = mfilename('fullpath');
   printpath=[printpath(1:end-23) 'errorbars.pdf'];
-%   printpath = [printpath(1:end-10) '..' printpath(end-10:end)];
-%   printpath = [printpath '_' strrep(region,' ','_')];
-%   printpath = strrep(printpath,'å','a');
-%   printpath = strrep(printpath,'ä','a');
-%   printpath = strrep(printpath,'ö','o');
-  %print('-depsc',printpath);
+
   print('-dpdf',printpath);
   disp(['saved figure: ' printpath]);
   % *** does not always work, run manually in this case:

@@ -10,7 +10,9 @@
 % R.Eriksson 2022-01-14
 
 % save .tex tables
-savetofile=true;
+if ~exist('savetofile','var')
+    savetofile=false;
+end
 
 includeSmoothing = true;
 includePop = true;

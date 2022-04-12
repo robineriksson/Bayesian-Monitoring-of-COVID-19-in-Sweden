@@ -5,18 +5,35 @@
 % S. Engblom 2021-05-28
 
 % change these for saving, replicas, and regions
-savetofile = true;
-includeUDS = false;
-Nreplicas = 25;
-regplot = [2 1 10 12 8 9 19];
-reg = 1:21;
+if ~exist('savetofile','var')
+    savetofile = false;
+end
+
+includeUDS = false; % don't generate samples using the uds solver
+if ~exist('Nreplicas','var')
+    Nreplicas = 25;
+end
+
+
+if ~exist('reg','var')
+    reg = 1:21;
+end
+
+if ~exist('regplot','var')
+    regplot = [2 1 10 12 8 9 19];
+end
+
+if ~all(ismember(regplot,reg))
+    error('all regions that you intend to plot needs to be generated as well');
+end
+
 
 % note: comment away 'solver', 'reg', and consider to pre-compile once
 % (set 'compile' = 0 when conctructing the umod struct)
 solver = 'ssa';
 date = '210531';
 stopdate = '210531';
-divide = 1; % I -> H, W -> H2, D = {D_I, D_H, D_W};
+divide = true; % I -> H, W -> H2, D = {D_I, D_H, D_W};
 Psamples = inf;% % inf: mean posterior, else: N # of posterior samples.
 
 % construct the rates to run
@@ -92,17 +109,21 @@ D.meta.hash = fsetop('check',D.U(:));
 
 save('URDME_all','D');
 %
-disp('... mean field approximation');
-% run Euler forward
-solver = 'uds';
-Nreplicas = 1;
-covid19enger_run_post
-load('URDME_all','D');
-D.EulFwd = reshape(permute(umod.U,[2 1 3]),numel(DATES),Nspecies,Nvoxels,Nreplicas);
-Nspecies_ = 7;
-D.dynOpt = reshape(permute(DR.xSim_all(reg,:,:),[3 2 1]),numel(DATES),Nspecies_,Nvoxels,Nreplicas);
+if includeUDS
+    disp('... mean field approximation');
+    % run Euler forward
+    solver = 'uds';
+    temp = Nreplicas; % we only need 1 sample from UDS.
+    Nreplicas = 1;
+    covid19enger_run_post
+    Nreplicas = temp;
+    load('URDME_all','D');
+    D.EulFwd = reshape(permute(umod.U,[2 1 3]),numel(DATES),Nspecies,Nvoxels,Nreplicas);
+    Nspecies_ = 7;
+    D.dynOpt = reshape(permute(DR.xSim_all(reg,:,:),[3 2 1]),numel(DATES),Nspecies_,Nvoxels,Nreplicas);
 
-save('URDME_all','D');
+    save('URDME_all','D');
+end
 
 %%
 % plot simulations with data
@@ -139,7 +160,7 @@ for regid=regplot
   plot(Hmean,'b')
   plot(Wmean,'r')
 
-  data = loadData('RU');
+  data = loadData('C19');
   tspan_post = find(data.date == D.date(1)):find(data.date == D.date(end));
   plot(sum(data.H(tspan_post,reg(regid)),2),'.b')
   plot(sum(data.W(tspan_post,reg(regid)),2),'.r')
@@ -194,7 +215,7 @@ for regid=regplot
 
   grid on
   axis tight
- 
+
   switch regions{regid}
     case 'Gotland'
       ylim([0,25]);

@@ -5,8 +5,9 @@
 %% region list
 regionList = regions();
 
+urdme=0;
 %% Options
-for reg = [6 11 21]%[1:21]
+for reg = [1:21]
   region=reg; % region to estimate beta for
   startdate = 200319;
   enddate = 210531;
@@ -21,7 +22,6 @@ for reg = [6 11 21]%[1:21]
   % posterior
   prefix = postpath();
 
-  urdme=0;
   %%
   if urdme > 0
     posterior = ['SLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];

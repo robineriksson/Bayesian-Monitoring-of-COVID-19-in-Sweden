@@ -1,6 +1,6 @@
 %%
-%SLAM_RUN is the main script the for SLAM procedure.
-%   Consider reading SLAM_INIT to se more what is generated when the
+%KLAM_RUN is the main script the for KLAM procedure.
+%   Consider reading KLAM_INIT to se more what is generated when the
 %   problem is properly structured.
 %
 %   main output generated from this script is THETAS which is the
@@ -70,10 +70,10 @@ init = getInit(useinit,[prefix posterior],false);
 
 % use initial state to start at a later date
 state0 = getInitState(useState0,210331,region);
-  
+
 
 rng(0)
-[thetas, sl, slab, amparam, amfunc, outverb,Ydata] = slam_init(region,nMCMC,...
+[thetas, sl, slab, amparam, amfunc, outverb,Ydata] = klam_init(region,nMCMC,...
   verb,nslab,date,init,scaleS,register,useCSSS,perslab,fix,...
   smc,state0);
 
@@ -86,7 +86,7 @@ tosave=false;
 [rates,rates100,ratesR0] = savePosterior(thetas, sl, slab, ...
   amparam, burnin, jump, ...
   true, useCSSS, tosave, fix, nslab,smc,[],{'full' '100'});
-    
+
 return;
 %% continue chain
 % If the above has been runned, this code can be used to reuse the

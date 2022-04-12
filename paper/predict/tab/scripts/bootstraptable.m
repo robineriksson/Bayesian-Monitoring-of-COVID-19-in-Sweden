@@ -95,7 +95,7 @@ if savetofile
   fclose(fileID);
   disp(['saved table: ' tabname]);
 
-  marginal_name = [postpath() 'SLAM/marginal_bias.mat'];
+  marginal_name = [postpath() 'KLAM/marginal_bias.mat'];
   save(marginal_name,'marginal')
   disp(['saved marginals: ' marginal_name]);
 else

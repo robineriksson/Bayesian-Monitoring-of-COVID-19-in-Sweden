@@ -2,16 +2,27 @@
 
 % H. Runvik 2021-04-14
 
+if ~exist('savetofile','var')
+    savetofile=false;
+end
+
+if ~exist('reg','var')
+    reg=2
+end
+
+if ~exist('evalplot','var')
+    evalplot=false;
+end
 %% region list
 regionList = regions();
 
 urdme=0;
 %% Options
-for reg = [1:21]
-  region=reg; % region to estimate beta for
+for region = reg % region to estimate beta for
+  disp(['running: ' regionList{region}]);
   startdate = 200319;
   enddate = 210531;
-  prevresdate = 210530; % previous result for initial guess
+  prevresdate = 210531; % previous result for initial guess
 
 
   wbeta=300000;
@@ -24,9 +35,9 @@ for reg = [1:21]
 
   %%
   if urdme > 0
-    posterior = ['SLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];
+    posterior = ['KLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];
   else
-      posterior = ['SLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
+      posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
   end
   %[postrates,~,slab] = posteriorenger(inf,[prefix posterior]);
   postrates = posteriorenger(inf,[prefix posterior]);
@@ -130,8 +141,10 @@ for reg = [1:21]
 
   %%
 
-  figure(11), clf
-  plot(R_post)
+  if evalplot
+      figure(1), clf
+      plot(R_post)
+  end
 
   beta_mpc(end,:)=[];
   ix_mpc(end,:)=[];
@@ -155,51 +168,54 @@ for reg = [1:21]
     beta_diff(k,:) = beta_mpc(k,:)-betaOpt(ix_mpc(k,:));
   end
 
-  figure(12), clf
-  plot(Ic_diff','color',[0.9 0.9 1])
-  yline(0,':');
-  xline(steplength,'--');
-  hold on
-  plot(mean(Ic_diff),'b')
-  plot(mean(Ic_diff)+std(Ic_diff),'--b')
-  plot(mean(Ic_diff)-std(Ic_diff),'--b')
-  hold off
+  if evalplot
+      figure(2), clf
+      plot(Ic_diff','color',[0.9 0.9 1])
+      yline(0,':');
+      xline(steplength,'--');
+      hold on
+      plot(mean(Ic_diff),'b')
+      plot(mean(Ic_diff)+std(Ic_diff),'--b')
+      plot(mean(Ic_diff)-std(Ic_diff),'--b')
+      hold off
 
 
-  figure(13), clf
-  plot(beta_diff','color',[0.9 0.9 1])
-  yline(0,':');
-  xline(steplength,'--');
-  hold on
-  plot(mean(beta_diff),'b')
-  plot(mean(beta_diff)+std(beta_diff),'--b')
-  plot(mean(beta_diff)-std(beta_diff),'--b')
-  hold off
+      figure(3), clf
+      plot(beta_diff','color',[0.9 0.9 1])
+      yline(0,':');
+      xline(steplength,'--');
+      hold on
+      plot(mean(beta_diff),'b')
+      plot(mean(beta_diff)+std(beta_diff),'--b')
+      plot(mean(beta_diff)-std(beta_diff),'--b')
+      hold off
 
-  figure(14), clf
-  plot(ix_mpc',beta_mpc')
+      figure(4), clf
+      plot(ix_mpc',beta_mpc')
+  end
   %%
   betaStruct.beta=betaOpt;
   betaStruct.betaIdx = betaIdx;
   try
     xSim = LPVsim_slabs(F,x0_post,betaStruct,slab);
-
-    figure(15), clf
-    subplot(3,1,1)
-    plot(xSim(5,:))
-    hold on
-    plot(squeeze(Ydata(1,1,:)))
-    hold off
-    subplot(3,1,2)
-    plot(xSim(6,:))
-    hold on
-    plot(squeeze(Ydata(2,1,:)))
-    hold off
-    subplot(3,1,3)
-    plot(xSim(7,:))
-    hold on
-    plot(squeeze(Ydata(3,1,:)))
-    hold off
+    if evalplot
+        figure(5), clf
+        subplot(3,1,1)
+        plot(xSim(5,:))
+        hold on
+        plot(squeeze(Ydata(1,1,:)))
+        hold off
+        subplot(3,1,2)
+        plot(xSim(6,:))
+        hold on
+        plot(squeeze(Ydata(2,1,:)))
+        hold off
+        subplot(3,1,3)
+        plot(xSim(7,:))
+        hold on
+        plot(squeeze(Ydata(3,1,:)))
+        hold off
+    end
   catch
     disp('LPsim_slabs is not really working');
   end
@@ -210,7 +226,13 @@ for reg = [1:21]
     savename = [savename '_URDME' num2str(urdme)];
   end
   savename = [savename '.mat']
-  savename = [prefix 'dynOpt/temp/' savename];
-  save(savename,'R_post','dates','x0_post','postrates');%,'xSim')
+  savename = [prefix 'dynOpt/' savename];
+  if savetofile
+      save(savename,'R_post','dates','x0_post','postrates');%,'xSim')
+      disp(['saved: ' savename]);
+  else
+      disp(['didn''t save: ' savename]);
+  end
+
 end
 return;

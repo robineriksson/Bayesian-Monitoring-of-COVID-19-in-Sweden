@@ -9,12 +9,15 @@ end
 if ~exist('reg','var')
     reg=2
 end
-
+if reg == 22
+    error('functionallity for reg == 22, is not yet supported');
+end
 if ~exist('evalplot','var')
     evalplot=false;
 end
 %% region list
-regionList = regions();
+regionList = cat(1,regions(),'Sweden');
+
 
 urdme=0;
 %% Options
@@ -34,13 +37,29 @@ for region = reg % region to estimate beta for
   prefix = postpath();
 
   %%
+
   if urdme > 0
-    posterior = ['KLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];
+      posterior = ['KLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];
+      files = {[prefix posterior]};
+      Weights=1;
   else
-      posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
+      if reg < 22
+          posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
+          files = {[prefix posterior]};
+          Weights=1;
+      else % Sweden
+          % Population data
+          load Ncounties
+          Npop = sum(N,1);
+          files = cell(size(21));
+          for r = 1:21
+              files{r} = [prefix 'KLAM/perRegion/slam'  num2str(enddate) '_' regionList{r} '_monthly_1_100.mat'];
+          end
+          Weights = Npop;
+      end
   end
   %[postrates,~,slab] = posteriorenger(inf,[prefix posterior]);
-  postrates = posteriorenger(inf,[prefix posterior]);
+  postrates = posteriorenger(inf,files,Weights,true);
   slab = postrates.meta.slabs;
 
   % load filter data
@@ -62,8 +81,13 @@ for region = reg % region to estimate beta for
   ixfilter = ixdata;
 
   % change data format
-  Ydata = cat(3,Data.H(ixdata,region),Data.W(ixdata,region),...
-              Data.D(ixdata,region));
+  if region == 22
+      Ydata = cat(3,Data.H(ixdata,:),Data.W(ixdata,:),...
+                  Data.D(ixdata,:));
+  else
+      Ydata = cat(3,Data.H(ixdata,region),Data.W(ixdata,region),...
+                  Data.D(ixdata,region));
+  end
   Ydata = permute(Ydata,[3 2 1]);
 
   % define a common time frame, including dates
@@ -86,7 +110,15 @@ for region = reg % region to estimate beta for
   obsrates.rdiag = (1e-3)^2*ones(3,1);
 
   G = speye(obsrates.nstate);
-  [Z,covZ,~,~,S] = C19filt([],[],G,postrates,0,obsrates,Ydata,slab,numel(ixfilter));
+  if region == 22
+      T=sparse(1,1:21,1);
+      D=sparse(zeros(21))
+  else
+      T = sparse(1,1,1);
+      D=sparse(0);
+  end
+  G = kron(T,G);
+  [Z,covZ,~,~,S] = C19filt([],[],G,postrates,D,obsrates,Ydata,slab,numel(ixfilter));
   covZ.covZ = []; % save some space
   stdZ = covZ.stdZ; % for brevity
 

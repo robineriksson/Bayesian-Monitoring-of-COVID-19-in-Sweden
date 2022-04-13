@@ -49,8 +49,7 @@ posterior = cell(1,Nvoxels);
 %u0 = []; phi0 = zeros(1,Nvoxels);
 for i = 1:Nvoxels
   postfile = ['slam' date '_' regions{reg(i)} '_monthly_1_100.mat'];
-  %posterior{i} = strcat([resultdir 'SLAM/perRegion/' date '/'],postfile);
-  posterior{i} = strcat([resultdir 'SLAM/perRegion/'],postfile);
+  posterior{i} = strcat([resultdir 'KLAM/perRegion/'],postfile);
 end
 
 % weighted posterior sample
@@ -86,14 +85,14 @@ for p = 1:Psamples_
   Rates.gammaA = P.gammaA(p);
   Rates.gammaH = P.gammaH(p);
   Rates.gammaW = P.gammaW(p);
-  
+
   % handled manually later
   % $$$ Rates.rho = P.rho;
   % $$$ Rates.thetaI = P.thetaI;
   % $$$ Rates.thetaA = P.thetaA;
   % $$$ Rates.thetaE = P.thetaE;
   % $$$ Rates.lambda = 0*P.lambda;
-  
+
   if inline
     warning('Inline propensities not tested for a while.');
     % inline uses a different sets of rates and they are not fed via the
@@ -109,13 +108,13 @@ for p = 1:Psamples_
     if ~isequal(fieldnames(Rates),umod.private.RateNames(3:end)')
       error('It seems the ordering of rate parameters differ.');
     end
-    
+
     % convert into Mrates-by-Nslabs matrix:
     GDATA = struct2cell(Rates);
     GDATA = [cat(2,GDATA{1:7})'; ...
       repmat(cell2mat(GDATA(8:end)),1,Nslabs)];
   end
-  
+
   % handled manually
   rho = P.rho(p);
   thetaI = P.thetaI(p);
@@ -123,23 +122,23 @@ for p = 1:Psamples_
   thetaE = P.thetaE(p);
   lambda = 0*P.lambda(:,p); % note: lambda = 0
   disp('   ...done.');
-  
+
   %% (2) initial conditions & simulation time interval
   if ~strcmp(solver,'uds')
     disp('Initial data...');
   end
 
-  
+
   % initial data from file
   umod.u0 = [u0; zeros(1,Nvoxels)];
   % the 7 states are [I A E phi H W D]; add also state R(ecovered)
-  
+
   umod.tspan = TSPAN;
   if ~strcmp(solver,'uds')
      disp('   ...done.');
   end
-  
-  
+
+
   %% (3) parse and compile, prepare to solve
   if ~strcmp(solver,'uds')
     disp('Parse and compile...');
@@ -151,7 +150,7 @@ for p = 1:Psamples_
   umod.solve = 1;
   umod.parse = 0;
   umod.compile = 0;
-  
+
   % solve in split-step fashion
   tspan = umod.tspan;
   U = zeros(Nspecies*Nvoxels,numel(tspan),Nreplicas);
@@ -163,7 +162,7 @@ for p = 1:Psamples_
   end
 
 
-  
+
   %% (4) solve
   if ~strcmp(solver,'uds')
     disp('Solving...');
@@ -175,7 +174,7 @@ for p = 1:Psamples_
     if ~strcmp(solver,'uds')
       fprintf('%d%% ',ceil(100*i/numel(tspan)));
     end
-    
+
     if mod(i,20) == 0, fprintf('\n'); end
     % update local state using present value of phi
     for k = 1:Nreplicas
@@ -198,7 +197,7 @@ for p = 1:Psamples_
       end
       U(:,i,k) = umod.U(:,end);
     end
-    
+
     % update phi
     UI = reshape(U(1:Nspecies:end,i-1,:),Nvoxels,Nreplicas);
     UA = reshape(U(2:Nspecies:end,i-1,:),Nvoxels,Nreplicas);

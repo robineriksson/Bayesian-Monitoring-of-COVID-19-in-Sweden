@@ -1,6 +1,6 @@
-%URDMECOMPARE generate figure that compares the actual data posterior with
+%PRIOR_POSTERIORURDME generate figure that compares the actual data posterior with
 % the ones recovered from the URDME equivalents. The script is a derivative
-% of PRIORPOSTERIOR_PLOTS as it only adds the URDME posterior on top of the
+% of PRIOR_POSTERIOR as it only adds the URDME posterior on top of the
 % existingposterior plot.
 
 % R. Eriksson 2022-01-27
@@ -8,7 +8,7 @@ savetofile = false;
 % load posterior
 Nsample = 1e4;
 path = postpath;
-prefix = 'SLAM/perRegion/';
+prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1';

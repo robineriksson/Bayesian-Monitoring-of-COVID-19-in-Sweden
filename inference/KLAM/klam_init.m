@@ -1,7 +1,7 @@
-function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = slam_init(...
+function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
   region,nMCMC,verb,nslab,date,init,scaleS,register,useCSSS, ...
   perslab,fix,ksmc,state0)
-%SLAM_INIT Bayesian inference, by Kalman, incrementally by slabs.
+%KLAM_INIT Bayesian inference, by Kalman, incrementally by slabs.
 %   [THETAS,SL,SLAB,AMPARAM,AMFUNC,OUTVERB] =
 %   SLAM_INIT(REGION,NMCMC,VERB,NSLAB,INIT,SCALES,REGISTER,USECSSS,
 %   PERSLAB,FIX) computes the (approximate) Bayesian posterior of the specified
@@ -592,7 +592,7 @@ end
 % anonymous function which reduce the number of input needed per
 % iteration.
 %
-% logSL - log-synthetic-likelihood has a legacy name from the
+% logLL - log-kalman-likelihood has a legacy name from the
 % approximate inference method synthetic likelihood adaptive
 % metropolis, or SLAM.
 
@@ -615,14 +615,14 @@ exception0.AbsMagn = inf;
 
 
 if perslab
-  logSL_func = @(x,state0,ixslab) logSL(x,state0,G,D,obsrates,Q,Ydata,...
+  logKL_func = @(x,state0,ixslab) logKL(x,state0,G,D,obsrates,Q,Ydata,...
     slab,ixslab,exception);
-  [~,~,L] = logSL(rates,state0,G,D,obsrates,Q,Ydata,...
+  [~,~,L] = logKL(rates,state0,G,D,obsrates,Q,Ydata,...
     slab,ixslab,exception0);
 else
-  logSL_func = @(x,Ydata)logSL(x,state0,G,D,obsrates,Q,Ydata,...
+  logKL_func = @(x,Ydata)logKL(x,state0,G,D,obsrates,Q,Ydata,...
     slab,1:slabstop(end),amparam.exception);
-  [~,~,L] = logSL(rates,state0,G,D,obsrates,Q,Ydata,...
+  [~,~,L] = logKL(rates,state0,G,D,obsrates,Q,Ydata,...
     slab,1:slabstop(end),exception0);
 end
 
@@ -748,13 +748,13 @@ m2s = @(x) mat2struct(x, amparam.ratenames, amparam.hyp,...
                       amparam.fix, amparam.nslab);
 % the reduced functions are stored in a struct for easy retrieval.
 amfunc = struct();
-amfunc.logSL = logSL_func;
+amfunc.logKL = logKL_func;
 amfunc.prior = prior_func;
 amfunc.m2s = m2s;
 
 %% likelihood smoothing of data
 % if lsmoothing
-%   Ydata = likelihoodSmooth(rates,Ydata,logSL_func, 5);
+%   Ydata = likelihoodSmooth(rates,Ydata,logKL_func, 5);
 % end
 
 %%

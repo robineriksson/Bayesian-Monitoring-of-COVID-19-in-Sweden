@@ -1,13 +1,13 @@
 function [thetas, sl, param, outverb] = AM(nMCMC, thetas, sl, param, funcs, Ydata, start, stop)
 %AM finds sampels from the (approximate) posterior using Adaptive
 %Metropolis.
-%   [THETAS, SL] = AM(NMCMC, THETAS, SL, PARAM, LOGSL, PRIOR, START, STOP)
-%   returns samples from the approximate posterior using the SLAM method.
+%   [THETAS, SL] = AM(NMCMC, THETAS, SL, PARAM, LOGKL, PRIOR, START, STOP)
+%   returns samples from the approximate posterior using the KLAM method.
 %
 %   --- output ---
 %   THETAS - samples from the posterior. Remember to check for burnin
 %   period.
-%   SL - (Synthetic) likelihood for each sample in THETAS
+%   KL - (Synthetic) likelihood for each sample in THETAS
 %   OUTVERB - diagnostic variables that are also displayed in prompter if
 %   PARAM.verb = true.
 %
@@ -15,11 +15,11 @@ function [thetas, sl, param, outverb] = AM(nMCMC, thetas, sl, param, funcs, Ydat
 %   NMCMC = the length of the chain.
 %   THETAS = matrix with current chain, can be empty except for first
 %          element.
-%   SL = synthetic likelihood for the current chain.
+%   KL = synthetic likelihood for the current chain.
 %   PARAM = AM method parameters.
-%   funcs = {LOGSL -function to compute the synthetic log likelihood.
+%   funcs = {LOGKL -function to compute the synthetic log likelihood.
 %            PRIOR = the prior density.}
-%   YDATA = data for inference. 
+%   YDATA = data for inference.
 %   START = where to start in the given chain.
 %   STOP  = where to stop the the given chain.
 %
@@ -80,19 +80,19 @@ for i = start:stop
   % mat2stuct with the new proposal (in matrix form).
 
   theta_new_struct = funcs.m2s(theta_new');
-  
+
   % check the prior density of the proposal. If it's 0 or log(prior) =
   % -Inf, then reject before computing the likelihood, as it's outside of
   % the support of the prior.
   prior = funcs.prior(theta_new_struct);
   prior_new = getfield(prior,'sumlog');
 
-  
+
 
   % check if prior is inside of support
   if ~isinf(prior_new)
     % Find the likelihood of the current slab.
-    [~,~,L_new] = funcs.logSL(theta_new_struct, Ydata);
+    [~,~,L_new] = funcs.logKL(theta_new_struct, Ydata);
     % compute the cumulative likelihood "so far".
     L_sum = sum(L_new);
 
@@ -155,7 +155,7 @@ for i = start:stop
   if mod(i,1e4) == 0
     save([param.savepath 'AM_temp.mat'])
   end
-  
+
   % store for later analyzis
   if i == part1
     earlyReject1 = earlyReject;
@@ -193,7 +193,7 @@ try
       (nreject2-nreject1)*outverb.early_reject_rate_10_90 - ...
       nreject1*outverb.early_reject_rate_10)/(nreject3-nreject2);
   end
-  
+
   outverb.early_reject_rate = earlyReject/nreject;
 catch
   outverb.early_reject_rate_10 = [];

@@ -10,7 +10,9 @@
 % R.Eriksson 2022-01-14
 
 % save .tex tables
-savetofile=true;
+if ~exist('savetofile','var')
+    savetofile=false;
+end
 
 includeSmoothing = true;
 includePop = true;
@@ -93,7 +95,7 @@ if savetofile
   fclose(fileID);
   disp(['saved table: ' tabname]);
 
-  marginal_name = [postpath() 'SLAM/marginal_bias.mat'];
+  marginal_name = [postpath() 'KLAM/marginal_bias.mat'];
   save(marginal_name,'marginal')
   disp(['saved marginals: ' marginal_name]);
 else

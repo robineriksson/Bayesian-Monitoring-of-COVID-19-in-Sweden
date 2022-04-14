@@ -14,7 +14,7 @@ includeBias=false;
 % load posterior
 Nsample = 1e4;
 path = postpath;
-prefix = 'SLAM/perRegion/';
+prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1_100';

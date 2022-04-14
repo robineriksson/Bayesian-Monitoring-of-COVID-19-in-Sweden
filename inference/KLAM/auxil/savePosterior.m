@@ -3,21 +3,21 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
                                 fix,slabtype,smc,id,type)
 %RATES = SAVEPOSTERIOR saves the posterior in the correct format.
 %   SAVEPOSTERIOR formulates the posterior file that is generated using
-%   SLAM and then loaded by other functions, e.g., posteriorenger.m
+%   KLAM and then loaded by other functions, e.g., posteriorenger.m
 %
 %   *Input*
 %   THETAS    - posterior matrix.
-%   SL        - (synthetic) likelihood for each slab and sample.
+%   KL        - (synthetic) likelihood for each slab and sample.
 %   SLAB      - The slabs used in the posterior.
 %   AMPARAM   - parameters, and others, used in the AM algorithm, as data
 %   info.
 %   BURNIN    - what burnin length to use when storing the markov chain.
 %   JUMP      - For large files, we cannot store all samples, only store
 %   every JUMP value.
-%   PERREGION - Was the posterior generated using single region data or 
-%               transports? 
+%   PERREGION - Was the posterior generated using single region data or
+%               transports?
 %   USECSSS   - if CSSS data was used durring the training, csss tag is
-%               then added to the name. 
+%               then added to the name.
 %   TOSAVE    - true/false, if false only return don't save the file.
 %
 %   FIX       - true/false, if sigma=gammaI or sigma!=gammaI
@@ -51,11 +51,11 @@ else
   d = round((size(thetas,2)-burnin-1)/100);
   rates100 = mat2struct(thetas(:,burnin:d:end),amparam.ratenames, ...
     amparam.hyp, amparam.fix,amparam.nslab);
-                     
+
   ratesR0 = struct('R0',{rates.R0});
 end
 
-%% .meta 
+%% .meta
 % meta information, e.g., hash, Fhash, revision, ...
 meta = struct();
 
@@ -121,7 +121,7 @@ sl_burn100 = sl(:,burnin:d:end);
 filename = mfilename('fullpath');
 filename = [filename(1:end-24) 'results/'];
 if perRegion
-  filename = [filename 'SLAM/perRegion/'];
+  filename = [filename 'KLAM/perRegion/'];
 end
 
 if smc
@@ -150,7 +150,7 @@ switch slabtype
   otherwise
     error('not defined slabtype');
 end
-    
+
 if ~isempty(id)
   filename = [filename '_run' num2str(id)];
 end
@@ -167,13 +167,13 @@ if tosave
   save(filename, 'rates', 'slabs', 'sl_burn', 'amparam');
   disp(['saved: ' filename]);
  end
- 
+
  if ismember('100', type)
   rates = rates100;
   save(filename100, 'rates', 'slabs', 'sl_burn100', 'amparam');
   disp(['saved: ' filename100]);
  end
- 
+
  if ismember('R0', type)
   rates = ratesR0;
   save(filenameR0, 'rates', 'sl_burn', 'slabs', 'amparam');

@@ -264,5 +264,6 @@ for region = reg % region to estimate beta for
     else
         disp(['didn''t save: ' savename]);
     end
+
 end
 return;

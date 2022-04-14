@@ -8,7 +8,7 @@
 % load posterior
 Nsample = 1e3;
 path = postpath;
-prefix = 'SLAM/perRegion/';
+prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1_100';
@@ -50,29 +50,29 @@ if false
   zeroweight = rates.meta.date(rates.meta.slabstop) > stopdate;
   fullweight = find(1-zeroweight);
   zeroweight = find(zeroweight);
-  
+
   % however, stopdate does probably not end on a slabstop date, find out how
   % many days on that final slab which should be counted and use is as a
   % weight instead of 0/1.
   finalslab = rates.meta.date(rates.meta.slabstop(fullweight(end)):rates.meta.slabstop(zeroweight(1)));
   finalslabw = numel(find(finalslab <= stopdate)) / numel(finalslab);
-  
+
   % 0 or 1 (or other) weight multiple.
   weightmultiple = ones(1,numel(rates.meta.slabstop)-1);
   weightmultiple(zeroweight(2:end)-1) = 0;
   weightmultiple(zeroweight(1)-1) = finalslabw;
-  
+
   % Get the data that the posterior used.
   tspan_post = find(Data_scale.date==rates.meta.date(1)):find(Data_scale.date==rates.meta.date(end));
   dates = Data_scale.date(tspan_post);
-  
+
   % Count the incidence death per slab
   Dinc = sum(Data_scale.Dinc(tspan_post,:), 2);
   Dinc_cum = zeros(1,numel(rates.meta.slabstop)-1);
   for i = 2:numel(rates.meta.slabstop)
     Dinc_cum(i-1) = sum(Dinc(rates.meta.slabstop(i-1):rates.meta.slabstop(i)));
   end
-  
+
   % Give zero weight to excluded slabs, and partial weight to partial slabs.
   Dinc_cum = Dinc_cum .* weightmultiple;
   weights = Dinc_cum/sum(Dinc_cum); % normalize

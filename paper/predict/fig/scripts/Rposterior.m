@@ -34,7 +34,7 @@ for rid = reg
 
   % dynamic beta data
   dynoptname = ['dynOptPosterior' dateend_dyn '_' region];
-  postname = strcat([postpath 'SLAM/perRegion/'],postname);
+  postname = strcat([postpath 'KLAM/perRegion/'],postname);
   dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
   load(dynoptname,'R_post','dates');
 

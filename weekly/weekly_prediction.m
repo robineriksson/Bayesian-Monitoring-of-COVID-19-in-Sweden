@@ -133,7 +133,7 @@ end
 
 % folder for posteriors
 abspath = mfilename('fullpath');
-prefix = [abspath(1:end-24) 'inference/results/SLAM/'];
+prefix = [abspath(1:end-24) 'inference/results/KLAM/'];
 
 % Population data
 load Ncounties

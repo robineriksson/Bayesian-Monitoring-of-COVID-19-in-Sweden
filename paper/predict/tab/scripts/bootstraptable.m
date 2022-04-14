@@ -17,7 +17,7 @@ end
 includeSmoothing = true;
 includePop = true;
 prefix = postpath;
-prefix = [prefix 'SLAM/perRegion/'];
+prefix = [prefix 'KLAM/perRegion/'];
 prefixSim = prefix;
 ending = '_100';
 if strcmp(ending,''), prefixSim = [prefix 'URDME/']; end

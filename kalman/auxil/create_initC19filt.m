@@ -24,7 +24,7 @@ function [Y0, Y0Cov, meta] = create_initC19filt(Nreplicas,file,date)
 %
 %   Example 1:
 %      % filename.
-%      file = ['inference/results/SLAM/slam210331_Uppsala_'...
+%      file = ['inference/results/KLAM/slam210331_Uppsala_'...
 %               'monthly_1_100.mat'];
 %      % create origo point.
 %      [Y0,Y0Cov] = create_initC19filt([],file,210331);
@@ -96,7 +96,7 @@ if useCSSS
   % correction factor in xmod = fac*x
   load Fcases_interp
   fac = sum(Eave(3:end))/sum(Iave(3:end));
-  
+
   % CSSS-data
   if strcmp(region,'Uppsala')
     csss = loadData('CSSS_RU');
@@ -110,12 +110,12 @@ if useCSSS
     Imid = csss.Imid(:,reg);
   end
   ixcsss = find(Data.date(1) == csss.date(1)):find(Data.date(end) == csss.date(end));
-  
+
   Imid(csss.date > 201231) = NaN; % data post 31 Dec 2020, is "bad".
-  
+
   % settle on a relative variance from given asymmetric 95% CI
   varI = mean(((Ihi-Ilo)/2./Imid).^2); % generally larger
-  
+
   % specify observation model
   obsrates.states = {5 6 7}; % state #5, #6, #7
   obsrates.indobs = {1}; % CSSS data for the I-compartment
@@ -123,7 +123,7 @@ if useCSSS
   obsrates.nstate = 8;
   obsrates.R0 = [ones(3,1); 1e-4];
   obsrates.rdiag = [(1e-3)^2*ones(3,1); varI];
-  
+
   % insert CSSS data
   Idata = permute([NaN(ixcsss(1)-ixdata(1),numel(lan)); Imid; ...
     NaN(ixdata(end)-ixcsss(end),numel(lan))],[3 2 1]);
@@ -173,4 +173,3 @@ Y0Cov = mean(covZ.lastPostYCov,numel(dims)+1); % by definition 1 dim larger
 
 % *** meta struct: date, region
 meta = struct('date',{date},'region',rates.meta.region);
-

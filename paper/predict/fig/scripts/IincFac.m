@@ -57,7 +57,7 @@ for rid = reg
     % construct posterior file name
     % folder for posteriors
     abspath = mfilename('fullpath');
-    prefix = [postpath 'SLAM/'];
+    prefix = [postpath 'KLAM/'];
     if ~strcmp(region,'Sweden')
         posterior = 'perRegion/';
         lan = {1};

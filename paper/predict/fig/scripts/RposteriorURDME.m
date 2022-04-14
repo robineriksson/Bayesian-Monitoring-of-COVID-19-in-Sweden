@@ -24,12 +24,12 @@ for reg = [2]% 1 10 12 8 9 19]
   for k = [1 2 3]
     postname{k} = ['slam' dateend_ '_' region '_monthly' ...
       shiftstr '_URDME' num2str(k) '_100.mat'];
-    postname{k} = strcat([postpath 'SLAM/perRegion/'],postname{k});
+    postname{k} = strcat([postpath 'KLAM/perRegion/'],postname{k});
   end
 
   postname{4} = ['slam' dateend_ '_' region '_monthly' ...
     shiftstr '_100.mat'];
-  postname{4} = strcat([postpath 'SLAM/perRegion/'],postname{4});
+  postname{4} = strcat([postpath 'KLAM/perRegion/'],postname{4});
 
   R_post_ = [];
   for k = [1 2 3]

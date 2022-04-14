@@ -37,7 +37,7 @@ else
 end
 
 
-load('inference/results/SLAM/marginal_bias.mat', 'marginal')
+load('inference/results/KLAM/marginal_bias.mat', 'marginal')
 tag = l_biascomp(meanpost,stdpost,marginal,ratenames); %indicate bias problem
 % bar plot
 regionid = 1:numel(regionList);
@@ -119,7 +119,7 @@ regionList_tex = {'Stockholm' 'Uppsala' 'S\"{o}dermanland' '\"{O}sterg\"{o}tland
   'V\"{a}stmanland' 'Dalarna' 'G\"{a}vleborg' 'V\"{a}sternorrland' ...
   'J\"{a}mtland' 'V\"{a}sterbotten' 'Norrbotten'}';
 
-file = [postpath() 'SLAM/perRegion/'];
+file = [postpath() 'KLAM/perRegion/'];
 meanpost = zeros(numel(ratenames),numel(regionList));
 stdpost = zeros(numel(ratenames),numel(regionList));
 

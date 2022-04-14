@@ -38,7 +38,7 @@ excludetransient = true;
 %% Start the calculations
 rng(0) % reproducability
 abspath = mfilename('fullpath');
-prefix = ['SLAM/perRegion/'];
+prefix = ['KLAM/perRegion/'];
 
 regionList = regions;
 

@@ -64,7 +64,7 @@ for i = reg
     % construct posterior file name
     % folder for posteriors
     abspath = mfilename('fullpath');
-    prefix = [abspath(1:end-35) 'inference/results/SLAM/'];
+    prefix = [abspath(1:end-35) 'inference/results/KLAM/'];
     if ~strcmp(region,'Sweden')
         posterior = 'perRegion/';
         lan = {1};

@@ -45,7 +45,7 @@ else
     noNetwork    = true;
 
     % folder for posteriors
-    prefix = [postpath 'SLAM/'];
+    prefix = [postpath 'KLAM/'];
 
     % Population data
     load Ncounties

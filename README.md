@@ -99,6 +99,7 @@ stored with the same name, i.e., overwriting of files are possible.
 reg=2; % Uppsala
 evalplot=true; % diagnostic plots
 savetofile=false;
+register='C19'; % observed data
 dynamic_beta_ML; % generates the Uppsala upscale, see the variable: R_POST
 
 reg=[1:21] % all regions

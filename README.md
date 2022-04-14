@@ -163,6 +163,29 @@ type = 2;
 laggen % Continous 7-day ahead prediction
 
 ```
+Common design elements in the figure scripts:
+
+Indicates that the constructed figure/table/output should be saved to
+file
+
+```
+savetofile = false; % or true
+```
+
+What region to compute for, sometimes 1:21 means the average of 1--21,
+sometimes it means to repeat for all regions in 1:21
+
+```
+reg = [2]; % | [1:21],
+```
+
+The data register to use as observations needs to be given, 'C19' is
+the standard. But we have syntax that allows for bootstrap replicates
+from `URDME` as well.
+
+```
+register = 'C19';
+```
 
 ## Figures (paper/predict/img/scripts)
 ### Fig. 2:
@@ -224,11 +247,9 @@ tries to uncover. In `IincFac` we do exactly this, we recover the
 symtomatic incidence and compare it to the positive tests by PHA in
 Stockholm and Uppsala. Figures can be generates in batch, or by region.
 ```
-savetofile = false;
 reg = [1] % Stockolm
 IincFac;
 
-savetofile = true; % the figure names are re-used and we suggest saving.
 reg = [1 2] % Stockholm and Uppsala
 IincFac;
 ```
@@ -261,7 +282,10 @@ distribution can be explored further.
 ```
 regen=1; % generate the samples
 reg=2; % Uppsala | can be swapped for othe regions, e.g., Stockholm (1).
-Nprior=1e3; % number of prior samples
+Nprior=1e1; % generate figure fast
+priorpred;
+
+Nprior=1e3; % now generate with as many samples as in the paper
 priorpred;
 
 regen=0;
@@ -275,7 +299,6 @@ calculations feasable in `HorizonSplitCompare`. *WARNING* this script
 takes a long time to compute.
 ```
 reg=2; % Uppsala region, as in paper.
-savetofile=false;
 HorizonSplitCompare;
 
 ```
@@ -300,7 +323,10 @@ comparison with the underlying data. There will be some missmatch
 assumed as the posterior we use in the simulations is a national
 average (except per the reproduction number) and therefore if the
 regional posterior differed significantly from the weighted national
-average, we then expect the simulations to differ more.
+average, we then expect the simulations to differ more. *Note* if you
+encounter an error while trying to simulate the first time, test
+running `clear all` and then trying again.
+
 ```
 reg = [1:21]; % national average
 regplot = [2];
@@ -434,7 +460,7 @@ Deadsplit; % run spectral, and unpacks the simulation file.
 * MATLAB (>= release 2021a)
 
 ## Tested on
-* Linux (Pop!_OS 20.10, 64 bit) [not yet]
+* Linux (Pop!_OS 20.10, 64 bit) [WORKS]
 * Linux (Pop!_OS 21.10, 64 bit) [not yet]
 * macOS (version?) [not yet]
 * Windows (version?) [not yet]

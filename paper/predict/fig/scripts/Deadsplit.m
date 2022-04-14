@@ -15,7 +15,7 @@ ending = '1';
 try
   load(['weekly/save/runs/slam210531_Sweden_monthly_' ending])
 catch
-    weekly_prediction
+    error('you tried to run the script without the necessary simulation file');
 end
 
 spectral; % fetch ODE CFR:s and D_SS_IHW

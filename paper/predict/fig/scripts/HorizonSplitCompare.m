@@ -18,7 +18,7 @@ steplength=20;
 
 % posterior
 abspath = mfilename('fullpath');
-prefix = [abspath(1:end-45) 'inference/results/SLAM/'];
+prefix = [abspath(1:end-45) 'inference/results/KLAM/'];
 
 %%
 posterior = ['perRegion/slam' num2str(enddate) '_Uppsala_monthly_1_100'];

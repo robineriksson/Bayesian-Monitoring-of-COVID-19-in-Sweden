@@ -1,4 +1,4 @@
-%URDMEruns_all URDME synthetic data for all 21 regions at once.
+%URDMESAMPLING URDME synthetic data for all 21 regions at once.
 
 
 % R. Marin 2022-03-25 (adjusting for plotting)

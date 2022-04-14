@@ -9,28 +9,33 @@ end
 if ~exist('reg','var')
     reg=2
 end
-if reg == 22
-    warning('functionallity for reg == 22, is not yet supported');
-end
+
 if ~exist('evalplot','var')
     evalplot=false;
 end
+
+if ~exist('urdme','var')
+    urdme=0;
+end
+
+if ~exist('register','var')
+    register='C19';
+end
+
 %% region list
-regionList = cat(1,regions(),'Sweden');
+regionList = cat(1,regions());
 
 
-urdme=0;
+
 %% Options
 for region = reg % region to estimate beta for
     disp(['running: ' regionList{region}]);
-    startdate = 200319;
+    startdate = 200401;
     enddate = 210531;
     prevresdate = 210531; % previous result for initial guess
 
     wbeta=300000;
-    if ismember(reg, [6 8 9 11 21]), wbeta = wbeta/3000; end;
-    if reg == 22, wbeta=repmat(wbeta,21,1); wbeta([[6 8 9 11 21]]) = wbeta(1)/3000; end
-    windowlength=50;%150;
+    windowlength=150;
     steplength=20;
 
     % posterior
@@ -39,37 +44,41 @@ for region = reg % region to estimate beta for
     %%
 
     if urdme > 0
-        posterior = ['KLAM/perRegion/URDME/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme)];
-        files = {[prefix posterior]};
-        Weights=1;
+        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme) '_100'];
     else
-        if reg < 22
-            posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
-            files = {[prefix posterior]};
-            Weights=1;
-        else % Sweden
-             % Population data
-            load Ncounties
-            Npop = sum(N,1);
-            M = 21;
-            files = cell(size(M));
-            for r = 1:M
-                files{r} = [prefix 'KLAM/perRegion/slam'  num2str(enddate) '_' regionList{r} '_monthly_1_100.mat'];
-            end
-            Weights = Npop(1:M);
-        end
+        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
     end
-    %[postrates,~,slab] = posteriorenger(inf,[prefix posterior]);
-    postrates = posteriorenger(inf,files,Weights,true);
+    postrates = posteriorenger(inf,[prefix posterior]);
     slab = postrates.meta.slabs;
 
     % load filter data
-    %datasource = 'RU';
-    datasource = 'C19';
-    Data = loadData(datasource);
-    Data = polishData(Data,'D','Dinc',1);
-    Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
+    if contains(register,'URDME') % synthetic data
+        filename = mfilename('fullpath');
+        Data_raw = load([filename(1:end-38) ...
+                         'URDME/URDMEoutput/URDME_all']);
 
+        Data = struct();
+        Data.regions = Data_raw.D.regions;
+        Data.date = Data_raw.D.date;
+        % which data "page"
+        try
+            runid = str2double(register(end));
+        catch
+            runid = 1;
+        end
+        Data.H = squeeze(Data_raw.D.U(:,5,:,runid));
+        Data.W = squeeze(Data_raw.D.U(:,6,:,runid));
+        Data.D = squeeze(Data_raw.D.U(:,7,:,runid));
+
+        Data.hash = fsetop('check',Data_raw.D.U(:));
+
+        Data.rev = Data_raw.D.date(end);
+        Data.reg = register;
+    else
+        Data = loadData(register);
+        Data = polishData(Data,'D','Dinc',1);
+        Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
+    end
     % define data and filter periods
     ixdata = find(Data.date == startdate):find(Data.date == enddate);
     if numel(slab) < numel(ixdata)
@@ -82,13 +91,8 @@ for region = reg % region to estimate beta for
     ixfilter = ixdata;
 
     % change data format
-    if region == 22
-        Ydata = cat(3,Data.H(ixdata,:),Data.W(ixdata,:),...
-                    Data.D(ixdata,:));
-    else
-        Ydata = cat(3,Data.H(ixdata,region),Data.W(ixdata,region),...
-                    Data.D(ixdata,region));
-    end
+    Ydata = cat(3,Data.H(ixdata,region),Data.W(ixdata,region),...
+                Data.D(ixdata,region));
     Ydata = permute(Ydata,[3 2 1]);
 
     % define a common time frame, including dates
@@ -112,57 +116,56 @@ for region = reg % region to estimate beta for
 
     G = speye(obsrates.nstate);
     D = 0;
-    R_post=[];
-    for i = 1:numel(files)
-        [Z,covZ,~,~,S] = C19filt([],[],G,postrates,D,obsrates,Ydata(:,i,:),slab,numel(ixfilter));
-        covZ.covZ = []; % save some space
-        stdZ = covZ.stdZ; % for brevity
 
-        nslab = max(slab);
+    [Z,covZ,~,~,S] = C19filt([],[],G,postrates,D,obsrates,Ydata(:,1,:),slab,numel(ixfilter));
+    covZ.covZ = []; % save some space
+    stdZ = covZ.stdZ; % for brevity
 
-        ntime = size(Ydata,3);
-        H = getC19obs(obsrates);
-        betaIdx = false(obsrates.nstate-1);
-        betaIdx(3,4) = true;
+    nslab = max(slab);
 
-        try
-            oldres = load([prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_'...
-                           regionList{region} '.mat']);
-            oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
-            beta0 = getC19beta(oldrates_daily,oldres.R_post);
-            beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
-            disp('found old guess')
-        catch
-            beta0 = 0.1*ones(1,ntime);
-            disp('from scratch')
-        end
+    ntime = size(Ydata,3);
+    H = getC19obs(obsrates);
+    betaIdx = false(obsrates.nstate-1);
+    betaIdx(3,4) = true;
 
-        %%
-        options = optimoptions(@fmincon,'MaxFunctionEvaluations',1700000,...
-                               'MaxIterations',6000,'Display','off',...'iter-detailed',...
-                               'OptimalityTolerance',2e-5);
-        options.Algorithm = 'sqp';
-
-        F=cell(nslab,1);
-        for m = 1:nslab
-            C19 = getC19syst(postrates,m,1);
-            KF = getC19filt(C19);
-            F{m} = KF.F(1:7,1:7);
-        end
-
-        x0 = initC19filt(F{1},H(:,1:7),squeeze(Ydata(:,i,1)),KF.CStates(1:7));
-        tic
-        [x0_post,betaOpt,J,misfit,beta_mpc,ix_mpc] = mpcloop_beta_S(squeeze(Ydata(:,i,:)),F,H(:,1:7),...
-                                                                    betaIdx,wbeta(i),slab,squeeze(S(:,:,:,1)),steplength,windowlength,x0,...
-                                                                    beta0,options);
-        toc
-        %%
-        rates_daily = dailyrates(postrates,slab);
-        rates_daily.beta=betaOpt';
-        R_post = cat(2,R_post,getC19R0(rates_daily));
-
-        dates = Data.date(ixdata);
+    try
+        oldres = load([prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_'...
+                       regionList{region} '.mat']);
+        oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
+        beta0 = getC19beta(oldrates_daily,oldres.R_post);
+        beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
+        disp('found old guess')
+    catch
+        beta0 = 0.1*ones(1,ntime);
+        disp('from scratch')
     end
+
+    %%
+    options = optimoptions(@fmincon,'MaxFunctionEvaluations',1700000,...
+                           'MaxIterations',6000,'Display','off',...'iter-detailed',...
+                           'OptimalityTolerance',2e-5);
+    %options.Algorithm = 'sqp';
+
+    F=cell(nslab,1);
+    for m = 1:nslab
+        C19 = getC19syst(postrates,m,1);
+        KF = getC19filt(C19);
+        F{m} = KF.F(1:7,1:7);
+    end
+
+    x0 = initC19filt(F{1},H(:,1:7),squeeze(Ydata(:,1,1)),KF.CStates(1:7));
+    tic
+    [x0_post,betaOpt,J,misfit,beta_mpc,ix_mpc] = mpcloop_beta_S(squeeze(Ydata(:,1,:)),F,H(:,1:7),...
+                                                                 betaIdx,wbeta,slab,squeeze(S(:,:,:,1)),steplength,windowlength,x0,...
+                                                                 beta0,options);
+    toc
+    %%
+    rates_daily = dailyrates(postrates,slab);
+    rates_daily.beta=betaOpt';
+    R_post = getC19R0(rates_daily);
+
+    dates = Data.date(ixdata);
+
     postrates.dataReg = Data.reg;
     postrates.dataRev = Data.rev;
     postrates.dataHash = Data.hash;
@@ -225,8 +228,8 @@ for region = reg % region to estimate beta for
     end
     %%
     try
-        betaStruct.beta=betaOpt;
-        betaStruct.betaIdx = betaIdx;
+        betaStruct.vals=betaOpt';
+        betaStruct.idx = betaIdx;
 
         xSim = LPVsim_slabs(F,x0_post,betaStruct,slab);
         if evalplot
@@ -259,7 +262,7 @@ for region = reg % region to estimate beta for
     savename = [savename '.mat']
     savename = [prefix 'dynOpt/' savename];
     if savetofile
-        save(savename,'R_post','dates','x0_post','postrates');%,'xSim')
+        save(savename,'R_post','dates','x0_post','postrates','xSim')
         disp(['saved: ' savename]);
     else
         disp(['didn''t save: ' savename]);

@@ -1,12 +1,12 @@
 function [Z,covZ,ZLag,covZLag,L] = C19filt_lag(G,rates,D,obsrates,Ydata,slab,ntime,lag,Q)
 %C19FILT_LAG (Lagged) Kalman filter for the EngEr Covid-19 model given data.
-%   [Z,covZ,ZLag,covZLag,LAGLIKE] = C19FILT_LAG(...)  returns the same
+%   [Z,covZ,ZLag,covZLag,LAGLIKE] = C19FILT_LAG(...) returns the same
 %   result [Z,covZ] as C19FILT, but with an additional prediction
 %   [ZLag,covZLag] made LAG days ahead of each point in time, and the
 %   associated (quasi-)log-likelihood LAGLIKE.
 %
 %   LAGLIKE is a cell of cells, 1 per SLAB in each rate combination in
-%   RATES
+%   RATES.
 %
 %   See also C19FILT.
 

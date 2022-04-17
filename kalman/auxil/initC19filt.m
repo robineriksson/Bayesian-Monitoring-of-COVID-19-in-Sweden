@@ -65,7 +65,6 @@ switch nargin
     PScales = [0.1 1];
 end
 
-
 if ~isempty(Y0) && ~isempty(Y0Cov) % start from provided initialization
   %warning('not yet fully defined');
   

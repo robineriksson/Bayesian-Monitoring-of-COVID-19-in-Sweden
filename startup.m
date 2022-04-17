@@ -12,7 +12,6 @@ addpath(genpath([link 'data/']));
 addpath(genpath([link 'inference/']));
 addpath(genpath([link 'kalman/']));
 addpath(genpath([link 'paper/']));
-addpath(genpath([link 'test/']));
 addpath(genpath([link 'URDME/']));
 addpath(genpath([link 'weekly/']));
 % (note: don't add to old/)

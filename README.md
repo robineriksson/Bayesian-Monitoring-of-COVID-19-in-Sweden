@@ -2,7 +2,7 @@
 
 ## About
 This README describes the code we use in the paper with the same name
-and allows the reader to replicate the paper results.
+and allows for a replication of the results in the paper.
 
 ## Authors
 * Robin Marin (robin.marin 'at' it.uu.se),
@@ -12,24 +12,22 @@ and allows the reader to replicate the paper results.
 
 # Installation
 1. Clone the repository
-2. Make sure that the dependencies are installed and initialzed
-3. Initialize the code-base by: in the main directory run `startup` in
-   a MATLAB environment.
-4. The code and data files are now accessable to be referenced.
-
+2. Make sure that the dependencies are installed and initialized
+3. Initialize by starting Matlab and running `startup` in the main
+   directory
 
 # Code
-Basic functionallity to generate results we give in the paper. If
-further explanation is wanted, see the extensive Matlab `help`
-functions each funciton has been outfitted with. See the *Examples*
-section further down for more explicit usecases and figure generation.
+Basic functionallity to generate the results in the paper. If further
+explanation is wanted, see the extensive Matlab `help` each function
+has. See the *Examples* section below for explicit usecases and figure
+generation.
 
 ## Data (/data/)
-To access the data run `d = loadData(rep)` where `rep` is a specificed
-directory listed under `help loadData`, e.g., `C19`. Raw .csv files
-are stored under `/data/sources/REP` for the same definition of `REP`
-as above. We strongly suggest using our pre-processing steps on the
-data before performing any calculations, see the following flow
+To access data, run `d = loadData(rep)` where `rep` is a specificed
+source, see `help loadData`. Note: not all sources listed are
+distributed. Raw .csv files are stored under `/data/sources/REP` for
+the source `REP`. We often use pre-processing steps on the data before 
+performing any calculations, e.g.,
 ```
 Data = loadData('C19');
 Data = polishData(Data,'D','Dinc',1);
@@ -38,13 +36,13 @@ Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
 
 ## Kalman filter (/kalman/)
 The main function for the Kalman filter is `C19filt(...)`. The
-function makes further calls to subordinate functions `/kalman/auxil/`
-that handle the The construction and time propagation of the Kalman
-filter approximation.
+function makes further calls to subordinate functions found in
+`/kalman/auxil/` that handle the construction and the recursive
+propagation of the filter.
 
-A rough evaluation of the prediction capabilities of the posterior
-Kalman fitler is given by `C19filt_lag(...)` which is the Kalman
-filter extended to enables k-day ahead (lag) predictions without data
+An evaluation of the prediction capabilities of the posterior Kalman
+filter is obtained by `C19filt_lag(...)`, which is the Kalman filter
+extended to enable k-day ahead ("lag") predictions, i.e., without data
 observations.
 
 ## Prior (/inference/)
@@ -163,29 +161,6 @@ type = 2;
 laggen % Continous 7-day ahead prediction
 
 ```
-Common design elements in the figure scripts:
-
-Indicates that the constructed figure/table/output should be saved to
-file
-
-```
-savetofile = false; % or true
-```
-
-What region to compute for, sometimes 1:21 means the average of 1--21,
-sometimes it means to repeat for all regions in 1:21
-
-```
-reg = [2]; % | [1:21],
-```
-
-The data register to use as observations needs to be given, 'C19' is
-the standard. But we have syntax that allows for bootstrap replicates
-from `URDME` as well.
-
-```
-register = 'C19';
-```
 
 ## Figures (paper/predict/img/scripts)
 ### Fig. 2:
@@ -223,7 +198,7 @@ The call is simply
 recovered; % generates the recoverd plot in the paper.
 ```
 
-### Fig. 5 (& S2)
+### Fig. 5 (& 7)
 The posterior reproduction number (4-week) and the marginal boostrap
 (daily) per region can be illustrated by `Rposterior`. In which the
 region of interest is specified by `reglist`. In Fig. 5 `= [2]`, and
@@ -238,7 +213,7 @@ reg = [2]
 Rposterior; % only generates the figure for Uppsala
 ```
 
-### Fig. S1:
+### Fig. 6:
 As the posterior Kalman filter can give an estimate of the proportion
 of recovered individuals, similarly the filter can also give an
 estimate of the number of symptomatic or the symptomatic
@@ -247,14 +222,16 @@ tries to uncover. In `IincFac` we do exactly this, we recover the
 symtomatic incidence and compare it to the positive tests by PHA in
 Stockholm and Uppsala. Figures can be generates in batch, or by region.
 ```
+savetofile = false;
 reg = [1] % Stockolm
 IincFac;
 
+savetofile = true; % the figure names are re-used and we suggest saving.
 reg = [1 2] % Stockholm and Uppsala
 IincFac;
 ```
 
-### Fig. S4:
+### Fig. 9:
 The pre-processing of the data (as discussed under Results → Data)
 corrects the distribution of diseased incidence per weekday to achieve
 one that is closer to uniformly distributed. If not close to uniform,
@@ -270,7 +247,7 @@ reg = 2; % Uppsala
 weekday_smoothing;
 ```
 
-### Fig. S5:
+### Fig. 11:
 Our effort of exploring the prior predictive distribution is given in
 `priorpred`. The parameters directly samples from the prior is used as
 the ones from the posterior is used in `laggen`. A first inital run
@@ -282,28 +259,26 @@ distribution can be explored further.
 ```
 regen=1; % generate the samples
 reg=2; % Uppsala | can be swapped for othe regions, e.g., Stockholm (1).
-Nprior=1e1; % generate figure fast
-priorpred;
-
-Nprior=1e3; % now generate with as many samples as in the paper
+Nprior=1e3; % number of prior samples
 priorpred;
 
 regen=0;
 priorpred; % same figure, but loading the prior samples from file.
 ```
 
-### Fig. S6:
+### Fig. 12:
 The daily estimate of β is expensive to run; superlinear in the number
 of days *K*. We illustrate the splitting of horizions to make the
 calculations feasable in `HorizonSplitCompare`. *WARNING* this script
 takes a long time to compute.
 ```
 reg=2; % Uppsala region, as in paper.
+savetofile=false;
 HorizonSplitCompare;
 
 ```
 
-### Fig. S7:
+### Fig. 13:
 The posterior for all regions is tricker to visualize all at once. In
 `errorbarsRegion` we give the posterior mean ± 1 std per region. This
 quick illustration gives a quick overview of potential outlier regions
@@ -315,7 +290,7 @@ errorbarsRegion; % load data into memory and generate figure.
 errorbarsRegion; % from memory generate figure.
 ```
 
-### Fig. S8:
+### Fig. 14:
 The bootstrap samples are, as mentioned, generated using URDME. The
 function `URDMEsampling` generates the samples for all regions, stores
 the file, and generates the figures. The latter allows for visualized
@@ -323,10 +298,7 @@ comparison with the underlying data. There will be some missmatch
 assumed as the posterior we use in the simulations is a national
 average (except per the reproduction number) and therefore if the
 regional posterior differed significantly from the weighted national
-average, we then expect the simulations to differ more. *Note* if you
-encounter an error while trying to simulate the first time, test
-running `clear all` and then trying again.
-
+average, we then expect the simulations to differ more.
 ```
 reg = [1:21]; % national average
 regplot = [2];
@@ -336,7 +308,7 @@ clear regplot
 URDMEsampling; % All the figures in the paper.
 ```
 
-### Fig. S9:
+### Fig. 15:
 The reproduced posterior samples on the bootstrap replicate data can
 we visualized together with the weighted national average (as Fig 2)
 as another marginal density in `prior_posteriorURDME`.
@@ -348,7 +320,7 @@ reg = [2];
 prior_posteriorURDME; % only for Uppsala.
 ```
 
-### Fig. S10:
+### Fig. 16:
 Similarly as the boostrap replicate posterior was compared to the the
 marginal posterior and prior in Fig. S9, we can include the replicate
 mean for the reproduction number in `RposteriorURDME`. We only include
@@ -358,7 +330,7 @@ paper. The following results in the same figure.
 RposteriorURDME;
 ```
 
-### Fig. S11:
+### Fig. 17:
 To compare the the Posterior Kalman filter predictor with something,
 we construct a Autoregressive (AR) model in `arx_fit`. The AR model
 considers data (H,W,D) in an expanding window and makes 7-day ahead
@@ -460,7 +432,7 @@ Deadsplit; % run spectral, and unpacks the simulation file.
 * MATLAB (>= release 2021a)
 
 ## Tested on
-* Linux (Pop!_OS 20.10, 64 bit) [WORKS]
+* Linux (Pop!_OS 20.10, 64 bit) [not yet]
 * Linux (Pop!_OS 21.10, 64 bit) [not yet]
 * macOS (version?) [not yet]
 * Windows (version?) [not yet]

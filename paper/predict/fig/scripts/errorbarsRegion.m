@@ -37,6 +37,8 @@ else
 end
 
 
+load('inference/results/KLAM/marginal_bias.mat', 'marginal')
+tag = l_biascomp(meanpost,stdpost,marginal,ratenames); %indicate bias problem
 % bar plot
 regionid = 1:numel(regionList);
 tiledlayout(3,4)
@@ -146,10 +148,6 @@ end
 function tag = l_biascomp(mu,sig,bias,ratenames)
 %L_BIASCOMP estimates if the bias is to large or not for the uncertainty
 %  given by 2*sig or not.
-%
-% load('inference/results/KLAM/marginal_bias.mat', 'marginal')
-% tag = l_biascomp(meanpost,stdpost,marginal,ratenames); %indicate bias problem
-
 
     bias_ = zeros(numel(ratenames),21);
     for i = 1:numel(ratenames)

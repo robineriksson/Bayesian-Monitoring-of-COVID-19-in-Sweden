@@ -4,13 +4,7 @@
 % existingposterior plot.
 
 % R. Eriksson 2022-01-27
-if ~exist('savetofile','var')
-    savetofile = false;
-end
-
-if ~exist('reg','var')
-    reg=[1:21];
-end
+savetofile = false;
 % load posterior
 Nsample = 1e4;
 path = postpath;
@@ -21,6 +15,15 @@ ending = '_1';
 ending_ = '_100';
 ending = [ending ending_];
 regionList = regions;
+% $$$ % select through list and a search...
+% $$$ reg = {'Gävleborg' 'Uppsala' 'Södermanland' 'Östergötland' 'Gotland' ...
+% $$$        'Kronoberg' 'Kalmar' 'Jönköping' 'Blekinge' 'Halland' 'Värmland' ...
+% $$$        'Dalarna' 'Örebro' 'Västmanland'};
+% $$$ [~,reg] = fsetop('ismember',reg,regions);
+
+% ...or directly by specifying here
+%reg = [16 11 5 7 9 13 14 15];
+reg = [1:21;
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
 

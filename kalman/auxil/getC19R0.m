@@ -6,11 +6,11 @@ function R0 = getC19R0(rates,D)
 %   Example:
 %     rates = priorenger(10,[3 3]);
 %     load Dcounties
-%      R0 = getC19R0(rates,D);
+%     R0 = getC19R0(rates,D);
 %
 %     % compare:
 %     [R0; rates.R0]
-
+%
 %   See also GETC19SYST.
 
 % S. Engblom 2020-10-12 (Settled on formula)
@@ -23,7 +23,6 @@ R0 = sqrt(rates.beta.* ...
            (1-rates.F0ave).*rates.thetaA_./rates.gammaA));
 
 return;
-
 
 % $$$ % rates
 % $$$ beta = rates.beta(n);
@@ -86,7 +85,7 @@ return;
 % $$$        thetaA_*(1-F0)/gammaA);
 % $$$ simplify(res) % = 0
 
-% *** not needed as a conservative D does not affect R0:
+% (not needed as a conservative D does not affect R0:)
 
 % $$$ % effective transmission matrix
 % $$$ Deff = D-diag(sum(D,1));

@@ -44,8 +44,7 @@ s = [s(1:2) '-' s(3:4) '-' s(5:6)];
 wd = mod(weekday(s)-1+(0:numel(tspan)-1),7)+1;
 
 % URDME
-printpath = mfilename('fullpath');
-load([printpath(1:end-43) 'URDME/URDMEoutput/URDME_all'])
+load('URDME/URDMEoutput/URDME_all')
 if D.date(1) ~= datetime(1) || D.date(end) ~= datetime(end)
     warning('start and/or stop dates are different in URDME')
 end
@@ -70,7 +69,7 @@ legend('Original','Smoothed','Synthetic','interpreter','latex');
 set(gcf,'PaperPositionMode','auto');
 set(gcf,'Position',[100 100 500 350]);
 
-
+printpath = mfilename('fullpath');
 printpath = [printpath(1:end-25) 'smoothing.pdf'];
 if savetofile
     print('-dpdf',printpath);

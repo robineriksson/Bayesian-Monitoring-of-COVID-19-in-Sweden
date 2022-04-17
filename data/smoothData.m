@@ -4,7 +4,7 @@ function data = smoothData(data,cumfield,incfield)
 %   fields CUMFIELD and the incidense fields INCFIELD to mitigate the
 %   effects of lag or misses of reporting.
 %
-%   The algorithm removes unlikely incidenses in INCFIELD and spread
+%   The algorithm removes unlikely incidenses in INCFIELD and spreads
 %   them out during the period immediately before in a way to mitigate
 %   weekday dependencies in reporting. CUMFIELD is updated
 %   accordingly.
@@ -15,7 +15,7 @@ function data = smoothData(data,cumfield,incfield)
 %   measurements in a row are understood as missing reports and
 %   replaced with a smoother transition.
 %
-%   Currently, the smoothed output fields are not integers.
+%   The smoothed output fields are generally not integers.
 %
 %   Example:
 %     Data = loadData('C19');

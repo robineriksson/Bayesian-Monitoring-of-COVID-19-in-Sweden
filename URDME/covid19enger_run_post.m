@@ -1,6 +1,8 @@
-%COVID19ENGER_RUN_POST Runs the EngEr Covid-19 model extending
-% COVID19ENGER_RUN by also allowing for posterior noise by sampling the
-% posterior further than the mean.
+% COVID19ENGER_RUN_POST Runs the EngEr Covid-19 model allowing for
+% posterior noise by sampling the posterior. Note, be carefull
+% considering multiple posterior samples, as the daily reproduction
+% number is mean posterior, meaning that posterior noise in the
+% other parameters might not be *true* posterior noise.
 
 % R. Marin 2022-03-14 (added posterior sampling support)
 % S. Engblom 2021-04-17 (Major revision)

@@ -13,9 +13,7 @@ function [xcov,xmean]=covRec(x,oldcov,oldmean,w)
 %   initial step, i.e., oldcov = oldmean = [] will return a zero
 %   initalization.
 
-
 % R. Eriksson 2021-01-25
-
 
 [p, n] = size(x);
 if p > 1
@@ -33,7 +31,4 @@ if w > 0 && ~isempty(oldcov) % update recursively
 else % initialize
   xmean = x;
   xcov = zeros(n);
-end
-
-
 end

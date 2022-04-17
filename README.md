@@ -46,46 +46,44 @@ extended to enable k-day ahead ("lag") predictions, i.e., without data
 observations.
 
 ## Prior (/inference/)
-`rates = priorenger(N)` gives `N` samples from the prior, and `dens =
-priorenger(rates)` computes the prior density of the samples `rates`.
-The empirical priors, and some defined from sources are constructed
-firstly by the `genprior` script.
+`rates = priorenger(N)` returns `N` samples from the prior, and `dens
+= priorenger(rates)` computes the prior density of the samples in
+`rates`.  The marginal priors are constructed in the `genprior`
+script.
 
 ## Posterior (/inference/)
-The posterior is stored, and accessed using `rates =
-posteriorenger(file)` where file references a specific posterior file.
-We have stored our generated posterior files under
-`inference/results/`. The function includes a functionallity of
-referencing a list of posterior files and computing a weighted average
-of them, e.g., Swedish national average weighted by regional
-population size.
+The posterior is stored and accessed using `rates =
+posteriorenger(file)` where `file` is a posterior file.  We have
+stored our generated posterior files under `inference/results/`. The
+function includes a functionallity of referencing a list of posterior
+files and sampling from a weighted average of them, e.g., the Swedish
+national average weighted by regional population size.
 
 ## KLAM (/inference/KLAM/)
-We generate samples from the approximate posterior by and
-implementation of Kalman likelihood adaptive Metropolis.  We supply
-the reader with the user friendly wrapper script `klam_parachain`
-which calls the underlying functions (`klam_init`, `AM`, `logKL`
-using MATLAB's `parfor` framework. Generating samples are expensive,
-and we include the code for reference, but the results we generated
-are acceable by the posterior function we reference above.
+We generate samples from the approximate posterior by an
+implementation of Kalman Likelihood Adaptive Metropolis (KLAM). We
+supply the wrapper script `klam_parachain` which calls the underlying
+functions (`klam_init`, `AM`, `logKL`) using Matlab's `parfor`
+framework. Generating samples are expensive and we include the code
+for reference, but the results we have generated can also be accessed by
+the posterior functionality discussed above.
 ```
 nMCMC = 1e3; % number of samples per chain
-savetofile=false; % save the posterior or not, either case RATES is created
+savetofile = false; % save the posterior or not
+                    % (in either case RATES is created)
 reg = 2; % Uppsala region
-gelmanRub=true; % convergence score
-burnin=1e0; % burnin length to remove from chain
+gelmanRub = true; % convergence score
+burnin = 1e0; % burnin length to remove from chain
 runs = 4; % number of parallel chains
-register='C19';
+register = 'C19'; % source of data
 klam_parachain;
 
-
-% Reproduce the results in the paper
+% reproduce the results in the paper
 nMCMC = 5e4;
 burnin = 1e3;
-reg=[1:21]
-savetofile=true;
-klam_parachain
-
+reg = 1:21;
+savetofile = true;
+klam_parachain;
 ```
 
 ## DynOpt (/inference/dynamic_beta/)
@@ -150,7 +148,6 @@ laggen;
 type = 2;
 reg = [2]
 laggen;
-
 
 % if all data is wanted
 type = 1;
@@ -351,7 +348,7 @@ arx_fit; % fit anew.
 
 ## Tables (paper/predict/tab/scripts)
 ### Tab. 1
-We describr in the paper how the research underlying the paper was
+We describe in the paper how the research underlying the paper was
 used, and developed, for weekly prediction in reports published for
 the local authorities. The result from those reports are summarized in
 a table and `weekly_eval` extracts the results.

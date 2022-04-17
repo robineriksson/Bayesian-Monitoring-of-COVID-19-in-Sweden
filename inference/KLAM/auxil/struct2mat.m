@@ -13,6 +13,8 @@ function [x0, ratenames, meta] = struct2mat(rates)
 %   meta - struct that hold the meta variables of the rates structure:
 %   {hash Fhash rev}.
 
+% R. Eriksson 210522
+
 fnames = fieldnames(rates);
 x0 = [];
 

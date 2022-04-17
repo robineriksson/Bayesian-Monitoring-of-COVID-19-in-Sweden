@@ -13,7 +13,7 @@
 %     1: without historic lag, but prediction lag days ahead
 %     2: with historic lag
 %
-%   datasource = string, source of data
+%   register = string, source of data
 %
 %   savetofile = {0 1} save to .tex-files
 %
@@ -35,29 +35,18 @@ if 0
   ending        = '1_100'; % at what date does the slabs start.
   datadate     = [200401 210531] % change end date here
 
-  datasource   = 'C19'; % Employs C19 if not Uppsala, then Uppsala Region
+  register   = 'C19'; % Employs C19 if not Uppsala, then Uppsala Region
   useCSSS      = false;
   saveall      = true;
   % run all regions
   type = 1, lag = 14;
-  regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-    'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-    'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-    'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-    'Jämtland' 'Västerbotten' 'Norrbotten'};
+  regionList = regions(false);
+
   for reg = [1:21]
     region = regionList{reg}
     FINALRUN = true;
     weekly_prediction
   end
-
-
-
-  %   % lag14-plot, Uppsala
-  %   FINALRUN = true;
-  %   type = 1, lag = 14;
-  %   region = 'Uppsala'
-  %   weekly_prediction
 
   % lag7-plot, Uppsala
   FINALRUN = true;
@@ -65,14 +54,6 @@ if 0
   region = 'Uppsala'
   weekly_prediction
 
-
-
-  %   % lag14-plot, Stockholm
-  %   FINALRUN = true;
-  %   type = 1, lag = 14;
-  %   region = 'Stockholm'
-  %   weekly_prediction
-  %
   % lag7-plot, Stockholm
   FINALRUN = true;
   type = 2, lag = 7;
@@ -98,7 +79,7 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % type =
   %   1: without historic lag, but prediction lag days ahead
   %   2: with historic lag
-  type = 2
+  type = 1
   if type == 1
     lag = 14;
   else
@@ -124,7 +105,7 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % exclude the network (only affects 'Sweden')
   noNetwork = 1;
 
-  datasource = 'C19';
+  register = 'C19';
 else
   disp('*** Running as script... ***');
   FINALRUN = false;
@@ -141,16 +122,11 @@ Npop = sum(N,1);
 
 
 % convert region into "test" for data extraction, later.
-regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-  'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-  'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-  'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-  'Jämtland' 'Västerbotten' 'Norrbotten'};
+regionList = regions(false);
 test = find(strcmp(region,regionList)) + 3;
 if isempty(test)
   if strcmp(region,'Sweden')
     test = 0;
-
     % construct the Sweden posteriorfile
     if ~exist([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'file')
       regs = 1:21;
@@ -158,15 +134,10 @@ if isempty(test)
       for r = 1:numel(regs)
         files{r} = [prefix 'perRegion/slam' posteriordate '_' regionList{regs(r)} '_monthly_' ending '.mat'];
       end
-
       Weights = Npop;
       rates = posteriorenger(100,files,Weights);
       save([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'rates')
-
-
     end
-
-
   else
     error(['Missing region: ' region]);
   end
@@ -210,28 +181,44 @@ end
 test_ = test; % for plotting keep test_
 
 % load filter data
-if strcmp(datasource,'URDME') % synthetic data
+if contains(register,'URDME') % synthetic data
   filename = mfilename('fullpath');
-  Data_raw = load([filename(1:end-24) 'data/sources/URDME/' 'URDME210418_Stockholm_Uppsala.mat']);
-
+  Data_raw = load([filename(1:end-24) ...
+                       'URDME/URDMEoutput/URDME_all']);
   Data = struct();
-  Data.regions = Data_raw.D.region;
+
+  if ~any(strcmp(region,regionList))
+      regionList_nordic = regions(true);
+      regid = strcmp(region,regionList_nordic);
+      if sum(regid) == 0
+          error('cannot find region in URDME data');
+      end
+  else
+      regid = strcmp(region,regionList);
+  end
+
+  Data.regions = Data_raw.D.regions(regid);
   Data.date = Data_raw.D.date;
-  Data.H = Data_raw.D.U(:,5,1);
-  Data.W = Data_raw.D.U(:,6,1);
-  Data.D = Data_raw.D.U(:,7,1);
+  % which data "page"
+  try
+    runid = str2double(register(end));
+  catch
+    runid = 1;
+  end
+  Data.H = Data_raw.D.U(:,5,regid,runid);
+  Data.W = Data_raw.D.U(:,6,regid,runid);
+  Data.D = Data_raw.D.U(:,7,regid,runid);
 
-  Data.I = Data_raw.D.U(:,1,1); % currently for plotting.
+  Data.hash = fsetop('check',Data_raw.D.U(:));
 
-  Data.hash = -1;
-  Data.rev = -1;
-  Data.reg = 'URDME210418_Stockholm_Uppsala';
+  Data.rev = Data_raw.D.date(end);
+  Data.reg = register;
   T = 1;
   D = 1;
   lan = {Data.regions};
   test = 0;
 else
-  Data = loadData(datasource);
+  Data = loadData(register);
   Data = polishData(Data,'D','Dinc',1);
   Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
 
@@ -239,10 +226,10 @@ else
   if test >= 4
     D = 1;
     lan = 1;
-    Data.D = Data.D(:,strcmp(Data.regions, region));
-    Data.W = Data.W(:,strcmp(Data.regions, region));
-    Data.H = Data.H(:,strcmp(Data.regions, region));
-    Npop = Npop(strcmp(Data.regions, region));
+    Data.D = Data.D(:, test-3);
+    Data.W = Data.W(:, test-3);
+    Data.H = Data.H(:, test-3);
+    Npop = Npop(test-3);
     Data.regions = Data.regions(test-3);
     test = 0;
   end
@@ -390,59 +377,49 @@ exception.AbsMagn = 1e4;
 switch type
   case 1
     % without:
-    if true%~exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '.mat'],'file')
-      [Z,covZ,~,L] = C19filt([],[],G,rates,D,obsrates,Ydata,slabs, ...
-        numel(ixfilter),[],Q, exception);
-      covZ.covZ = []; % save some space
-      % remove "exceptions"
-      rows = find(~isinf(sum(L,1)));
-      Z = Z(:,:,unique(rows));
-      covZ.stdZ = covZ.stdZ(:,:,unique(rows));
-      covZ.lastPriorY = covZ.lastPriorY(:,unique(rows));
-      covZ.lastPostY = covZ.lastPostY(:,unique(rows));
-      covZ.lastPriorYCov = covZ.lastPriorYCov(:,:,unique(rows));
-      covZ.lastPostYCov = covZ.lastPostYCov(:,:,unique(rows));
-
-
-
-
-      % when loading, are we loading the posterior we think we're doing?
-      meta = struct();
-      meta.postHash = rates.meta.hash; % same posterior
-      meta.dataHash = Data.hash;  % same data
-      save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4)],...
-        'Z','covZ','meta','Ydata','tspan_filter','tspan_data','lan',...
-        'useCSSS','datasource','DATES','TSPAN','lag','slabs','Data');
-    else
-      warning(['Already saved prediction for ' posterior(1:end-4)]);
+    if exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '.mat'],'file')
+        warning(['Already saved prediction for ' posterior(1:end-4)]);
     end
+    [Z,covZ,~,L] = C19filt([],[],G,rates,D,obsrates,Ydata,slabs, ...
+                           numel(ixfilter),[],Q, exception);
+    covZ.covZ = []; % save some space
+                    % remove "exceptions"
+    rows = find(~isinf(sum(L,1)));
+    Z = Z(:,:,unique(rows));
+    covZ.stdZ = covZ.stdZ(:,:,unique(rows));
+    covZ.lastPriorY = covZ.lastPriorY(:,unique(rows));
+    covZ.lastPostY = covZ.lastPostY(:,unique(rows));
+    covZ.lastPriorYCov = covZ.lastPriorYCov(:,:,unique(rows));
+    covZ.lastPostYCov = covZ.lastPostYCov(:,:,unique(rows));
 
 
 
+
+    % when loading, are we loading the posterior we think we're doing?
+    meta = struct();
+    meta.postHash = rates.meta.hash; % same posterior
+    meta.dataHash = Data.hash;  % same data
+    save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4)],...
+         'Z','covZ','meta','Ydata','tspan_filter','tspan_data','lan',...
+         'useCSSS','register','DATES','TSPAN','lag','slabs','Data');
   case 2
     % with:
-    if true%~exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
-      disp(['qdiag: ' num2str(Q.qdiag)]);
-      [Z_,covZ_,Z,covZ] = ...
-        C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
-        numel(ixfilter),lag,Q);
-      covZ.covZ = []; % save some space
-      covZ_.covZ = [];
-
-      % when loading, are we loading the posterior we think we're doing?
-      meta = struct();
-      meta.postHash = rates.meta.hash; % same posterior
-      meta.dataHash = Data.hash;  % same data
-      save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag'],...
-        'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
-        'tspan_data','lan','useCSSS','datasource','DATES','TSPAN',...
-        'lag','slabs','Data');
-    else
-      warning(['Already saved lag prediction for ' posterior(1:end-4)]);
-
+    if exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
+        warning(['Already saved lag prediction for ' posterior(1:end-4)]);
     end
+    disp(['qdiag: ' num2str(Q.qdiag)]);
+    [Z_,covZ_,Z,covZ] = ...
+        C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
+                    numel(ixfilter),lag,Q);
+    covZ.covZ = []; % save some space
+    covZ_.covZ = [];
 
-
-
-
+    % when loading, are we loading the posterior we think we're doing?
+    meta = struct();
+    meta.postHash = rates.meta.hash; % same posterior
+    meta.dataHash = Data.hash;  % same data
+    save([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag'],...
+         'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
+         'tspan_data','lan','useCSSS','register','DATES','TSPAN',...
+         'lag','slabs','Data');
 end

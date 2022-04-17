@@ -22,16 +22,13 @@ function [thetas, sl, param, outverb] = AM(nMCMC, thetas, sl, param, funcs, Ydat
 %   YDATA = data for inference.
 %   START = where to start in the given chain.
 %   STOP  = where to stop the the given chain.
-%
-%
 
 % R. Eriksson 201006
+
 if nargin < 8 % starting up a new chain, otherwise, these have to be set.
   start = 2;
   stop = nMCMC;
 end
-
-
 
 % starting guess for AM
 sigma = param.sigma;

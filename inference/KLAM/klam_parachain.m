@@ -1,3 +1,29 @@
+% KLAM_PARACHAIN generates multiple (parallel) Markov Chains using
+% Kalman marginal Adaptive Metropolis, see AM.m for the Metropolis
+% implementation. Per parallel core, the inference object is
+% initialized with KLAM_INIT.m, and then run for NMCMC samples using
+% AM.m
+%
+% After the sampling is done, the parallel chains are evaluated by
+% Gelman-Rubin convergence score if GELMRUB = [true]. Each chain is
+% saved as a temporary file, and can be recovered after the fact even
+% if SAVETOFILE = [false]. But if SAVETOFILE = true, after the
+% Gelman-Rubin score is calculated, a posterior file is compiled and
+% saved under /inference/results/KLAM/perRegion/.
+%
+% Adjustable parameters are
+% NMCMC = 5e4: length of each individual chain
+% SAVETOFILE = false: if the posterior file is to be saved to disk
+% REG = 2: the region to compute for, see regions() for the numbering.
+% GELMANRUB = true: computes the Gelman-Rubin convergence score,
+% betweem 0.9-1.2 is good.
+% BURNIN = 1e3: the number of samples to discard in the start of each chain.
+% RUNS = 4: number of parallel chains, should be set to the number of
+% physical core available for optimal efficiency.
+% REGISTER = 'C19': the data  source to use for inference, see LOADDATA(register).
+
+% R. Marin 22-04-17
+
 %% Generate the data
 rng(0)
 
@@ -24,26 +50,28 @@ end
 if ~exist('runs','var')
     runs = 4;
 end
-smc      = 0;
+
+if ~exist('register','var')
+    register = 'C19';
+end
+
+
 verb     = false; % debug text
 nslab    = 1; % {1: 1st, 8: 8th, 15: 15th, 22:22nd} monthly slabs
 date     = [200401 210531];
 scaleS   = 0.04; %0.1 in Uppsala gives acceptance rate ~ 10-20%
-register = 'C19';
-
 useinit      = true; % use old posterior as initalization
-useinitstate = false; % use new origo
 
+
+
+% do not change these
+useinitstate = false; % use new origo
 useCSSS  = false;
 perslab  = false;
 fix      = false;
 
 
-
-
-
-
-regionList = regions();
+regionList = regions(false);
 
 
 
@@ -74,8 +102,6 @@ try
             scaleS = 0.04;
         end
 
-        %  init = getInit(useinit, ...
-        %  [prefix posterior region '_monthly_15_100.mat'],false);
         init = getInit(useinit, [prefix posterior],false);
         state0 = getInitState(useinitstate,210331,region);
 
@@ -85,7 +111,7 @@ try
         [thetas, sl, slab, amparam, amfunc, outverb] = ...
             klam_init(region, nMCMC, verb, nslab, date,...
                       init,scaleS,register,useCSSS,perslab,...
-                      fix,smc,state0);
+                      fix,0,state0);
 
 
         disp(['completed: ' region ', id: ' num2str(roundid) ...
@@ -103,7 +129,7 @@ try
 
 
         rates = savePosterior(thetas, sl, slab, amparam, burnin, ...
-                              jump, true, useCSSS, true, fix,nslab,smc,roundid,{'full'});
+                              jump, true, useCSSS, true, fix,nslab,smc,roundid,{'full'},false);
 
     end
     stopped = 0;
@@ -145,13 +171,15 @@ if gelmanRub
                 end
             end
 
-            subset = {'sigma' 'gammaI' 'gammaH' 'gammaW'};
-            for nid = 1:numel(subset)
-                ix = ismember(ratenames,subset(nid));
-                subplot(numel(subset),1,nid)
-                plot(1./squeeze(X(ix,:,:)))
-                title(ratenames{nid})
-            end
+            % Uncomment below  if you want to see some example trajectories
+            %
+            % subset = {'sigma' 'gammaI' 'gammaH' 'gammaW'};
+            % for nid = 1:numel(subset)
+            %     ix = ismember(ratenames,subset(nid));
+            %     subplot(numel(subset),1,nid)
+            %     plot(1./squeeze(X(ix,:,:)))
+            %     title(ratenames{nid})
+            % end
 
             % Gelman-Rubin statistic
             % chain mean
@@ -180,13 +208,13 @@ end
 % remove-burnin
 date_ = num2str(date(end));
 ending = num2str(nslab);
-saveit=true; % false if testing
+
 
 for i = reg
     region = regionList{i};
     try
         post0 = [prefix '/slam' date_ '_' region '_monthly_' ending '_run'];
-        file = {[post0 '1'] [post0 '2'] [post0 '3'] [post0 '4']};
+        file = strcat(post0, strsplit(num2str(1:runs)));
         if contains(register,'URDME')
             for i = 1:numel(file)
                 file{i} = [file{i} '_' register];
@@ -212,7 +240,7 @@ for i = reg
 
         load(file{1},'amparam','slabs');
         [rates,rates100,ratesR0] = savePosterior(mat, sl, slabs, amparam, 1e0, ...
-                                                 1e0, true, useCSSS, savetofile, fix,nslab,smc,[],{'full' '100'});
+                                                 1e0, true, useCSSS, savetofile, fix,nslab,smc,[],{'full' '100'},false);
     catch
         warning(['missing region: ' region])
     end

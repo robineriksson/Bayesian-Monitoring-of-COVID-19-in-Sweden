@@ -8,6 +8,7 @@ function [init] = getInit(useinit, filepath, final)
 %   FINAL    - true or false, if true start from last value, otherwise
 %              start from mean value.
 
+% R. Eriksson 210522
 
 if useinit
  init = struct();

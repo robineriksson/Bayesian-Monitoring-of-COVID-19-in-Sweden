@@ -36,23 +36,13 @@ end
 % ****************************************************
 
 
-regionList = regions();
-
-% matlab structs, does not allow åäö and ' ' in naming of fields.
-regionList_nonnordic = strrep(regionList,'ö','o');
-regionList_nonnordic = strrep(regionList_nonnordic,'Ö','O');
-regionList_nonnordic = strrep(regionList_nonnordic,'ä','a');
-regionList_nonnordic = strrep(regionList_nonnordic,'å','a');
-regionList_nonnordic = strrep(regionList_nonnordic,' ','_');
-
+regionList = regions(false);
 
 datastore = struct();
 
 
 for rid = reg
     region = regionList{rid}; % to character
-    region_ = regionList_nonnordic{rid};
-
 
     % construct posterior file name
     % folder for posteriors
@@ -98,11 +88,6 @@ for rid = reg
     % Population data
     load Ncounties
     Npop = sum(N,1);
-    regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-                  'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-                  'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-                  'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-                  'Jämtland' 'Västerbotten' 'Norrbotten'};
     regi = find(ismember(regionList,region));
 
 
@@ -115,18 +100,18 @@ for rid = reg
     sigmahat_tot = sqrt(sigmahat_I.^2+var(log(YI),0,3));
 
 
-    datastore.(region_).YR = YI;
-    datastore.(region_).muhat = muhat_I;
-    datastore.(region_).sigmahat = sigmahat_tot;
-    datastore.(region_).DATES = DATES;
-    datastore.(region_).tspan_filter = tspan_filter;
+    datastore.(region).YR = YI;
+    datastore.(region).muhat = muhat_I;
+    datastore.(region).sigmahat = sigmahat_tot;
+    datastore.(region).DATES = DATES;
+    datastore.(region).tspan_filter = tspan_filter;
 
     %% process for table
-    datastore.(region_).low95 = exp(datastore.(region_).muhat - 1.96*datastore.(region_).sigmahat);
-    datastore.(region_).low68 = exp(datastore.(region_).muhat - 1.0*datastore.(region_).sigmahat);
-    datastore.(region_).mid = exp(datastore.(region_).muhat);
-    datastore.(region_).high68 = exp(datastore.(region_).muhat + 1.0*datastore.(region_).sigmahat);
-    datastore.(region_).high95 = exp(datastore.(region_).muhat + 1.96*datastore.(region_).sigmahat);
+    datastore.(region).low95 = exp(datastore.(region).muhat - 1.96*datastore.(region).sigmahat);
+    datastore.(region).low68 = exp(datastore.(region).muhat - 1.0*datastore.(region).sigmahat);
+    datastore.(region).mid = exp(datastore.(region).muhat);
+    datastore.(region).high68 = exp(datastore.(region).muhat + 1.0*datastore.(region).sigmahat);
+    datastore.(region).high95 = exp(datastore.(region).muhat + 1.96*datastore.(region).sigmahat);
 
 
 
@@ -149,12 +134,12 @@ policy_dates = {200313 200605 200831 211101 211122 220209};
 
 for ri = reg
     region = regionList{ri}; % to character
-    region_ = regionList_nonnordic{ri};
-    DATES = datastore.(region_).DATES;
+
+    DATES = datastore.(region).DATES;
     t = 1:numel(DATES);
 
     %   if numel(reg) > 1
-    %     disp([num2str(ri) ': ' region_ '. ' '<key>']);
+    %     disp([num2str(ri) ': ' region '. ' '<key>']);
     %     pause;
     %   end
     %
@@ -196,10 +181,10 @@ for ri = reg
 
 
     % illustrate the
-    tspan_filter = datastore.(region_).tspan_filter;
-    plot(t(tspan_filter),datastore.(region_).mid,'Color',filter_c)
-    pred_68 = [datastore.(region_).low68, fliplr(datastore.(region_).high68)];
-    pred_95 = [datastore.(region_).low95, fliplr(datastore.(region_).high95)];
+    tspan_filter = datastore.(region).tspan_filter;
+    plot(t(tspan_filter),datastore.(region).mid,'Color',filter_c)
+    pred_68 = [datastore.(region).low68, fliplr(datastore.(region).high68)];
+    pred_95 = [datastore.(region).low95, fliplr(datastore.(region).high95)];
 
     pred_tt =  [t(tspan_filter), fliplr(t(tspan_filter))];
     patch(pred_tt, pred_68,...
@@ -265,7 +250,7 @@ for ri = reg
 
     yyaxis left
     ylimits = ylim;
-    ylim([0, min(max(datastore.(region_).high95), 2*max(ydata))]);
+    ylim([0, min(max(datastore.(region).high95), 2*max(ydata))]);
 
 
     grid on
@@ -282,7 +267,7 @@ for ri = reg
 
     % save to file
     savepath = mfilename('fullpath');
-    savepath1 = [savepath(1:end-15) 'Iinc_data_' region_];
+    savepath1 = [savepath(1:end-15) 'Iinc_data_' region];
     if savetofile % true if we should compute the error table
 
 
@@ -303,10 +288,10 @@ for ri = reg
     figure(2), clf
 
     % mu is the mean of the normal
-    mu = exp(datastore.(region_).muhat)';
+    mu = exp(datastore.(region).muhat)';
     % sig is the std which can be found as the difference between:
     % sig = (mean) - (mean - 1 std)
-    sig = exp(datastore.(region_).muhat').*(1 - exp(-datastore.(region_).sigmahat'));
+    sig = exp(datastore.(region).muhat').*(1 - exp(-datastore.(region).sigmahat'));
 
     % Z = X / Y ~ Cauchy, but approx Normal with:
     mu_Z = mu ./ ydata(tspan_filter);
@@ -389,7 +374,7 @@ for ri = reg
 
 
     savepath = mfilename('fullpath');
-    savepath2 = [savepath(1:end-15) 'Iinc_fac_' region_];
+    savepath2 = [savepath(1:end-15) 'Iinc_fac_' region];
     if savetofile % true if we should compute the error table
 
 

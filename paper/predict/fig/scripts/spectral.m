@@ -12,7 +12,7 @@ prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1_100';
-regionList = regions;
+regionList = regions(false);
 reg = 1:21;
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');

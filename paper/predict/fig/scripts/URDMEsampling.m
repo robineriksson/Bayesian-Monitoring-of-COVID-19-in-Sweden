@@ -36,6 +36,7 @@ stopdate = '210531';
 divide = true; % I -> H, W -> H2, D = {D_I, D_H, D_W};
 Psamples = inf;% % inf: mean posterior, else: N # of posterior samples.
 
+regionList = regions(false);
 % construct the rates to run
 P = load('slam210531_mean_monthly_1');
 P = P.rates;
@@ -70,7 +71,7 @@ covid19enger_run_post
 %
 % pack up output
 clear D
-D.regions = regions(reg);
+D.regions = regionList(reg);
 D.date = DATES;
 D.U = reshape(permute(umod.U(:,:,:,:),[2 1 3 4]),numel(DATES),Nspecies,Nvoxels,Nreplicas,[]);
 D.vars = umod.private.Species;
@@ -216,12 +217,12 @@ for regid=regplot
   grid on
   axis tight
 
-  switch regions{regid}
+  switch regionList{regid}
     case 'Gotland'
       ylim([0,25]);
     case 'Blekinge'
       ylim([0,60]);
-    case 'Jämtland'
+    case 'Jamtland'
       ylim([0,35]);
   end
 
@@ -234,7 +235,7 @@ for regid=regplot
   % ***************************************
   savepath = mfilename('fullpath');
   savepath = [savepath(1:end-21) 'URDME_samples'];
-  savepath = [savepath '_' strrep(regions{reg(regid)},' ','_')];
+  savepath = [savepath '_' strrep(regionList{reg(regid)},' ','_')];
   savepath = strrep(savepath,'å','a');
   savepath = strrep(savepath,'ä','a');
   savepath = strrep(savepath,'ö','o');

@@ -23,7 +23,7 @@ if ~exist('register','var')
 end
 
 %% region list
-regionList = regions();
+regionList = regions(false);
 
 
 
@@ -254,6 +254,7 @@ for region = reg % region to estimate beta for
     end
 
     %%
+    regionList_notnordic = regions(false);
     savename=['dynOptPosterior' num2str(enddate) '_' regionList{region}];
     if urdme
         savename = [savename '_URDME' num2str(urdme)];

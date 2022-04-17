@@ -20,7 +20,7 @@ dateend_dyn = '210531';
 shiftstr = '_1';
 datestart = 200401; % where to start the plot
 
-regions_ = regions();
+regions_ = regions(false);
 
 for rid = reg
 

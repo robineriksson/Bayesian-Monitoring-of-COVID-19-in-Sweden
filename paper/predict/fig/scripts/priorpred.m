@@ -18,7 +18,7 @@ smoothD = true;
 plotfun = @plot;
 
 
-regionList = regions();
+regionList = regions(false);
 region = regionList{reg};
 
 abspath = mfilename('fullpath');
@@ -40,7 +40,7 @@ else
 
     % dates that "date" the data used
     datadate     = [200401 210531]; % change end date here
-    datasource = 'C19';
+    register = 'C19';
     saveall      = true;
     noNetwork    = true;
 
@@ -84,7 +84,7 @@ else
 
     % load filter data
 
-    Data = loadData(datasource);
+    Data = loadData(register);
     Data = polishData(Data,'D','Dinc',1);
     Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
 
@@ -92,10 +92,10 @@ else
     if test >= 4
         D = 1;
         lan = 1;
-        Data.D = Data.D(:,strcmp(Data.regions, region));
-        Data.W = Data.W(:,strcmp(Data.regions, region));
-        Data.H = Data.H(:,strcmp(Data.regions, region));
-        Npop = Npop(strcmp(Data.regions, region));
+        Data.D = Data.D(:,test-3);
+        Data.W = Data.W(:,test-3);
+        Data.H = Data.H(:,test-3);
+        Npop = Npop(test-3);
         Data.regions = Data.regions(test-3);
         test = 0;
     end
@@ -195,7 +195,7 @@ else
 
     save([abspath(1:end-9),'priorpred_' region '.mat'],...
          'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
-         'tspan_data','lan','useCSSS','datasource','DATES','TSPAN',...
+         'tspan_data','lan','useCSSS','register','DATES','TSPAN',...
          'lag','slabs','Data');
     disp('saved priorpred.mat')
 end
@@ -228,7 +228,7 @@ stdY_swe = stdZ(ind,:,:);
 % scaling for plots
 Ydata_swe_plot = Ydata_swe;
 smoothing = @(x) sgolayfilt(x,0,7);
-Ydata_swe_plot(Dcomp,:) = Data.Dinc(tspan_data,find(strcmp(regions,region)));
+Ydata_swe_plot(Dcomp,:) = Data.Dinc(tspan_data,find(strcmp(regionList,region)));
 if smoothD
     Ydata_swe_plot(Dcomp,:) = smoothing(Ydata_swe_plot(Dcomp,:));
 end
@@ -238,9 +238,6 @@ Y_swe_plot = Y_swe;
 
 stdY_swe_plot = stdY_swe;
 
-if strcmp(datasource,'URDME')
-    Ydata_swe_plot(Icomp,:) = Data.I;
-end
 filtval = 1e-1;
 Y_sweF = max(Y_swe,filtval); % filtered values
 Y_sweF_plot = max(Y_swe_plot,filtval); % filtered values
@@ -376,11 +373,11 @@ if reg == 2
 
     yyaxis left
     ylim([0,200])
-else
-  yyaxis left
-  ylim([0,1200])
-  yyaxis right
-  ylim([0, 220])
+elseif reg == 1
+        yyaxis left
+        ylim([0,1200])
+        yyaxis right
+        ylim([0, 220])
 end
 
 

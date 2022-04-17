@@ -1,6 +1,6 @@
-function [L, state, Lsum] = logSL(rates,state0,G,D,obsrates,Q,Ydata,...
+function [L, state, Lsum] = logKL(rates,state0,G,D,obsrates,Q,Ydata,...
   slab,idTime,exception)
-%[LSUM, STATE]= LOGSL(RATES,sate0, G,D,OBSRATES,YDATA,SLAB,NTIME) give the marginal
+%[LSUM, STATE]= LOGKL(RATES,sate0, G,D,OBSRATES,YDATA,SLAB,NTIME) give the marginal
 %   likelihood for RATES per SLAB using the Kalman filter in the data in
 %   YDATA. Supplying the struct EXCEPTION allows for handeling of the early
 %   rejections.
@@ -12,8 +12,10 @@ function [L, state, Lsum] = logSL(rates,state0,G,D,obsrates,Q,Ydata,...
 %   LSUM has size (unique(slab),numel(rates)), where numel(rates) :=
 %   numel(rates.sigma)
 %
-%
 %   see also C19FILT for futher definition.
+
+% R. Eriksson 210522
+
 if nargin < 10
   exception = [];
 end

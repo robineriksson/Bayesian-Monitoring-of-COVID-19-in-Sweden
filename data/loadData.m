@@ -31,7 +31,6 @@ function Data = loadData(regName,quiet)
 %   'FHM_R'          Estimated R per region
 %   'UWW'            Uppsala Waste water reported level for Uppsala county.
 %   'FHM_vac'        FHM, # of vaccinated, 1st and 2nd dose, per region
-%   'RU_old'         **TEMPORARY** C19 + closed source 'Region Uppsala'
 %   'OWID_swe'           Number of tests administered in Sweden total
 %   'FHM_test'       Number of tests per 1000 per region
 %
@@ -112,7 +111,7 @@ switch regName
     fileName = 'SIR/SIR_swe.csv';
   case 'CSSS'
     regName_ = 'CSSS';
-    fileName = 'CSSS/CSSS.csv';  
+    fileName = 'CSSS/CSSS.csv';
   case 'CSSS_public'
     regName_ = 'CSSS';
     fileName = 'CSSS/CSSS_public.csv';
@@ -134,15 +133,18 @@ switch regName
   case 'FHM_vac'
     regName_ = 'FHM';
     fileName = 'FHM/FHM_vac.csv';
-  case 'RU_old'
-    regName_ = 'RU';
-    fileName = 'RU/C19RU_old.csv';
   case 'OWID_swe'
     regName_ = 'OWID';
     fileName = 'OWID/OWID.csv';
   case 'FHM_test'
     regName_ = 'FHM';
     fileName = 'FHM/FHM_test.csv';
+  case 'test1'
+    fileName = 'test1.csv';
+  case 'test2'
+    regName_ = '';
+    fileName = 'test2.csv';
+
   otherwise
       error('Unknown source.');
 end
@@ -160,7 +162,9 @@ filecol = col(1);
 datecol = col(3);
 hashcol = col(4);
 row = find(fsetop('ismember',revTable.textdata(:,filecol),{fileName}));
-
+if numel(row) == 0
+    error(sprintf('Source = %s, is not included in source table.', regName));
+end
 % metainformation
 revData = revTable.textdata(row,datecol);
 revData = datestr(revData{:});
@@ -185,8 +189,12 @@ catch
   % (§2) considerably slower...
   l_disp(quiet,['New load of data for register ''' regName '''...']);
   csvpath = [fullpath(1:end-8) 'sources/' fileName];
-  p = readcell(csvpath);
-  l_disp(quiet,'   ...done. Will load faster next time.');
+  try
+      p = readcell(csvpath);
+      l_disp(quiet,'   ...done. Will load faster next time.');
+  catch
+      error(sprintf('Cannot read source = %s.', regName));
+  end
 end
 
 % prepare output struct
@@ -292,15 +300,15 @@ Data.hash = fsetop('check',cat(2,c{:})');
 % for some reason, load needs more detailed path than readcell:
 hashpath = [fullpath(1:end-8) 'sources/' regName_ '/' regName 'hash.mat'];
 if ~exist(hashpath,'file')
-  % (§2a) full load of data, no old hash found so new hash generated 
+  % (§2a) full load of data, no old hash found so new hash generated
   warning(sprintf('Could not load hash for register ''%s''.',regName));
   disp('Saving new hash, saving data, and updating sources.csv...');
   hash0 = hash;
   save(hashpath,'hash0');
-  
+
   % save to file for quick load next time
   save(datapath,'Data');
-  
+
   % register new hash in source.csv to trigger load next time
   revTable.data(row-1) = Data.hash;
   revTable.textdata(2:end,hashcol) = num2cell(uint32(revTable.data));
@@ -341,10 +349,10 @@ else
     l_disp(quiet,sprintf('Hash MATCH for register ''%s''.',regName));
     l_disp(quiet,'This indicates missing .mat-file for fast load.');
     l_disp(quiet,'Saving data, and updating sources.csv...');
- 
+
     % save to file for quick load next time
     save(datapath,'Data');
-  
+
     % register new hash in source.csv to trigger load next time
     revTable.data(row-1) = Data.hash;
     revTable.textdata(2:end,hashcol) = num2cell(uint32(revTable.data));

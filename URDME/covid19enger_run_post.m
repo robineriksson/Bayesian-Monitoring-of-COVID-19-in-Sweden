@@ -17,7 +17,7 @@ inline = false; % use inline propensities or not
 % pick region(s) + date
 %reg = 1; % *** region select
 %date = '210523';
-regions = regions;
+regionList = regions(false);
 Nvoxels = numel(reg);
 fprintf('\n*** EngEr C19 in %d region(s): Nreplicas = %d, Psamples = %d ***\n', ...
   Nvoxels,Nreplicas,Psamples);
@@ -48,7 +48,7 @@ resultdir = postpath();
 posterior = cell(1,Nvoxels);
 %u0 = []; phi0 = zeros(1,Nvoxels);
 for i = 1:Nvoxels
-  postfile = ['slam' date '_' regions{reg(i)} '_monthly_1_100.mat'];
+  postfile = ['slam' date '_' regionList{reg(i)} '_monthly_1_100.mat'];
   posterior{i} = strcat([resultdir 'KLAM/perRegion/'],postfile);
 end
 

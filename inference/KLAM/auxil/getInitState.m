@@ -6,6 +6,8 @@ function state0 = getInitState(useinit, date, region)
 %   If USEINIT = false, then the function returns an empty variable. This
 %   functionality is included to reduce the size of the runnable scripts.
 
+% R. Eriksson 210522
+
 if useinit
   % folder location
   folder = mfilename('fullpath');

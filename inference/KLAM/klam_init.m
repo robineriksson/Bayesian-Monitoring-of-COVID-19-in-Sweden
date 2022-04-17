@@ -1,7 +1,7 @@
 function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
   region,nMCMC,verb,nslab,date,init,scaleS,register,useCSSS, ...
   perslab,fix,ksmc,state0)
-%KLAM_INIT Bayesian inference, by Kalman, incrementally by slabs.
+%KLAM_INIT Kalman Likelihood Adaptive Metropolis, incrementally by slabs.
 %   [THETAS,SL,SLAB,AMPARAM,AMFUNC,OUTVERB] =
 %   SLAM_INIT(REGION,NMCMC,VERB,NSLAB,INIT,SCALES,REGISTER,USECSSS,
 %   PERSLAB,FIX) computes the (approximate) Bayesian posterior of the specified
@@ -36,7 +36,6 @@ function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
 %   to be used for the covariance estimate for the AM chain, and *nslab*
 %   number of slabs used for the initial guess.
 %
-%
 %   SCALES - step scaling parameter Sd affects the acceptance rate, in
 %   general, smaller Sd gives higher acceptance rate and vice versa. SCALES
 %   then allows to scales the standard Sd implemented in this function,
@@ -58,9 +57,8 @@ function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
 %   See also, am.m (or smc.m) which is called from this function to generate the
 %   posterior samples.
 
-% SLAM (MCMC) inference
+% R. Eriksson 2020-10-06
 
-% R. Eriksson 201006
 switch nargin
   case 1
     nMCMC=1e4;

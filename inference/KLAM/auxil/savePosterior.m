@@ -1,28 +1,47 @@
 function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, ...
                                 burnin,jump, perRegion, useCSSS,tosave,...
-                                fix,slabtype,smc,id,type)
+                                fix,slabtype,smc,id,type,fromNordic)
 %RATES = SAVEPOSTERIOR saves the posterior in the correct format.
 %   SAVEPOSTERIOR formulates the posterior file that is generated using
 %   KLAM and then loaded by other functions, e.g., posteriorenger.m
 %
 %   *Input*
-%   THETAS    - posterior matrix.
-%   KL        - (synthetic) likelihood for each slab and sample.
-%   SLAB      - The slabs used in the posterior.
-%   AMPARAM   - parameters, and others, used in the AM algorithm, as data
-%   info.
-%   BURNIN    - what burnin length to use when storing the markov chain.
-%   JUMP      - For large files, we cannot store all samples, only store
+%   THETAS - posterior matrix.
+%
+%   KL - (synthetic) likelihood for each slab and sample.
+%
+%   SLAB - The slabs used in the posterior.
+%
+%   AMPARAM - parameters, and others, used in the AM algorithm, as
+%   data info.
+%
+%   BURNIN - what burnin length to use when storing the markov chain.
+%
+%   JUMP - For large files, we cannot store all samples, only store
 %   every JUMP value.
-%   PERREGION - Was the posterior generated using single region data or
-%               transports?
-%   USECSSS   - if CSSS data was used durring the training, csss tag is
-%               then added to the name.
-%   TOSAVE    - true/false, if false only return don't save the file.
 %
-%   FIX       - true/false, if sigma=gammaI or sigma!=gammaI
+%   PERREGION - Was the posterior generated using single region data
+%   or transports?
 %
-%   SLABTYPE  - {0,1,2,3}, where are the slab cuts placed?
+%   USECSSS - if CSSS data was used durring the training, csss tag is
+%   then added to the name.
+%
+%   TOSAVE - true/false, if false only return don't save the file.
+%
+%   FIX - true/false, if sigma=gammaI or sigma!=gammaI
+%
+%   SLABTYPE - {0,1,2,3}, where are the slab cuts placed?
+%
+%   SMC - IF the sampler was of smc type or not
+%
+%   ID - If say, multi-chain, and appends the ID to the name
+%
+%   TYPE - one, or several of {'full','100','R0'}, indicates what type
+%   of posterior file to save. 100 and R0 will be much smaller in
+%   size.
+%
+%   FROMNORDIC - if region name in the filename should be converted
+%   from Nordic formating åäö to English friendly name.
 %
 %   *Output*
 %   RATES    - the struct that is stored in the display message.
@@ -40,6 +59,7 @@ if nargin < 8
   slabtype=0;
   smc=0;
   id=[];
+  type
 end
 
 if smc
@@ -131,7 +151,17 @@ else
 end
 filename = [filename  num2str(amparam.date(end))];
 
-filename = [filename '_' amparam.region '_monthly'];
+% convert to english friendly naming
+if fromNordic
+    regionList_nordic = regions(true);
+    regionList = regions(false);
+    region = regionList{strcmp(amparam.region, regionList_nordic)}
+else
+    region = amparam.region;
+end
+filename = [filename '_' region '_monthly'];
+
+
 if useCSSS
   filename = [filename '_csss'];
 end

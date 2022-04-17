@@ -30,26 +30,20 @@ end
 illustrate = true;
 
 % which regions to include (see regionList below)
-reg = [1];%1:21;
+if ~exist('reg','var')
+    reg = 1;
+end
+
+if reg ~= 1
+    warning('validating data is not present for regions other than Stockholm');
+end
 
 % dates of interest | for table
 doi = [200801 201001 201201 210201 210401];
 % ****************************************************
 
 
-regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-    'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-    'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-    'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-    'Jämtland' 'Västerbotten' 'Norrbotten'};
-
-% matlab structs, does not allow åäö and ' ' in naming of fields.
-regionList_nonnordic = strrep(regionList,'ö','o');
-regionList_nonnordic = strrep(regionList_nonnordic,'Ö','O');
-regionList_nonnordic = strrep(regionList_nonnordic,'ä','a');
-regionList_nonnordic = strrep(regionList_nonnordic,'å','a');
-regionList_nonnordic = strrep(regionList_nonnordic,' ','_');
-
+regionList = regions(false);
 
 datastore = struct();
 datastore.table = [];
@@ -57,9 +51,7 @@ datastore.table_ci = [];
 datastore.tablerows= {};
 
 for i = reg
-    region = regionList{i}; % to character
-    region_ = regionList_nonnordic{i};
-
+    region_ = regionList{i}; % to character
 
     % construct posterior file name
     % folder for posteriors
@@ -105,11 +97,6 @@ for i = reg
     % Population data
     load Ncounties
     Npop = sum(N,1);
-    regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-        'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-        'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-        'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-        'Jämtland' 'Västerbotten' 'Norrbotten'};
     regi = find(ismember(regionList,region));
 
     YR = sum(ZR,1);
@@ -355,13 +342,6 @@ if illustrate
               'LineStyle',linestyle,'Color',[fhmcolor2 fhmalpha*256]/256,'lineWidth',1.5)
         end
 
-%         study_R95 = [study_pred(:,3)', fliplr(study_pred(:,4)')];
-%         pred_tt =  [datastore.(region).tspan_filter(xx_study) ...
-%             fliplr(datastore.(region).tspan_filter(xx_study))];
-%
-%         patch(pred_tt,study_R95, ...
-%             [0.9 0.9 0.9],'FaceAlpha',0.05, ...
-%             'LineStyle','none','FaceColor','k');
 
 
         plot(datastore.(region).tspan_filter(xx_vac),data_vac.V1(xx_vac_rev,i)/Npop(i),':k')

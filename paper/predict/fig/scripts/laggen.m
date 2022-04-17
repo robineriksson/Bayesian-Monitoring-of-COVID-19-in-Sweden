@@ -17,24 +17,22 @@ else
     error('plot type specified is not defined');
 end
 
+if ~exist('register','var')
+    register='C19'
+end
 % defaults
 posteriordate = '210531'; % change here
 ending        = '1_100'; % at what date does the slabs start.
 datadate     = [200401 210531] % change end date here
 
-datasource   = 'C19';
+
 useCSSS      = false;
-
 saveall      = true;
-
 noNetwork    = true;
 
 
-regionList_ = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
-  'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-  'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
-  'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
-  'Jämtland' 'Västerbotten' 'Norrbotten' 'Sweden'};
+regionList_ = regions(false);
+regionList_ = cat(1,regionList_,'Sweden');
 for rid = reg
   region = regionList_{rid}
   FINALRUN = true;

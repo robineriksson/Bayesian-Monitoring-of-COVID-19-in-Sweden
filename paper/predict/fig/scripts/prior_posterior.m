@@ -1,15 +1,19 @@
-%PRIORPOSTERIOR_PLOTS Plots of densities.
+%PRIOR_POSTERIOR Plots of densities.
 %
-%   figure(1) is a plot of the prior densities.
-%   figure(2) is a combined prior-posterior plot.
-%   figure(3) is a boxplot for slab-dependent parameters
 
 % S. Engblom 2021-04-03 (Revision)
 % S. Engblom 2020-10-26 (Minor revision)
 % S. Engblom 2020-10-24
 
-save2file=true;
-includeBias=false;
+
+if ~exist('reg','var')
+    reg = 1:21;
+end
+
+if ~exist('savetofile','var')
+    savetofile=false;
+end
+
 
 % load posterior
 Nsample = 1e4;
@@ -18,19 +22,9 @@ prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
 ending = '_1_100';
-regionList = regions;
-% $$$ % select through list and a search...
-% $$$ reg = {'Gävleborg' 'Uppsala' 'Södermanland' 'Östergötland' 'Gotland' ...
-% $$$        'Kronoberg' 'Kalmar' 'Jönköping' 'Blekinge' 'Halland' 'Värmland' ...
-% $$$        'Dalarna' 'Örebro' 'Västmanland'};
-% $$$ [~,reg] = fsetop('ismember',reg,regions);
+regionList = regions(false);
 
-% ...or directly by specifying here
-%reg = [16 11 5 7 9 13 14 15];
-
-if ~exist('reg','var')
-    reg = 1:21;
-end
+includeBias=false; % true if to include the bias estimate.
 
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
@@ -233,7 +227,7 @@ set(gcf,'Position',[100 100 700 400]);
 printpath = mfilename('fullpath');
 printpath = [printpath(1:end-23) 'posterior_sweden.pdf'];
 % print to file
-if save2file
+if savetofile
   %print('-depsc',printpath);
   print('-dpdf',printpath);
   % *** does not always work, run manually in this case:

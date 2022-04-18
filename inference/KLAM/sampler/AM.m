@@ -1,6 +1,7 @@
-function [thetas, sl, param, outverb] = AM(nMCMC, thetas, sl, param, funcs, Ydata, start, stop)
-%AM finds sampels from the (approximate) posterior using Adaptive
-%Metropolis.
+function [thetas, sl, param, outverb] = AM(nMCMC, thetas, sl, param, ...
+                                           funcs, Ydata, start, stop)
+% AM finds sampels from the (approximate) posterior using Adaptive
+% Metropolis.
 %   [THETAS, SL] = AM(NMCMC, THETAS, SL, PARAM, LOGKL, PRIOR, START, STOP)
 %   returns samples from the approximate posterior using the KLAM method.
 %

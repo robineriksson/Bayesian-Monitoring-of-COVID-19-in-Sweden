@@ -13,8 +13,8 @@ function [init] = getInit(useinit, filepath, final)
 if useinit
  init = struct();
  rates = posteriorenger([],filepath);
- % *** TEMPORARY ***
- % transition from new to old format.
+
+ % If old format is given, convert to new the new format.
  try
    rates.E2I = rates.F0;
    rmfield(rates,'F0');
@@ -23,9 +23,9 @@ if useinit
    rates.A2I = rates.F1;
    rmfield(rates,'F1');
  end
- % *** end ***
- 
- 
+
+
+
  init.meta = rates.meta; % when made into mat, this is lost.
  [rates0, rates0_names] = struct2mat(rates);
  if final

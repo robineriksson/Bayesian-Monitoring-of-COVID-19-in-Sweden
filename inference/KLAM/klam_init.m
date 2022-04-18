@@ -51,11 +51,12 @@ function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
 %
 %   FIX     - if sigma = gammaI/A or not
 %
+%   KSMC     - true if SMC sampler, else AM sampler
 %
-%   SMC     - true if SMC sampler, else AM sampler
+%   STATE0 - initial state to start simulations from. If left empty,
+%   start from scratch.
 %
-
-%   See also, am.m (or smc.m) which is called from this function to generate the
+%   See also, AM.m which is called from this function to generate the
 %   posterior samples.
 
 % R. Eriksson 2020-10-06
@@ -221,9 +222,6 @@ else % load empirical data
     D = 1;
   elseif any(strcmp(region, Data.regions))% other: Stockholm, Uppsala, etc.
     ixRegion = find(strcmp(region,Data.regions));
-    %   if isempty(ixRegion)
-    %     error([region + ' is not a recognized region']);
-    %   end
     lan = lan(ixRegion);
     fnames = fieldnames(Data);
     for k = 1:numel(fnames)
@@ -294,7 +292,8 @@ Ydata = permute(Ydata,[3 2 1]);
 
 amparam.date = Data.date(ixdata); % save dates
 
-%% ** TEMPORARY SOUTION **
+% Note, CSSS data is not included in the release as it was not used in
+% the the paper to achieve any of the presented result.
 if useCSSS
   % define a common time frame, including dates
   TSPAN = Data.date;
@@ -312,9 +311,6 @@ if useCSSS
   Ilo = csss.Ilo(:,ixRegion);
   Imid = csss.Imid(:,ixRegion);
 
-
-
-
   Ihi(csss.date > 201231) = []; % data post 31 Dec 2020, is "bad".
   Imid(csss.date > 201231) = [];
   Ilo(csss.date > 201231) = [];
@@ -329,7 +325,7 @@ if useCSSS
   % insert CSSS data
   Idata = permute([NaN(ixcsss(1)-ixdata(1),1); Imid; NaN(ixdata(end)-ixcsss(end),1)],[3 2 1]);
   Ydata = cat(1,Ydata,Idata);
-  %%
+  %
   amparam.dataHash = [amparam.dataHash csss.hash];
   amparam.dataRev  = [amparam.dataRev ' | ' csss.rev];
   amparam.dataReg  = [amparam.dataReg ' | ' csss.reg];
@@ -349,13 +345,11 @@ if useCSSS
   obsrates.R0 = [ones(3,1); 1e-4];
   obsrates.rdiag = [(1e-3)^2*ones(3,1); varI];
 end
+
+
+
+%% specify output model
 H = getC19obs(obsrates); % i.e., "H", "W", "D", ["I (in percent)" if csss]
-
-% * END OF TEMPORARY SOLUTION *
-%%
-
-% specify output model
-%H = getC19obs(obsrates); % i.e., "H", "W", "D"
 % read as: "Stockholm", "Uppsala", "Sweden total"
 G = kron(T,H);
 
@@ -527,9 +521,6 @@ else % use AM
     extendFlag=max(0,amparam.nslab - size(rates.R0,1));
     if size(rates.R0,1) < amparam.nslab % extend!
       % recognizes that we need to extend the initial covariance guess as well.
-
-      %numel(unique(amparam.dynamic))*(amparam.nslab - size(rates.R0,1));
-
       % generate a sample at the mean of prior
       rates_ = priorenger(inf, amparam.fix, amparam.nslab,amparam.hypfile);
 
@@ -590,11 +581,6 @@ end
 % that will change durring the iterations. Therefore, we create an
 % anonymous function which reduce the number of input needed per
 % iteration.
-%
-% logLL - log-kalman-likelihood has a legacy name from the
-% approximate inference method synthetic likelihood adaptive
-% metropolis, or SLAM.
-
 
 % these will be used durring inference
 exception.LB = -1e2;
@@ -712,7 +698,6 @@ if ~ksmc
     % empty initalization can be done by a scaled eye matrix or a random one.
     % What one needs to remember is that the covariance matrix is SPD.
     amparam.sigma = 1e-3*eye(numel(theta0));
-    %amparam.sigma = 1e-3*generateSPDmatrix(numel(theta0));
     amparam.xcov = amparam.sigma;
   end
 end
@@ -751,12 +736,7 @@ amfunc.logKL = logKL_func;
 amfunc.prior = prior_func;
 amfunc.m2s = m2s;
 
-%% likelihood smoothing of data
-% if lsmoothing
-%   Ydata = likelihoodSmooth(rates,Ydata,logKL_func, 5);
-% end
-
-%%
+%% Generatesamples
 if ksmc % use smc sampler
   amfunc.metro = @(nMCMC,thetas,sl,amparam,amfunc,ksmc,empty) ...
     SMC(nMCMC,thetas,sl,amparam,amfunc,ksmc,empty);
@@ -767,28 +747,11 @@ else
   else
     amfunc.metro = @AM;
   end
-  ksmc=2; % cheaky trick to solve number of inputs.
+  ksmc=2; % flag that indicates the solve number of inputs.
 end
 tic;
 [thetas, sl, amparam, outverb] = amfunc.metro(nMCMC, thetas, sl, ...
   amparam, amfunc,Ydata,ksmc,nMCMC);
 outverb.tt = toc;
 amparam.region = region;
-end
-
-
-
-
-function A = generateSPDmatrix(n)
-% Generate a dense n x n symmetric, positive definite matrix
-
-A = randn(n,n); % generate a random n x n matrix
-
-% construct a symmetric matrix using either
-A = 0.5*(A+A');
-
-% since A(i,j) < 1 by construction and a symmetric diagonally dominant matrix
-%   is symmetric positive definite, which can be ensured by adding nI
-A = A + n*eye(n);
-
 end

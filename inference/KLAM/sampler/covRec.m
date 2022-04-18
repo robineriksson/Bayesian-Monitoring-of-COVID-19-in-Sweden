@@ -5,7 +5,7 @@ function [xcov,xmean]=covRec(x,oldcov,oldmean,w)
 %   the recursive sample covariance, using the new sample X and the old covariance
 %   OLDCOV and the old mean OLDMEAN, on the W:th sample.
 %
-%   X       - a [1 x n] matrix. 
+%   X       - a [1 x n] matrix.
 %   OLDCOV  - previous step sample covariance.
 %   OLDMEAN - previous step sample mean.
 %   W       - sample number, e.g., w \in {1:n}
@@ -22,11 +22,8 @@ end
 
 if w > 0 && ~isempty(oldcov) % update recursively
   xmean  = oldmean + 1/(w)*(x-oldmean);
-  
-  % biased estimate
-  %xcov = (w-1)/w*oldcov + (w-1)/w^2*(x - oldmean)'*(x-oldmean);
-  
-  % unbiased estimate
+
+  % unbiased covariance estimate
   xcov =  oldcov + 1/(w-1)*( (w-1)/(w)*((x-oldmean)'*(x-oldmean)) - oldcov);
 else % initialize
   xmean = x;

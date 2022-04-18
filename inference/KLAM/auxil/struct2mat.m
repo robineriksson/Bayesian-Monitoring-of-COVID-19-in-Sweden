@@ -10,7 +10,7 @@ function [x0, ratenames, meta] = struct2mat(rates)
 %   *output*
 %   X0 - appended rates in matrix form.
 %   RATENAMES - fieldnames of rates.
-%   meta - struct that hold the meta variables of the rates structure:
+%   META - struct that hold the meta variables of the rates structure:
 %   {hash Fhash rev}.
 
 % R. Eriksson 210522
@@ -34,7 +34,7 @@ slabdependent = {};
 for i = 1:numel(fnames)
   name = fnames{i};
   if size(rates.(name),1) > 1
-    slabdependent{numel(slabdependent)+1} = name; 
+    slabdependent{numel(slabdependent)+1} = name;
   end
 end
 
@@ -75,13 +75,13 @@ if any(strcmp(fieldnames(rates), 'hash'))
   catch
     meta.hash = [];
   end
-  
+
   try
     meta.Fhash = rates.Fhash;
   catch
     meta.Fhash = [];
   end
-  
+
   try
     meta.rev = rates.rev;
   catch

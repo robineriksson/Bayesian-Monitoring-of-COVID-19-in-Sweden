@@ -1,12 +1,12 @@
 function [rates] = structMerge(rates0,rates1,keep0,keep1)
-%RATES = structMerge(RATES0,RATES1,KEEP0,KEEP1) merges RATES1 onto RATES0
+% RATES = structMerge(RATES0,RATES1,KEEP0,KEEP1) merges RATES1 onto RATES0
 %   and while keepinging only KEEP0 [rows, cols] from RATES0 and KEEP1
 %   [rows, cols] form RATES1.
 %
 %   The output, RATES, will have size
 %   size(RATES0)-KEEP0+size(RATES1)-KEEP1. Where RATES0 and RATES1 are of
 %   the same type.
-% 
+%
 %   KEEP0 = {rows, cols}, cell of integer arrays.
 %   KEEP1 = {rows, cols}
 
@@ -66,4 +66,3 @@ for i = 1:numel(names)
   end
 end
 end
-

@@ -1,13 +1,7 @@
-%RECPLOT generates the (R)ecovered estimate plot and TABLE
-%
-% How to use:
-% 1) run weekly_predict for:
-%    a) Uppsala, Stockholm, Sweden
-%    b) type 1 (lag 14 ahead)
-%    c) specific posterior and dates
-% 2) Run this script, and the final table, table_R is in latex form,
-%    or have a look at datastore.table_ci for the credible interval in cell
-%    string format.
+% IINCFAC generates two figures: model estimate symptomatic incidence
+% vs postitive testing incidence AND the factor between these two. The
+% code as a whole is similar in form to RECOVERED.m. The model
+% estimate is loaded from a posterior Kalman simulation.
 %
 
 % R. Eriksson 2021-05-12.
@@ -88,6 +82,11 @@ for rid = reg
     % Population data
     load Ncounties
     Npop = sum(N,1);
+    regionList = {'Stockholm' 'Uppsala' 'Södermanland' 'Östergötland' ...
+                  'Jönköping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
+                  'Skåne' 'Halland' 'Västra Götaland' 'Värmland' 'Örebro' ...
+                  'Västmanland' 'Dalarna' 'Gävleborg' 'Västernorrland' ...
+                  'Jämtland' 'Västerbotten' 'Norrbotten'};
     regi = find(ismember(regionList,region));
 
 

@@ -29,14 +29,14 @@ if nargin < 8, lag=1; end
 if nargin < 9
   % model error (Q0+qdiag*[...])
   Id = speye(nstate*nlan);
-  % *** "optimal" defaults?
-  %Q0 = 0.1^2
-  %Q0 = Q0*Id; % absolute term
   Q.Q0 = Id;
   Q.qdiag = 0.05^2; % relative term, taken as +/- 5% error in rates
-  %qdiag = 0.01^2; % relative term, taken as +/- 1% error in rates
-  %qdiag = 0.1^2;% relative term, taken as +/- 10% error in rates
-  %qdiag = 0.25^2; % relative term, taken as +/- 25% error in rates  
+  % Alternatively one can increase the considired error in the
+  % rates. We did however find the above to be optimal through trial
+  % and error.
+  % Q.qdiag = 0.01^2; % relative term, taken as +/- 1% error in rates
+  % Q.qdiag = 0.1^2;% relative term, taken as +/- 10% error in rates
+  % Q.qdiag = 0.25^2; % relative term, taken as +/- 25% error in rates
 end
 
 % effective transmission matrix
@@ -70,7 +70,7 @@ if nargout > 2
     ZLag = NaN;
     covZLag = NaN;
   end
-  
+
   if nargout > 4
     L = zeros(ntime,nparams);
     computeL = true;
@@ -113,11 +113,11 @@ for n = 1:nparams
     KF = getC19filt(C19);
     F_loc{m} = KF.F;
     Qp{m} = KF.Qp;
-    
+
     % "networkify" the model: this construct understands the state to be
     % ordered nstate states at a time, repeated nlan times on an
     % nstate*nlan long vector
-    
+
     % network transmission model
     D = rates.lambda(m,n)*Deff;
     if any(size(F_loc{m}) ~= nstate)
@@ -128,17 +128,17 @@ for n = 1:nparams
     % note that the Qp has a bit of a special format with Q assembled on
     % the fly
   end
-  
+
   % filter measurement models:
-  
+
   % 1st phase (H+P,W,D), i.e., state (#5 + #8,#6,#7)
   [H_loc,R0,rdiag] = getC19obs(obsrates);
   H = kron(Id_lan,H_loc);
-  
+
   % measurement error model
   R0 = kron(Id_lan,R0);
   rdiag = repmat(rdiag,nlan,1);
-  
+
   % initial state
   xx = zeros(nstate*nlan,1);
   PP = zeros(nstate*nlan);
@@ -152,24 +152,24 @@ for n = 1:nparams
     xxLag = zeros(nlan*nstate,0);
     PPLag = zeros(nlan*nstate,nlan*nstate,0);
   end
-  
+
   % base assembly
   KF.Q0 = Q.Q0;
   KF.qdiag = Q.qdiag;
   KF.R0 = R0;
   KF.rdiag = rdiag;
-  
+
   % measurements according to H1
   KF.H = H;
-  
+
   x = zeros(nstate*nlan,size(Ydata,3));
   P = zeros(nstate*nlan,nstate*nlan,size(Ydata,3));
-  
+
   for j = 1:nloop
     slabix = slab(slabloop(j));
     KF.F = F{slabix};
     KF.Qp = Qp{slabix};
-    
+
     dataslab = reshape(Ydata(:,:,slabloop(j):slabloop(j+1)),size(H,1),[]);
     if computeL
       [x_,P_,L(slabloop(j):slabloop(j+1),n)] = ...
@@ -177,7 +177,7 @@ for n = 1:nparams
     else
       [x_,P_] = C19filt_kalman(KF,dataslab,xx,PP);
     end
-    
+
     if computeLag
       %%%
       % Needs to consider the prediction ahead aswell for when mtime >
@@ -195,10 +195,10 @@ for n = 1:nparams
         end
         len = numel(tspanLag);
       end
-      
+
       xLagFinal = zeros(nlan*nstate,len+lag);
       PLagFinal = zeros(nlan*nstate,nlan*nstate,len+lag);
-      
+
       for i = tspanLag
         % look ahead lag days
         Ydata_empty = NaN(size(H,1),lag);
@@ -216,20 +216,20 @@ for n = 1:nparams
         PPLag = cat(3,PPLag, PLagFinal);
       end
     end
-    
+
     % absorb posterior output (detail: by construction, the last entry
     % slabloop(j+1) is overwritten in the next round, except in the
     % final round)
     x(:,slabloop(j):slabloop(j+1)) = x_(:,:,2);
     P(:,:,slabloop(j):slabloop(j+1)) = P_(:,:,:,2);
-    
+
     % initial state for next round:
     xx = x_(:,end,2);
     PP = P_(:,:,end,2);
-    
+
   end
-  
-  
+
+
   % compute output states
   Z(:,:,n) = G*x;
   for i = 1:size(P,3)

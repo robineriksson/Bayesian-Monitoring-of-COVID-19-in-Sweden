@@ -26,7 +26,7 @@ generation.
 To access data, run `d = loadData(rep)` where `rep` is a specificed
 source, see `help loadData`. Note: not all sources listed are
 distributed. Raw .csv files are stored under `/data/sources/REP` for
-the source `REP`. We often use pre-processing steps on the data before 
+the source `REP`. We often use pre-processing steps on the data before
 performing any calculations, e.g.,
 ```
 Data = loadData('C19');
@@ -95,7 +95,7 @@ reg = 2; % Uppsala
 evalplot = true;  % diagnostic plots
 savetofile = false;
 register = 'C19'; % source of data
-dynamic_beta_ML;  % generates R_t for Uppsala upscale, 
+dynamic_beta_ML;  % generates R_t for Uppsala upscale,
                   % see the variable R_POST
 
 reg = 1:21 % all regions
@@ -166,6 +166,7 @@ Illustrate the marginal prior and posterior with
 average or any combination of regional posteriors, see the variable
 `reg` which include all if set to `[1:21]` or only Uppsala if `[2]`.
 ```
+savetofile=false;
 reg = [1:21]
 prior_posterior; % generates the weighted national average, as in the paper.
 
@@ -178,6 +179,7 @@ prior_posterior; % generates the same but only for Uppsala.
 `weekly_predict` wrapper `laggen`
 
 ```
+savetofile=false;
 generateData=0; % if the laggen call was already made
 reg = [2]; % Uppsala figure, [1] for Stockholm and so on.
 lagplot;
@@ -192,6 +194,7 @@ region. The validating sources are included by .csv: [`fhmAnti`,
 `fhmAntiGivare`, `RecPaperEstimate`], see the paper for the sources.
 The call is simply
 ```
+savetofile=false;
 recovered; % generates the recoverd plot in the paper.
 ```
 
@@ -204,6 +207,7 @@ using a boxplot, the daily as a red line, and for comparison (or
 validation) we also include the estimate given by PHA per region.
 ```
 clear reg
+savetofile=false;
 Rposterior; % generates the figures for the 7 regions in the paper
 
 reg = [2]
@@ -237,6 +241,7 @@ infection should decide that one day is >5 times likely to have more
 reported deaths on. The illustration is reproducable in
 `weekday_smoothing`.
 ```
+savetofile=false;
 reg = 1; % Stockholm
 weekday_smoothing;
 
@@ -254,6 +259,7 @@ can be large, therefore we do not include it). After it has been
 generated, the file can simply be loaded the the predictive
 distribution can be explored further.
 ```
+savetofile=false;
 regen=1; % generate the samples
 reg=2; % Uppsala | can be swapped for othe regions, e.g., Stockholm (1).
 Nprior=1e3; % number of prior samples
@@ -269,8 +275,8 @@ of days *K*. We illustrate the splitting of horizions to make the
 calculations feasable in `HorizonSplitCompare`. *WARNING* this script
 takes a long time to compute.
 ```
-reg=2; % Uppsala region, as in paper.
 savetofile=false;
+reg=2; % Uppsala region, as in paper.
 HorizonSplitCompare;
 
 ```
@@ -282,6 +288,7 @@ quick illustration gives a quick overview of potential outlier regions
 but also the similarity between regional results.
 ```
 clear ratenames
+savetofile=false;
 errorbarsRegion; % load data into memory and generate figure.
 
 errorbarsRegion; % from memory generate figure.
@@ -297,6 +304,7 @@ average (except per the reproduction number) and therefore if the
 regional posterior differed significantly from the weighted national
 average, we then expect the simulations to differ more.
 ```
+savetofile=false;
 reg = [1:21]; % national average
 regplot = [2];
 URDMEsampling; % Only the Uppsala figure
@@ -310,6 +318,7 @@ The reproduced posterior samples on the bootstrap replicate data can
 we visualized together with the weighted national average (as Fig 2)
 as another marginal density in `prior_posteriorURDME`.
 ```
+savetofile=false;
 reg = [1:21]; % national average
 prior_posteriorURDME; % same figure as in the paper
 
@@ -324,6 +333,7 @@ mean for the reproduction number in `RposteriorURDME`. We only include
 the files necessary for the Uppsala region plot, as given in the
 paper. The following results in the same figure.
 ```
+savetofile=false;
 RposteriorURDME;
 ```
 
@@ -337,6 +347,7 @@ Kalman filter. The reasoning for only doing it on the recorded dates
 is that it makes sure that the Kalman filter had not seen "future"
 data when making predictions. The code also generates the Tab. S5.
 ```
+savetofile=false;
 reg=2; % Uppsala region
 arx_fit; % first time loads solution into memory
 
@@ -353,6 +364,7 @@ used, and developed, for weekly prediction in reports published for
 the local authorities. The result from those reports are summarized in
 a table and `weekly_eval` extracts the results.
 ```
+savetofile=false;
 weekly_eval; % reads the table
 tableWeekly % the summarized and stored .tex table
 ```
@@ -396,6 +408,7 @@ Deeper investigation into the working of the table construction is to
 be done by examining `posterror` which processes the posterior files
 that `bootstraptable` supplies it with.
 ```
+saveetofile=false;
 bootstraptable; % generates the table in the paper.
 ```
 

@@ -51,7 +51,7 @@ datastore.table_ci = [];
 datastore.tablerows= {};
 
 for i = reg
-    region_ = regionList{i}; % to character
+    region = regionList{i}; % to character
 
     % construct posterior file name
     % folder for posteriors
@@ -73,7 +73,7 @@ for i = reg
     try
         load([abspath(1:end-35) 'weekly/save/runs/' posterior]);
     catch % missing file. Recompute?
-        code =  ['reg=' num2str(rid) ', ', ...
+        code =  ['reg=' num2str(i) ', ', ...
                  'type=1, '...
                  'laggen'];
 
@@ -117,18 +117,18 @@ for i = reg
     sigmahat_tot = sqrt(sigmahat_R.^2+var(log(YR),0,3));
 
 
-    datastore.(region_).YR = YR;
-    datastore.(region_).muhat = muhat_R;
-    datastore.(region_).sigmahat = sigmahat_tot;
-    datastore.(region_).DATES = DATES;
-    datastore.(region_).tspan_filter = tspan_filter;
+    datastore.(region).YR = YR;
+    datastore.(region).muhat = muhat_R;
+    datastore.(region).sigmahat = sigmahat_tot;
+    datastore.(region).DATES = DATES;
+    datastore.(region).tspan_filter = tspan_filter;
 
     %% process for table
-    low95 = exp(datastore.(region_).muhat - 2*datastore.(region_).sigmahat);
-    low68 = exp(datastore.(region_).muhat - 1*datastore.(region_).sigmahat);
-    mid = exp(datastore.(region_).muhat);
-    high68 = exp(datastore.(region_).muhat + 1*datastore.(region_).sigmahat);
-    high95 = exp(datastore.(region_).muhat + 2*datastore.(region_).sigmahat);
+    low95 = exp(datastore.(region).muhat - 1.96*datastore.(region).sigmahat);
+    low68 = exp(datastore.(region).muhat - 1*datastore.(region).sigmahat);
+    mid = exp(datastore.(region).muhat);
+    high68 = exp(datastore.(region).muhat + 1*datastore.(region).sigmahat);
+    high95 = exp(datastore.(region).muhat + 1.96*datastore.(region).sigmahat);
 
 
 
@@ -259,7 +259,7 @@ if illustrate
     xx_vac_rev = find(ismember(data_vac.date,dates));
     %% Plot
     for i = reg
-        region = regionList_nonnordic{i}
+        region = regionList{i}
         figure(1), clf;
         % Sample trajectories
         Nsamples = 0;

@@ -70,7 +70,7 @@ else
   betaIdx = beta0.betaIdx;
 end
 
-try 
+try
  exceptioncheck = isfield(KF,'exception') && nargout > 3;
 catch % allows for hidden support.
  exceptioncheck = false;
@@ -85,7 +85,7 @@ if exceptioncheck || earlylog
   x = exclog;
   return;
  end
- 
+
  exc = KF.exception; % convenience
  SAFETY = double(realmin('single'))*realmax;
  % (like "single precision away from being double precision -inf")
@@ -103,7 +103,8 @@ nnode = size(F,1)/nstate;
 ntime = size(y,2);
 Id = speye(size(F));
 
-% *** more effective format possible (sparse)?
+% Could potentially be made more effective format possible if using
+% sparse formating
 Qv = kron(eye(nnode),KF.Qv);
 
 % build block indexes (iiQ,jjQ)
@@ -111,7 +112,7 @@ Q_ = cell(1,nnode);
 Q_(:) = {sparse(ones(nstate))};
 Q_ = blkdiag(Q_{:});
 [iiQ,jjQ,~] = find(Q_);
-% *** [iiQ,jjQ] should be built elsewhere?
+% Design proposal: [iiQ,jjQ] could be generated somewhere else
 
 H = KF.H;
 R0 = KF.R0;
@@ -173,9 +174,9 @@ for m = 1:ntime
   R = R0+Rdiag.*(Hmod*xx).^2;
   S = Hmod*PP*Hmod'+R;
   K = PP*Hmod'/S; % [profile: 3rd worst]
-  
+
   Scov(:,:,m) = S;
-  
+
   % updated likelihood
   if ~isempty(L)
     % (note: unclear what to return if det < 0, but likely better to have
@@ -188,14 +189,14 @@ for m = 1:ntime
   PP = (Id-K*Hmod)*PP; % [profile: 1st worst]
   x(:,m,2) = xx;
   P(:,:,m,2) = PP;
-  
+
   if exceptioncheck
     % bad L or bad state (xx,PP)?
     if L(m) < -SAFETY || ... % very small likelihood?
           ~isreal(L(m)) || ...       % oops! went imaginary!
           isnan(L(m)) || ...         % oops! went NaN!
           any(xx < exc.LB) || ...    % mean outside bounds [LB,UB]
-          any(exc.UB < xx) || ... 
+          any(exc.UB < xx) || ...
           any(diag(PP) < 0) || ...   % no negative diagonals
           any(exc.AbsMagn < xx & xx.^2 < exc.SDFAC^2*diag(PP))
       % final check is: *above* AbsMag *and* large portion of probability

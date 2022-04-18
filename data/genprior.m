@@ -63,7 +63,7 @@ IFRmean = l_scaledbetastats(IFRHyp,IFRPQ);
 % (IFR is not used directly but later determines the rate I_MORT: I
 % --> D after taking {H,W} --> D into account)
 
-% SIR_MORT: mortality under IC (W --> D) 
+% SIR_MORT: mortality under IC (W --> D)
 SIR = loadData('SIR_swe_mort'); % (source: [4])
 SIR_MORT = mean(SIR.SIR_MORT);
 % (F4 = SIR_MORT)
@@ -79,24 +79,29 @@ HOSP_MORT = mean(hosp_mort./SIR.SIR_MORT);
 Data = loadData('C19');
 Data = polishData(Data,{},{},1);
 Data = smoothData(Data,{'H' 'W'},{[] []});
-      
-% *** old version: per day, but all of Sweden
-%HWfac = sum(Data.H,2)./sum(Data.W,2);
-%IC_HOSP_ = gammaWmean./(gammaHmean*HWfac);
-%ABC = quantile(IC_HOSP_,[0.05 0.5 0.95]);
-% Beta with support at the 90% CI and with mean at the median
-%IC_HOSPPQ = ABC([1 3]);
-%IC_HOSPHyp(1) = 2;
-%IC_HOSPHyp(2) = IC_HOSPHyp(1)/((ABC(2)-IC_HOSPPQ(1))/diff(IC_HOSPPQ))- ...
-%    IC_HOSPHyp(1);
-%IC_HOSPmean = l_scaledbetastats(IC_HOSPHyp,IC_HOSPPQ);
 
-% *** new version: per day and region, but remove small values of W
+% per day and region, but remove small values of W
 HWfac = reshape(Data.H./Data.W,[],1);
 HWfac(Data.W < 0.5*nanmean(Data.W(:))) = NaN;
 HWfac(isnan(HWfac)) = [];
 IC_HOSP_ = gammaWmean./(gammaHmean*HWfac);
 ABC = quantile(IC_HOSP_,[0.005 0.5 0.995]);
+
+% Note, there exists an alternative solution for IC_HOSP which is
+% achived by the following steps: per day, but all of Sweden
+% HWfac = sum(Data.H,2)./sum(Data.W,2);
+% IC_HOSP_ = gammaWmean./(gammaHmean*HWfac);
+% ABC = quantile(IC_HOSP_,[0.05 0.5 0.95]);
+% Beta with support at the 90% CI and with mean at the median
+% IC_HOSPPQ = ABC([1 3]);
+% IC_HOSPHyp(1) = 2;
+% IC_HOSPHyp(2) = IC_HOSPHyp(1)/((ABC(2)-IC_HOSPPQ(1))/diff(IC_HOSPPQ))- ...
+%    IC_HOSPHyp(1);
+% IC_HOSPmean = l_scaledbetastats(IC_HOSPHyp,IC_HOSPPQ);
+
+
+
+
 
 % Beta-fit with support at the 99% CI and with mean at the median
 IC_HOSPPQ = ABC([1 3]);

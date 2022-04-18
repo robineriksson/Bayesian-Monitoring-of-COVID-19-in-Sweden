@@ -129,7 +129,7 @@ try
 
 
         rates = savePosterior(thetas, sl, slab, amparam, burnin, ...
-                              jump, true, useCSSS, true, fix,nslab,smc,roundid,{'full'},false);
+                              jump, true, useCSSS, true, fix,nslab,0,roundid,{'full'},false);
 
     end
     stopped = 0;
@@ -199,7 +199,7 @@ if gelmanRub
             R = (W*(L-1)/L + B/L) ./ W;
             R_mean = mean(R)
         catch
-            warning(['missing region: ' region])
+            warning(['GR missing region: ' region])
         end
     end
 end
@@ -240,7 +240,8 @@ for i = reg
 
         load(file{1},'amparam','slabs');
         [rates,rates100,ratesR0] = savePosterior(mat, sl, slabs, amparam, 1e0, ...
-                                                 1e0, true, useCSSS, savetofile, fix,nslab,smc,[],{'full' '100'},false);
+                                                 1e0, true, useCSSS, savetofile, ...
+                                                 fix,nslab,0,[],{'full' '100'},false);
     catch
         warning(['missing region: ' region])
     end

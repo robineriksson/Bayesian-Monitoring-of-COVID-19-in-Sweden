@@ -718,7 +718,7 @@ end
 % As for the log-likelihood function, we supply a reduced
 % anom. function for the prior.
 prior_func = @(x) priorenger(x,amparam.fix,amparam.nslab,amparam.hypfile);
-amparam.prior = prior_func(rates); % *** same here, multiple proposals?
+amparam.prior = prior_func(rates);
 if any(isinf(getfield(amparam.prior,'sumlog')))
   error('initial proposal is rejected based on prior');
 end

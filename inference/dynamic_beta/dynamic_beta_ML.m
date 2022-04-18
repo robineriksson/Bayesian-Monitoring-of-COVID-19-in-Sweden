@@ -25,6 +25,9 @@ if ~exist('register','var')
     register='C19';
 end
 
+if ~exist('windowlength','var')
+    windowlength=150;
+end
 %% region list
 regionList = regions(false);
 
@@ -35,7 +38,6 @@ for region = reg % region to estimate beta for
     prevresdate = 210531; % previous result for initial guess
 
     wbeta=300000;
-    windowlength=150;
     steplength=20;
 
     % posterior

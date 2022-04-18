@@ -23,7 +23,7 @@ function [Z,covZ,resids,L,S] = C19filt(Y0,Y0Cov,G,rates,D,obsrates,Ydata, ...
 %   supporting cases of dynamic/daily beta. Q is a struct with the
 %   fields {Q0, qdiag}, which define the process noise. See
 %   C19FILT_KALMAN for their use.
-%   
+%
 %   On return, covZ is a covariance struct with fields:
 %
 %   Field         Dimensions
@@ -51,7 +51,7 @@ function [Z,covZ,resids,L,S] = C19filt(Y0,Y0Cov,G,rates,D,obsrates,Ydata, ...
 %   [Y,covY,resids,L] = C19FILT(...) additionally computes the marginal
 %   (log-)likelihood L of the Kalman filter, see C19FILT_KALMAN. The
 %   output matrix L is NTIME-by-NRATES.
-%   
+%
 %   [Y,covY,resids,L,S] = C19FILT(...) additionally returns the
 %   innovation covariance S, where S(:,:,m,n) defines the covariance at
 %   time index m and rate n.
@@ -86,14 +86,14 @@ end
 if nargin < 11
   % model error (Q0+qdiag*[...])
   Id = speye(nstate*nlan);
-  % *** "optimal" defaults?
-  %Q0 = 0.1^2
-  %Q0 = Q0*Id; % absolute term
   Q.Q0 = Id;
   Q.qdiag = 0.05^2; % relative term, taken as +/- 5% error in rates
-  %qdiag = 0.01^2; % relative term, taken as +/- 1% error in rates
-  %qdiag = 0.1^2;% relative term, taken as +/- 10% error in rates
-  %qdiag = 0.25^2; % relative term, taken as +/- 25% error in rates  
+  % Alternatively one can increase the considired error in the
+  % rates. We did however find the above to be optimal through trial
+  % and error.
+  % Q.qdiag = 0.01^2; % relative term, taken as +/- 1% error in rates
+  % Q.qdiag = 0.1^2;% relative term, taken as +/- 10% error in rates
+  % Q.qdiag = 0.25^2; % relative term, taken as +/- 25% error in rates
   if nargin < 10
     beta = [];
     if nargin < 9
@@ -214,7 +214,7 @@ for n = 1:nparams
   % measurement error model
   R0 = kron(Id_lan,R0);
   rdiag = repmat(rdiag,nlan,1);
- 
+
   % initial state
   xx = zeros(nstate*nlan,1);
   PP = zeros(nstate*nlan);

@@ -74,7 +74,8 @@ if 0
 
   disp('*** Done ***');
 end
-% *** change here BEGIN { **********************************************
+
+% Change below for standard parameters
 if ~exist('FINALRUN','var') || ~FINALRUN
   % type =
   %   1: without historic lag, but prediction lag days ahead
@@ -265,7 +266,9 @@ tspan_filter = TSPAN(ixfilter); % filter output
 tspan_data = TSPAN(ixdata);  % data used
 tspan_alldata = TSPAN(1:min(ixfilter(end),numel(Data.date))); % *all* data
 
-% *** Code to allow for CSSS data, a bit messy, should be looked into.
+% Code to allow for CSSS data included for completion, but is not to
+% considered as (1) the data is not included and (2) no result in the
+% paper is depenedent on the data source.
 if useCSSS
   % correction factor in xmod = fac*x
   load Fcases_interp

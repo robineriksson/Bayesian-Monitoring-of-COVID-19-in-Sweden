@@ -1,5 +1,13 @@
 %LAGGEN generates the lag data for the figures and predictions using the
 % posterior and Kalman filter.
+%
+% All simulation can be generated using
+% reg= [1:22], type = 1, laggen, type=2, laggen;
+%
+% But all data is often not needed, and the specific region can be
+% specified by REG and the type of output, 7-day lag ahead (TYPE = 1)
+% and filter output with 14 day ahead prediction at data stop (TYPE = 2).
+%
 
 % run all regions
 if ~exist('reg','var')

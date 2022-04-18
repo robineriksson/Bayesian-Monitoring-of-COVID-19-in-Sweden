@@ -40,7 +40,7 @@ rng(0) % reproducability
 abspath = mfilename('fullpath');
 prefix = ['KLAM/perRegion/'];
 
-regionList = regions;
+regionList = regions(false);
 
 postdate = '210531';
 

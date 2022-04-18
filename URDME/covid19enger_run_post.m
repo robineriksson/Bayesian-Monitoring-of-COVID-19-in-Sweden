@@ -15,9 +15,6 @@ rng(200328); % reproducible results
 % simulation input
 inline = false; % use inline propensities or not
 
-% pick region(s) + date
-%reg = 1; % *** region select
-%date = '210523';
 regionList = regions(false);
 Nvoxels = numel(reg);
 fprintf('\n*** EngEr C19 in %d region(s): Nreplicas = %d, Psamples = %d ***\n', ...
@@ -104,7 +101,7 @@ for p = 1:Psamples_
     end
     GDATA = GDATA(umod.private.ixRate(2:end)-1,:);
   else
-    % *** this construct relies on using the same ordering of rates:
+    % this construct relies on using the same ordering of rates:
     if ~isequal(fieldnames(Rates),umod.private.RateNames(3:end)')
       error('It seems the ordering of rate parameters differ.');
     end

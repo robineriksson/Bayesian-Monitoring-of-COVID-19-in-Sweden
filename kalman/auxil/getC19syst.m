@@ -7,17 +7,17 @@ function C19 = getC19syst(rates,m,n)
 %   cumulative/incidence/deterministic/removed states
 %   CStates/IStates/DStates/Astates. The output is intended to be used
 %   as input to GETC19FILT.
-%   
+%
 %   C19.transMat(i,j) defines the rate of the transition from the
 %   compartment i to compartment j.
-%   
+%
 %   C19.dMat defines the deterministic linear dynamics, used to
 %   describe the evolution of the infectious pressure. It is a matrix,
 %   whose rows correspond to the contributions from the states defined
 %   by the rows of transMat, to these dynamics, i.e., for a scalar
 %   deterministic state phi_k and a state vector x_k, the update law
 %   is phi_{k+1} = dMat*x_k.
-%   
+%
 %   CStates, IStates, DStates, and AStates are arrays of indices which
 %   define properties of the corresponding states (given by transMat)
 %   in the following way:
@@ -36,7 +36,7 @@ function C19 = getC19syst(rates,m,n)
 %   purpose of including states in transMat that will be removed later
 %   is to represent the transitions from other states into these sink
 %   states in a convenient way.
-%   
+%
 %   See also GETC19FILT, C19FILT_KALMAN.
 
 % S. Engblom 2021-03-03 (Revision, optional CStates/IStates)
@@ -72,8 +72,6 @@ thetaI = rates.thetaI(n);
 thetaA = rates.thetaA(n);
 thetaE = rates.thetaE(n);
 
-% *** testing static rho
-% old: rho = rates.rho(m,n); 
 rho = rates.rho(n);
 % this scaling uses that thetaI = rho:
 erho = -expm1(-rho); % (skip division by rho here)

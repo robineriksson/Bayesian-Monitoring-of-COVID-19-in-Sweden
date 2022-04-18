@@ -1,4 +1,18 @@
-%ARX_FIT constructs a prediction model using an expanding window formulation.
+% ARX_FIT constructs an AR prediction model using an expanding window
+% formulation. The idea of the script is to generate a model for
+% comparison with the posterior Kalman filter. How does the prediction
+% differ and so on. The comparison between the models is done by
+% loading the results from previous weekly reportings with
+% READWEEKLYTABLE. We can therefore evaluate the prediciton inside 66/95% CrI
+% and NRMSE) of the AR and the Posterior Kalman filter on the same
+% dates, thus making sure not to favorize the Posterior Kalman filter
+% by "evaluating on already seen data".
+%
+% The AR model uses the ARX function supplied by MATLAB'S libraries.
+%
+% The AR model is basic by design. Further effort could have been
+% included, by for example extending the model with the the ARMA or
+% ARIMA extensions.
 
 % R. Marin 2022-04-07
 if ~exist('savetofile','var')

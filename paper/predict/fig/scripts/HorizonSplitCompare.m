@@ -11,9 +11,8 @@ ntime = 365;
 startdate = 200319;
 enddate = 210531;
 prevresdate = 210531; % previous result for initial guess
-
+windowlength=150
 wbeta=300000;
-windowlength=150;
 steplength=20;
 
 % posterior

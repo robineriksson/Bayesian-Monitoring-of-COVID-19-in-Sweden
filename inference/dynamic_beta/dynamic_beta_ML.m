@@ -1,4 +1,7 @@
-%DYNAMIC_BETA_ML Dynamic beta from posterior parameters
+%DYNAMIC_BETA_ML Dynamic beta from posterior parameters.
+%   Calculates a quasi-ML estimate of beta and R using MPCLOOP_BETA_S.
+%   Covariance matrix S is calculated using C19FILT for a given posterior.
+%   Results are optionally plotted and and saved to file.
 
 % H. Runvik 2021-04-14
 
@@ -24,8 +27,6 @@ end
 
 %% region list
 regionList = regions(false);
-
-
 
 for region = reg % region to estimate beta for
     disp(['running: ' regionList{region}]);
@@ -181,8 +182,6 @@ for region = reg % region to estimate beta for
 
     %%
 
-
-
     if evalplot
 
         beta_temp = 0.1*ones(size(betaOpt,2),size(beta_mpc,1));
@@ -269,7 +268,3 @@ for region = reg % region to estimate beta for
     end
 
 end
-
-
-
-return;

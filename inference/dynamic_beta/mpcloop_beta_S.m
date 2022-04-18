@@ -1,8 +1,8 @@
 function [x00,beta,J,misfit,beta_mpc,ix_mpc] = mpcloop_beta_S(y,F,H,...
     betaIdx,wbeta,slab,S,steplength,windowlength,x0,beta0,options)
-%MPCLOOP_BETA_S solves dynamic beta optimization using an MPC-setup
-% Same as MPCLOOP_BETA, except for support for slabs, and covariance matrix
-% S which scales the measurements.
+%MPCLOOP_BETA_S solves dynamic beta optimization using an MPC-setup.
+%   Same as MPCLOOP_BETA, except for support for slabs, and covariance
+%   matrix S which scales the measurements.
 
 % H. Runvik 2021-04-12
 
@@ -25,41 +25,26 @@ for k=1:nsteps
     if k==1
         y_loc = y(:,nstart(k):nstart(k)+windowlength-1);
         beta0_loc = beta0(1:windowlength);
-%         if max(abs(diff(beta0_loc)))>1e-5
-%             ub = beta0_loc.*[1.1*ones(1,floor(windowlength*0.7))...
-%                 linspace(2, 3, ceil(windowlength*0.3))];
-%             lb = beta0_loc.*[0.9*ones(1,floor(windowlength*0.7))...
-%                 linspace(0.5, 0, ceil(windowlength*0.3))];
-%         else
-            ub = 5*beta0_loc;
-            lb = 0*beta0_loc;
-%         end
+        ub = 5*beta0_loc;
+        lb = 0*beta0_loc;
         slab_loc = slab(nstart(k):nstart(k)+windowlength-1);
         betaFunc = @(u)betaCost_S(u,y_loc,F,H,betaIdx,wbeta,slab_loc,S(:,:,nstart(k):nstart(k)+windowlength-1),x0);
-        [betatemp,~,exitflag]=fmincon(betaFunc,[beta0_loc],[],[],[],[],...%[x0' beta0_loc]
-            lb,...%+nstate
-            ub,[],options);%[inf*ones(1,nstate) 0.4*ones(1,windowlength)]
+        [betatemp,~,exitflag]=fmincon(betaFunc,[beta0_loc],[],[],[],[],...
+            lb,...
+            ub,[],options);
         if exitflag ~=1 && exitflag ~=2
             disp('Convergence problem')
         end
         if min(betatemp-lb)<1e-6 || min(ub-betatemp)<1e-6
             disp('Constraint active')
         end
-        %x00=betatemp(1:nstate);
         x00=x0';
     else
         options.InitBarrierParam=1e-4;
         y_loc = y(:,nstart(k):nstart(k)+windowlength-1);
         slab_loc = slab(nstart(k):nstart(k)+windowlength-1);
-%         if max(abs(diff(beta0_loc)))>1e-5
-%             ub = beta0_loc.*[1.1*ones(1,floor(windowlength*0.7))...
-%                 linspace(2, 3, ceil(windowlength*0.3))];
-%             lb = beta0_loc.*[0.9*ones(1,floor(windowlength*0.7))...
-%                 linspace(0.5, 0, ceil(windowlength*0.3))];
-%         else
-            ub = 5*beta0_loc;
-            lb = 0*beta0_loc;
-%         end
+        ub = 5*beta0_loc;
+        lb = 0*beta0_loc;
         betaFunc = @(u)betaCost_S(u,y_loc,F,H,betaIdx,wbeta,slab_loc,S(:,:,nstart(k):nstart(k)+windowlength-1),x0);
         [betatemp,~,exitflag]=fmincon(betaFunc,beta0_loc,[],[],[1 zeros(1,windowlength-1)],...
             betaPrev,lb,ub,[],...
@@ -74,14 +59,14 @@ for k=1:nsteps
     
     if k==1
         beta(nstart(k):nstart(k)+steplength-1) = ...
-            betatemp(1:steplength);%betatemp(nstate+1:nstate+steplength)
-        betastruct.vals=betatemp(1:steplength)';%betatemp(nstate+1:nstate+steplength)
-        xSim = LPVsim_slabs(F,x0,betastruct,slab_loc);%betatemp(1:nstate)'
+            betatemp(1:steplength);
+        betastruct.vals=betatemp(1:steplength)';
+        xSim = LPVsim_slabs(F,x0,betastruct,slab_loc);
         x0 = xSim(:,end);
-        betaPrev = betatemp(steplength+1);%betatemp(nstate+steplength+1)
-        beta0_loc = [betatemp(steplength+1:end)...%nstate+steplength+1:end
+        betaPrev = betatemp(steplength+1);
+        beta0_loc = [betatemp(steplength+1:end)...
             beta0(windowlength+1:windowlength+steplength)];
-        beta_mpc(k,:) = betatemp(1:end);%(nstate+1:end)
+        beta_mpc(k,:) = betatemp(1:end);
         ix_mpc(k,:) = 1:windowlength;
     elseif k<nsteps
         beta(nstart(k):nstart(k+1)-1)...

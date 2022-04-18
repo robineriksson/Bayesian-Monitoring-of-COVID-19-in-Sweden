@@ -1,10 +1,11 @@
 function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
   region,nMCMC,verb,nslab,date,init,scaleS,register,useCSSS, ...
   perslab,fix,ksmc,state0)
-%KLAM_INIT Kalman Likelihood Adaptive Metropolis, incrementally by slabs.
-%   [THETAS,SL,SLAB,AMPARAM,AMFUNC,OUTVERB] =
-%   SLAM_INIT(REGION,NMCMC,VERB,NSLAB,INIT,SCALES,REGISTER,USECSSS,
-%   PERSLAB,FIX) computes the (approximate) Bayesian posterior of the specified
+%KLAM_INIT initializes the Kalman Likelihood Adaptive Metropolis
+% sampler. The object is constructed with the data (YDATA) and so on. Finally,
+% the AM sampler is called and NMCMC samples are generated from the posterior.
+%
+% KLAM_INIT computes the (approximate) Bayesian posterior of the specified
 %   REGION until the date DATE, using NMCMC samples in an Adaptive
 %   Metropolis (AM) chain. Init holds initial guess variables for the AM
 %   chain, however, this can be left empty for default values. OUTVERB

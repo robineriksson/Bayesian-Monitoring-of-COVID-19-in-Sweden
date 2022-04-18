@@ -1,4 +1,4 @@
-% COVID19ENGER_RUN_POST Runs the EngEr Covid-19 model allowing for
+%COVID19ENGER_RUN_POST Runs the EngEr Covid-19 model allowing for
 % posterior noise by sampling the posterior. Note, be carefull
 % considering multiple posterior samples, as the daily reproduction
 % number is mean posterior, meaning that posterior noise in the
@@ -9,7 +9,6 @@
 % S. Engblom 2020-06-26 (Revision)
 % S. Engblom 2020-04-09 (Revision)
 % S. Engblom 2020-03-28
-
 
 rng(200328); % reproducible results
 
@@ -64,7 +63,6 @@ if isinf(Psamples)
 else
   Psamples_ = Psamples;
 end
-
 
 % define a common time frame, including dates
 DATES = P.meta.date;
@@ -130,7 +128,6 @@ for p = 1:Psamples_
     disp('Initial data...');
   end
 
-
   % initial data from file
   umod.u0 = [u0; zeros(1,Nvoxels)];
   % the 7 states are [I A E phi H W D]; add also state R(ecovered)
@@ -139,7 +136,6 @@ for p = 1:Psamples_
   if ~strcmp(solver,'uds')
      disp('   ...done.');
   end
-
 
   %% (3) parse and compile, prepare to solve
   if ~strcmp(solver,'uds')
@@ -162,8 +158,6 @@ for p = 1:Psamples_
   if ~strcmp(solver,'uds')
     disp('   ...done.');
   end
-
-
 
   %% (4) solve
   if ~strcmp(solver,'uds')

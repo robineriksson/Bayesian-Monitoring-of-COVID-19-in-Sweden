@@ -1,6 +1,8 @@
-%DYNAMIC_BETA_ML_all
-% H. Runvik 2021-06-02
+%DYNAMIC_BETA_ML_all Dynamic beta from posterior parameters for all regions
+%   Similar to DYNAMIC_BETA_ML, but loops over all regions and collects
+%   results in one file. 
 
+% H. Runvik 2021-06-02
 
 if ~exist('savetofile','var')
     savetofile=false;

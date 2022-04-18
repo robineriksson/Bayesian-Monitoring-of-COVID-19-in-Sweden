@@ -120,7 +120,6 @@ prefix = [abspath(1:end-24) 'inference/results/KLAM/'];
 load Ncounties
 Npop = sum(N,1);
 
-
 % convert region into "test" for data extraction, later.
 regionList = regions(false);
 test = find(strcmp(region,regionList)) + 3;
@@ -142,7 +141,6 @@ if isempty(test)
     error(['Missing region: ' region]);
   end
 end
-
 
 if test > 0
   posterior = 'perRegion/';
@@ -267,11 +265,7 @@ tspan_filter = TSPAN(ixfilter); % filter output
 tspan_data = TSPAN(ixdata);  % data used
 tspan_alldata = TSPAN(1:min(ixfilter(end),numel(Data.date))); % *all* data
 
-
-
-
-
-% *** Code to allow for CSSS data, a bit measy, should be looked into.
+% *** Code to allow for CSSS data, a bit messy, should be looked into.
 if useCSSS
   % correction factor in xmod = fac*x
   load Fcases_interp
@@ -348,10 +342,9 @@ if saveall
      0 0 0 0 0 0 1 0 0 0;   % D
      0 0 0 0 0 0 0 0 1 0;   % Ii
      0 0 0 0 0 0 0 0 0 1;   % Di
-     0 0 0 1 0 0 0 0 0 0;  % PHI
+     0 0 0 1 0 0 0 0 0 0;   % PHI
      0 0 0 0 0 0 0 1 0 0;   % R
-     1 0 0 0 0 0 0 0 0 0]);   % I
-
+     1 0 0 0 0 0 0 0 0 0]); % I
 
   G = kron(T,G);
 else
@@ -364,10 +357,7 @@ Q = struct();
 Q.Q0 = speye(numel(lan)*obsrates.nstate);
 Q.qdiag = 0.05^2;
 
-
-
-
-% these were used durring inference (some regions are sensitive)
+% these were used during inference (some regions are sensitive)
 exception.LB = -1e2;
 exception.UB = 1e7;
 exception.SDFAC = 0.25;
@@ -407,6 +397,7 @@ switch type
     if exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
         warning(['Already saved lag prediction for ' posterior(1:end-4)]);
     end
+
     disp(['qdiag: ' num2str(Q.qdiag)]);
     [Z_,covZ_,Z,covZ] = ...
         C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...

@@ -14,4 +14,3 @@ addpath(genpath([link 'kalman/']));
 addpath(genpath([link 'paper/']));
 addpath(genpath([link 'URDME/']));
 addpath(genpath([link 'weekly/']));
-% (note: don't add to old/)

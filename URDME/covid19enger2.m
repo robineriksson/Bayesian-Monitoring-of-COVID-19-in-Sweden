@@ -1,10 +1,12 @@
 function umod = covid19enger2
 %COVID19ENGER2 Scenario model file for the EngEr Covid-19 model.
-%   UMOD = COVID19ENGER returns an URDME model UMOD for the EngEr
+%   UMOD = COVID19ENGER2 returns an URDME model UMOD for the EngEr
 %   Covid-19 model in 21 counties.
 %
-%   The modification divides the D compartment into D_I, D_H, and D_W.
-%   Additionally, H -> W <-> H2.
+%   The modification here divides the D compartment into D_I, D_H, and
+%   D_W.  Additionally, H -> W <-> H2.
+%
+%   See also COVID19ENGER.
 
 % S. Engblom 2021-04-17 (Major revision)
 % S. Engblom 2020-06-26 (Revision)
@@ -51,7 +53,6 @@ r{13} = 'W > gammaW*(1-F4)*W > H2';
 r{14} = 'H2 > gammaH*F3*H2 > W';
 r{15} = 'H2 > gammaH*F3d*H2 > D_W';
 r{16} = 'H2 > gammaH*(1-F3-F3d)*H2 > R';
-
 
 % sort it out
 umod = rparse([],r,species,rates,'covid19enger.c');

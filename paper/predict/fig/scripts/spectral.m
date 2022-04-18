@@ -1,4 +1,7 @@
-%SPECTRALANALYSISF Analyze the operator F spectrally.
+% SPECTRALANALYSISF Analyze the operator F "spectrally", ~ODE solution
+% without simulation noise. With this formulation, we can estimate the
+% CFR from I, H, and W. The output is in CrI and the comparative total
+% dead sources as presented from Socialstyrelsen.
 
 % R. Marin 2022-03-22 (stream lined for the results we want in paper)
 % S. Engblom 2021-03-11

@@ -4,7 +4,7 @@
 % the synthetic set, we know the true parameters, and therefore the bias.
 % Allowing for an imputed bias in for the actual data set.
 %
-% Columns in table format: [Region, bias^2, CoV, MSE, NMRSE]
+% Columns in table format: [Region, CoV, CoB, NMRSE, smoothing_diff, Npop]
 %
 %
 % R.Eriksson 2022-01-14

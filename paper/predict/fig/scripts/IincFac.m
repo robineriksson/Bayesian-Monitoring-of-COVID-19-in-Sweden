@@ -1,7 +1,13 @@
 % IINCFAC generates two figures: model estimate symptomatic incidence
 % vs postitive testing incidence AND the factor between these two. The
 % code as a whole is similar in form to RECOVERED.m. The model
-% estimate is loaded from a posterior Kalman simulation.
+% estimate is loaded from a posterior Kalman simulation, and the
+% positive testing from data file by LOADDATA.m. Adding further
+% context to the figure, we also include the number of tests performed
+% to construct the positive testing estimate. By changing REG the
+% region of interest to observe can be changed. Setting REG to a
+% vector only makes it so that a figure is generated per region, i.e.,
+% no summation over regions.
 %
 
 % R. Eriksson 2021-05-12.

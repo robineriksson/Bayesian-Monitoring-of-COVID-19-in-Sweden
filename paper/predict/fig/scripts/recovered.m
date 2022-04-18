@@ -1,14 +1,9 @@
-%RECPLOT generates the (R)ecovered estimate plot and TABLE
-%
-% How to use:
-% 1) run weekly_predict for:
-%    a) Uppsala, Stockholm, Sweden
-%    b) type 1 (lag 14 ahead)
-%    c) specific posterior and dates
-% 2) Run this script, and the final table, table_R is in latex form,
-%    or have a look at datastore.table_ci for the credible interval in cell
-%    string format.
-%
+% RECPLOT generates the (R)ecovered estimate plot and TABLE. For the
+% given region REG the Recovered figure is generated. For REG = 1
+% (Stockholm) three validation datasets are included. We also assume
+% the simulation data underlying the estimate of the # of recovered
+% per region. If not, it is up to the user to generate the file, see
+% laggen and tyoe=1.
 
 % R. Eriksson 2021-05-12.
 

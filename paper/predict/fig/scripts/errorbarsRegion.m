@@ -1,5 +1,12 @@
-%POSTERIOR_CLUSTER is a script that visualizes the similarity or
-%   discrepencies between the posterior found for different regions.
+% ERRORBARSREGION is a script that visualizes the similarity or
+% discrepencies between the marginal posterior found for the different
+% regions. The posterior in the figure is the mean and the standard
+% deviation.
+%
+% The selection and representation of the marginals are the
+% same as in PRIOR_POSTERIOR.m. If the script is called two times in a
+% row, then the posterior values are retrieved from memory. Forcing
+% new simulations can be done by 'clear ratenames'.
 
 % Robin Marin (Eriksson) 2020-03-07
 if ~exist('savetofile','var')
@@ -36,9 +43,6 @@ else
   disp('using in-memory');
 end
 
-
-load('inference/results/KLAM/marginal_bias.mat', 'marginal')
-tag = l_biascomp(meanpost,stdpost,marginal,ratenames); %indicate bias problem
 % bar plot
 regionid = 1:numel(regionList);
 tiledlayout(3,4)

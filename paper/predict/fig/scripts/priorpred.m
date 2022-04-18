@@ -1,4 +1,14 @@
-%WEEKLY_PREDICTION Script for generating predictions.
+% PRIORPRED generates and illustrates a proxy for the prior predictive
+% distribution of the Kalman filter model. This visualized "test" is
+% supposed to be interpret as "could the data possibly be captured by
+% the prior"?
+%
+% if REGEN = true, new samples are generated and save to file. If
+% false, we assume that the file is available and we load it from
+% file. After generating or loading, the figure is generated. See
+% LAGPLOT for the posterior version of this figure.
+
+% R. Marin 2022-04-18
 rng(0)
 
 if ~exist('Nprior','var')

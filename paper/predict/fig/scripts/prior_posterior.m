@@ -1,4 +1,8 @@
-%PRIOR_POSTERIOR Plots of densities.
+% PRIOR_POSTERIOR plots of marginal densities, per single or
+% collection of regions. If a collection, say all regions, is given
+% (REG = [...]), the posterior output is weighted according to
+% population size. Included in the generated figure is also the prior
+% and the mean of the prior and posterior.
 %
 
 % S. Engblom 2021-04-03 (Revision)

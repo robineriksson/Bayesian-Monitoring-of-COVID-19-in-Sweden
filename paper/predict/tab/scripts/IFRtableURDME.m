@@ -1,4 +1,11 @@
-%IFRtable computes the (bi)monthly IFR from the posterior
+% IFRtable computes the (bi)monthly IFR from the posterior and
+% generates table with the results. In the table, we also include a
+% warning if the posterior estimate can have a potential issue with
+% the width being to tight or the bias being to large, as indicated by
+% the results from the Bootstrap replicates.
+%
+% The table is ready to be pasted into LaTeX, and we also give worded
+% out averages over longer time periods.
 
 % R. Marin   2022-03-23 (Dinc weighting)
 % R. Erisson 2021-10-19 (adjusted format)

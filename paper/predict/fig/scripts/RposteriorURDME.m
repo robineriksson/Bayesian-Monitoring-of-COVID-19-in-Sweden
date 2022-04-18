@@ -1,4 +1,8 @@
-%Rposterior creates figure with reproduction number.
+% Rposterior creates figure with reproduction number. This is simply a
+% replicate of RPOSTERIOR.m. The difference is that per region, the
+% bootstrap replicates (URDME) are used for reproduced posterior
+% estimates. In this figure we give the results of this "reversion of
+% inversion".
 
 % S. Engblom 2021-08-21 (minor revision)
 % H. Runvik 2021-08-20

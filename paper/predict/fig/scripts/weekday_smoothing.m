@@ -1,5 +1,9 @@
-%WEEKDAY_SMOOTHING illustrates the periodic effect that
-% POLISHDATA and SMOOTHDATA has on the C19 data.
+% WEEKDAY_SMOOTHING illustrates the periodic effect that
+% POLISHDATA and SMOOTHDATA has on the C19 data. The region can be
+% specified by REG. For comparison, the output from the URDME
+% simulation is also included in the figure. The idea is that the
+% smoothing should have similar form as the the reaction-rate one as
+% it is not subject to data reporting bias.
 
 % R. Marin 2022-04-06 (formating of example in SMOOTHDATA (c) S.Engblom)
 
@@ -9,6 +13,10 @@ end
 
 if ~exist('reg','var')
     reg = 1;
+end
+
+if numel(reg) > 1
+    error('only one region at a time')
 end
 
 

@@ -22,7 +22,9 @@ Stockholm = {};
 Sverige = {};
 
 % open file
-fid = fopen('tables/tablePredEval.tex');
+savepath = mfilename('fullpath');
+savepath = savepath(1:end-15);
+fid = fopen([savepath 'tables/tablePredEval.tex']);
 
 % read lines until first week was found
 tline = fgetl(fid);

@@ -1,4 +1,8 @@
-%Rposterior creates figure with reproduction number.
+% Rposterior creates figure with reproduction number. The figure
+% consists of two parts: the posterior per slab in boxplots and the
+% marginal boostrap per day as a line. The script requires the
+% posterior file(s) to be available otherwise, you user have to see to
+% it to generate the needed data.
 
 % S. Engblom 2021-08-21 (minor revision)
 % H. Runvik 2021-08-20

@@ -81,7 +81,8 @@ try
     hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
     hypfile = hypfile{:};
   end
-
+  temp = load(hypfile)
+  clear temp;
 catch
   hypfile = [];
 end

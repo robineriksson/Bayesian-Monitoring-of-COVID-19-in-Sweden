@@ -2,7 +2,8 @@ function [J, L] = betaCost_S(beta,y,F,H,betaIdx,wbeta,slab,S,x0)
 %BETACOST_S cost-function for state space model with time-varying parameter
 %beta.
 %   [J, L] = BETACOST_S(beta,y,F,H,betaIdx,wbeta,slab,S,x0) calculates cost
-%   J and likelihood L for data y for the state space model 
+%   J and likelihood L (which is scaled and shifted, see below) for data y
+%   for the state space model 
 %   x_{k+1} = F_k x_k, x_0 = x0,
 %   y_k=H x_k
 %   where the elements of F_k are constant and given by F, except for the
@@ -11,8 +12,10 @@ function [J, L] = betaCost_S(beta,y,F,H,betaIdx,wbeta,slab,S,x0)
 %   scales the measurements. J relates to L as
 %   J = wbeta*sum(diff(beta).^2) - L,
 %   i.e. wbeta penalizes acts as a regularization that penalizes fast
-%   variations in beta. See MPCLOOP_BETA_S for the use of the function in an
-%   optimization formulation.
+%   variations in beta. Note that the cost is rescaled with a factor 1e-3
+%   and that the fixed offsets of the likelihood are not calculated for
+%   performance reasons. See MPCLOOP_BETA_S for the use of the function in
+%   an optimization formulation.
 
 % H. Runvik 2021-01-12
 

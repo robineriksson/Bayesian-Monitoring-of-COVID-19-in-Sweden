@@ -120,7 +120,7 @@ mean posterior. See the example for Fig. S8 below for some sample
 code. The following example will generate the bootstrap replicate
 samples, infer one posterior using KLAM on that data for the Uppsala
 region, and finally perform the upscaling of the reproduction number
-on that posterior. *NOTE* this is time consuming.
+on that posterior. *NOTE* these results take a long time to generate.
 ```
 savetofile = true;
 dynamic_beta_ML_all; % if not already run
@@ -304,7 +304,9 @@ comparison with the underlying data. There will be some missmatch
 assumed as the posterior we use in the simulations is a national
 average (except per the reproduction number) and therefore if the
 regional posterior differed significantly from the weighted national
-average, we then expect the simulations to differ more.
+average, we then expect the simulations to differ more. *Note* URDME
+does currently not support the Windows platform, meaning that this
+example is not possible to generate if using that system.
 ```
 savetofile=false;
 reg = [1:21]; % national average
@@ -382,10 +384,8 @@ our estimate (posterior sample) for Stockholm and Uppsala. Next we
 also give the weighted national average. The posterior CrI is computed
 as the marginal quantiles. The table include footnotemarks (§ and ‡)
 and we use these marks to indicate that the estimate should be
-considered with care.
-```
-clear reg, bimonthly
-IFRtableURDME; % generates the same table as in the paper
+considered with care.  ``` clear reg, bimonthly IFRtableURDME; %
+generates the same table as in the paper
 
 reg = [2]
 IFRtableURDME; % only for Uppsala

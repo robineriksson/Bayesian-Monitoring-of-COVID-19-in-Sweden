@@ -14,9 +14,9 @@ function [score] = energyscore(y,mu,sig,k)
     % reshape to proper size
     [m,p] = size(y);
 
-    y = reshape(y,[m,1,p]);
-    mu = reshape(mu,[m,1,p]);
-    sig = reshape(sig,[m,1,p]);
+    y = repmat(reshape(y,[m,1,p]),1,k,1);
+    mu = repmat(reshape(mu,[m,1,p]),1,k,1);
+    sig = repmat(reshape(sig,[m,1,p]),1,k,1);
     % sample the normal distribution
     X = mu + sig.*randn(m,k,p);
 

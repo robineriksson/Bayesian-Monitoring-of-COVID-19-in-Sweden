@@ -1,4 +1,9 @@
-%URDMESAMPLING URDME synthetic data for all 21 regions at once.
+% URDMESAMPLING generates synthetic data using URDME. Note that one
+% has to use a national posterior, that is, national (population
+% weighted) for all parameters except for R_t (beta_t) which is region
+% dependent. The R_t in the posterior file is per slab but URDME needs
+% daily values as to not "computationally explode" for large values
+% R_t.
 
 
 % R. Marin 2022-03-25 (adjusting for plotting)
@@ -137,15 +142,8 @@ else
 end
 Wcol = [6];
 
-% if numel(reg) == 21
-%   tiledlayout(7,3)
-% else
-%   tiledlayout(3,3)
-% end
-
 alpha=0.1;
 for regid=regplot
-  %nexttile;
   H = squeeze(sum(D.U(:,Hcol,regid,:),[2 3]));
   W = squeeze(sum(D.U(:,Wcol,regid,:),[2 3]));
   plot(H,'Color',[0 0 1 alpha],'HandleVisibility','off'), hold on

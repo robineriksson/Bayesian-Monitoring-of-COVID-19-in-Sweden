@@ -263,7 +263,7 @@ if illustrate
           tspan_filter_short = datastore.(region).tspan_filter(1:end);
 
           % linear fit fit get a good start on 5 April
-          lm = polyfit(1:10,paper_pred(1:10,4),1);
+          lm = polyfit(1:10,paper_pred(1:10,4)',1);
           start = polyval(lm,-0.7); % found this to work good.
 
           %

@@ -109,11 +109,9 @@ title('Density at date: D_I + D_H + D_W')
 
 %% X --> D (eventually) = X/D
 figure(4), clf
-tiledlayout(1,3)
-
 
 % I -> D
-nexttile;
+subplot(1,3,1)
 I_post_sig = covZ.stdZ(sel_Ic,Data.date(tspan_data) == stopdate,:);
 D_post_sig = covZ.stdZ(sel_D,Data.date(tspan_data) == stopdate,:);
 I_post = Z(sel_Ic,Data.date(tspan_data) == stopdate,:);
@@ -146,7 +144,7 @@ xlabel('%')
 
 
 % H -> D
-nexttile;
+subplot(1,3,2);
 H_post = Z(sel_Hc,Data.date(tspan_data) == stopdate,:);
 H_post_sig = covZ.stdZ(sel_Hc,Data.date(tspan_data) == stopdate,:);
 [mu_Hd, sig_Hd] = l_MoG(sum(D_post_IHW([2 3],:,:),1),sqrt(sum(D_post_sig([2 3],:,:).^2,1)),...
@@ -171,7 +169,7 @@ xlabel('%')
 
 
 % W -> D
-nexttile;
+subplot(1,3,3);
 W_post = Z(sel_Wc,Data.date(tspan_data) == stopdate,:);
 W_post_sig = covZ.stdZ(sel_Wc,Data.date(tspan_data) == stopdate,:);
 [mu_Wd, sig_Wd] = l_MoG(sum(D_post_IHW([3],:,:),1),sqrt(sum(D_post_sig([3],:,:).^2,1)),...

@@ -76,7 +76,11 @@ regionList = regions(false);
 
 
 prefix = postpath;
-prefix = [prefix '/KLAM/perRegion/'];
+if ispc
+    prefix = [prefix 'KLAM\perRegion\'];
+else
+    prefix = [prefix 'KLAM/perRegion/'];
+end
 
 
 burnin = 1e0;
@@ -154,7 +158,7 @@ if gelmanRub
         region=regionList{i}
         try
             for roundid = 1:runs
-                file = [prefix '/slam' num2str(date(end)) '_' ...
+                file = [prefix 'slam' num2str(date(end)) '_' ...
                         region '_monthly_' num2str(nslab) '_run' ...
                         num2str(roundid)];
                 if contains(register,'URDME')
@@ -213,7 +217,7 @@ ending = num2str(nslab);
 for i = reg
     region = regionList{i};
     try
-        post0 = [prefix '/slam' date_ '_' region '_monthly_' ending '_run'];
+        post0 = [prefix 'slam' date_ '_' region '_monthly_' ending '_run'];
         file = strcat(post0, strsplit(num2str(1:runs)));
         if contains(register,'URDME')
             for i = 1:numel(file)

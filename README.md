@@ -100,9 +100,11 @@ dynamic_beta_ML;  % generates R_t for Uppsala upscale,
 
 reg = 1:21 % all regions
 evalplot = false;
-dynamic_beta_ML; % generates the files for all the regions.
+% generates the files for all the regions:
+dynamic_beta_ML;
 
-dynamic_beta_ML_all; % generates the weighted national average posterior
+% generates the weighted national average posterior:
+dynamic_beta_ML_all;
 ```
 
 ## Weekly predictions (/weekly/)
@@ -110,15 +112,15 @@ We perform k-day ahead prediction using the posterior Kalman filter in
 `weekly_prediction`, for an example, see Fig. 3 in the paper.
 
 ## Bootstrap (/URDME/)
-The boostrap replicates we use for estimating robustness are generated
+The boostrap replicates we use for assessing robustness are generated
 using URDME. The URDME-model script `covid19enger` defines the rates
 and the model itself and `covid19enger_run_post` simulates the
 samples. Our posterior samples are generated using a national weighted
-mean posterior. See the example for Fig. S8 below for a code
-sample. The following example will generate the bootstrap replicate
+mean posterior. See the example for Fig. S8 below for some sample
+code. The following example will generate the bootstrap replicate
 samples, infer one posterior using KLAM on that data for the Uppsala
 region, and finally perform the upscaling of the reproduction number
-on that posterior. *NOTE* this time consuming.
+on that posterior. *NOTE* this is time consuming.
 ```
 savetofile = true;
 dynamic_beta_ML_all; % if not already run
@@ -444,5 +446,5 @@ Deadsplit; % run spectral, and unpacks the simulation file.
 ## Tested on
 * Linux (Pop!_OS 20.10, 64 bit) [not yet]
 * Linux (Pop!_OS 21.10, 64 bit) [not yet]
-* MacOSX (version?) [not yet]
+* macOS Monterey Version 12.3 [not yet]
 * Windows (version?) [not yet]

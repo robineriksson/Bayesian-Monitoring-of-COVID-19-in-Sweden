@@ -91,10 +91,19 @@ NRMSE = @(x,y) sqrt(nanmean( (x-y).^2,2))./nanmean(x,2);
 % Selected Mondays predictions
 % -load Kalman predictions
 [kalman_reported, date_comp, TABkalman] = l_getKalmanScore();
-kalman_nrmse = NRMSE(kalman_reported{1}.reported,kalman_reported{2}.reported)';
+% kalman_reported = {{data} {prediction}}
 
 TAB68(1,:) = 1-TABkalman(1,:,1);
 TAB95(1,:) = 1-TABkalman(1,:,2);
+
+% nrmse for Kalman
+kalman_nrmse = NRMSE(kalman_reported{1}.reported,kalman_reported{2}.reported)';
+
+% unpack for energyscore
+kdata = [kalman_reported{1}.H',kalman_reported{1}.W',kalman_reported{1}.D'];
+kpred = [kalman_reported{2}.H',kalman_reported{2}.W',kalman_reported{2}.D'];
+ksdpred = [kalman_reported{2}.Hsd',kalman_reported{2}.Wsd',kalman_reported{2}.Dsd'];
+kalman_es = energyscore(kdata,kpred,ksdpred,1e4)
 
 
 
@@ -120,21 +129,25 @@ TAB68(2,:) = 1-mean(elem_reported68,2);
 TAB95(2,:) = 1-mean(elem_reported95,2);
 
 
-% NRMSE?
+% compute the (mean normalized) NRMSE
 arx_nrmse = NRMSE(ypred(t_reported,:)',ydata(t_reported,:)')';
 
+% and the Energy score
+arx_es = energyscore(ydata(t_reported,:),ypred(t_reported,:),ysdpred(t_reported,:),1e4);
 
 TAB68 = cat(1,[{'Hospital (H)'} {'Intensive (W)'} {'Death (D)'}],num2cell(TAB68));
 TAB68 = cat(2,[{' '} {'Posterior Kalman (68\% CrI)'} {'AR'}]',TAB68);
 TAB95 = cat(2,[{'Posterior Kalman (95\% CrI)'} {'AR'}]',num2cell(TAB95));
 TAB = cat(1,TAB68,TAB95);
 
-
-
 TAB_nrmse = cat(2,[{'Posterior Kalman (NRMSE)'} {'AR'}]',num2cell([kalman_nrmse;arx_nrmse]))
 TAB = cat(1,TAB,TAB_nrmse)
 
-tablePoly = l_latexify(TAB,numel(t_reported),[3 5])
+TAB_es = cat(2,[{'Posterior Kalman (Energy score)'} {'AR'}]',num2cell([kalman_es;arx_es]./100))
+TAB = cat(1,TAB,TAB_es)
+
+
+tablePoly = l_latexify(TAB,numel(t_reported),[3 5 7])
 
 %% plotting
 ypred_plot = ypred;
@@ -294,7 +307,11 @@ function [kalman_reported, date_comp, TABkalman] = l_getKalmanScore()
     % - but first we need to extract the predictions and data.
     kalman_pred = struct('H',zeros(1,numel(Uppsala)),...
                          'W',zeros(1,numel(Uppsala)),...
-                         'D',zeros(1,numel(Uppsala)));
+                         'D',zeros(1,numel(Uppsala)),...
+                         'Hsd',zeros(1,numel(Uppsala)),...
+                         'Wsd',zeros(1,numel(Uppsala)),...
+                         'Dsd',zeros(1,numel(Uppsala)));
+
     kalman_data = struct('H',zeros(1,numel(Uppsala)),...
                          'W',zeros(1,numel(Uppsala)),...
                          'D',zeros(1,numel(Uppsala)));
@@ -304,6 +321,10 @@ function [kalman_reported, date_comp, TABkalman] = l_getKalmanScore()
         kalman_pred.H(k) = Uppsala{k}(1,3);
         kalman_pred.W(k) = Uppsala{k}(2,3);
         kalman_pred.D(k) = Uppsala{k}(3,3);
+
+        kalman_pred.Hsd(k) = mean([Uppsala{k}(1,3)-Uppsala{k}(1,2), Uppsala{k}(1,4)-Uppsala{k}(1,3)]);
+        kalman_pred.Wsd(k) = mean([Uppsala{k}(2,3)-Uppsala{k}(2,2), Uppsala{k}(2,4)-Uppsala{k}(2,3)]);
+        kalman_pred.Dsd(k) = mean([Uppsala{k}(3,3)-Uppsala{k}(3,2), Uppsala{k}(3,4)-Uppsala{k}(3,3)]);
 
         % the data at that time | sadly data has been updated cont.
         kalman_data.H(k) = Uppsala{k}(1,end);
@@ -327,7 +348,8 @@ function tex = l_latexify(TAB,N,hmid)
     %caption = ['RMSE of weekly predictions for proposed model and baseline models'];
     caption = ['Frequency of all weekly reported predictions (N~=~' num2str(N) ','...
                ' Dec 2020--May 2021) for Uppsala that fell inside of the reported CrIs' ...
-               ' (68/95\%, 7 days ahead) and the NRMSE evaluated on the following week,' ...
+               ' (68/95\%, 7 days ahead), the NRMSE, and the multivariate Energy Score' ...
+               ' evaluated on the following week,' ...
                ' thus comparing the performance of the posterior Kalman filter and the AR model.'];
 
 

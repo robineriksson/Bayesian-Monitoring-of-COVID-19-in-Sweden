@@ -33,6 +33,8 @@ if ~all(ismember(regplot,reg))
 end
 
 
+
+
 % note: comment away 'solver', 'reg', and consider to pre-compile once
 % (set 'compile' = 0 when conctructing the umod struct)
 solver = 'ssa';
@@ -42,6 +44,11 @@ divide = true; % I -> H, W -> H2, D = {D_I, D_H, D_W};
 Psamples = inf;% % inf: mean posterior, else: N # of posterior samples.
 
 regionList = regions(false);
+
+% get absolute save path
+filename = mfilename('fullpath');
+
+
 % construct the rates to run
 P = load('slam210531_mean_monthly_1');
 P = P.rates;
@@ -113,7 +120,7 @@ D.meta = P.meta;
 D.meta.posteriorHash = P.meta.hash;
 D.meta.hash = fsetop('check',D.U(:));
 
-save('URDME_all','D');
+save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
 %
 if includeUDS
     disp('... mean field approximation');
@@ -123,12 +130,12 @@ if includeUDS
     Nreplicas = 1;
     covid19enger_run_post
     Nreplicas = temp;
-    load('URDME_all','D');
+    load([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
     D.EulFwd = reshape(permute(umod.U,[2 1 3]),numel(DATES),Nspecies,Nvoxels,Nreplicas);
     Nspecies_ = 7;
     D.dynOpt = reshape(permute(DR.xSim_all(reg,:,:),[3 2 1]),numel(DATES),Nspecies_,Nvoxels,Nreplicas);
 
-    save('URDME_all','D');
+    save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
 end
 
 %%
@@ -226,19 +233,11 @@ for regid=regplot
 
   hold off
 
-
-  %
-  % ***************************************
-  % *** save to files ***
-  % ***************************************
-  savepath = mfilename('fullpath');
-  savepath = [savepath(1:end-21) 'URDME_samples'];
+  savepath = [filename(1:end-21) 'URDME_samples'];
   savepath = [savepath '_' strrep(regionList{reg(regid)},' ','_')];
   savepath = strrep(savepath,'å','a');
   savepath = strrep(savepath,'ä','a');
   savepath = strrep(savepath,'ö','o');
-
-
   if savetofile % true if we should compute the error table
 
 

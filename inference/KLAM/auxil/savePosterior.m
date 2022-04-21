@@ -83,7 +83,10 @@ meta = struct();
 meta.priorRev = amparam.priorRev;
 
 % .revision
-meta.rev = datestr(today());
+currentDate = datetime("today");
+currentDateString = string(currentDate);
+meta.rev = convertStringsToChars(currentDateString);
+% Alternative from matlab 2022a: meta.rev = datestr(today());
 
 % data .reg/rev/hash
 meta.dataReg = amparam.dataReg;

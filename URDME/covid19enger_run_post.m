@@ -17,13 +17,17 @@ inline = false; % use inline propensities or not
 
 regionList = regions(false);
 Nvoxels = numel(reg);
-fprintf('\n*** EngEr C19 in %d region(s): Nreplicas = %d, Psamples = %d ***\n', ...
-  Nvoxels,Nreplicas,Psamples);
+if verb
+    fprintf('\n*** EngEr C19 in %d region(s): Nreplicas = %d, Psamples = %d ***\n', ...
+            Nvoxels,Nreplicas,Psamples);
+end
 
 %---------------------------------------------------------------------------
 
 %% (1) build the model
-disp('Building model...');
+if verb
+    disp('Building model...');
+end
 if inline
   umod = covid19enger_inline;
 else
@@ -67,7 +71,9 @@ DATES = DATES(DATES <= str2double(stopdate));
 TSPAN = 1:numel(DATES);
 Usamples = zeros(Nspecies*Nvoxels,numel(DATES),Nreplicas,Psamples_);
 for p = 1:Psamples_
-  fprintf('Post sample: %d',p)
+    if verb
+        fprintf('Post sample: %d',p)
+    end
     % URDME fractions and rates
   clear Rates
   Rates.F0 = P.F0ave(:,p);
@@ -118,11 +124,15 @@ for p = 1:Psamples_
   thetaA = P.thetaA(p);
   thetaE = P.thetaE(p);
   lambda = 0*P.lambda(:,p); % note: lambda = 0
-  disp('   ...done.');
+  if verb
+      disp('   ...done.');
+  end
 
   %% (2) initial conditions & simulation time interval
   if ~strcmp(solver,'uds')
-    disp('Initial data...');
+      if verb
+          disp('Initial data...');
+      end
   end
 
   % initial data from file
@@ -131,12 +141,16 @@ for p = 1:Psamples_
 
   umod.tspan = TSPAN;
   if ~strcmp(solver,'uds')
-     disp('   ...done.');
+      if verb
+          disp('   ...done.');
+      end
   end
 
   %% (3) parse and compile, prepare to solve
   if ~strcmp(solver,'uds')
-    disp('Parse and compile...');
+      if verb
+          disp('Parse and compile...');
+      end
   end
   umod = urdme(umod,'solve',0,'compile',p==1,'solver',solver, ...
     'gdata',zeros(size(umod.gdata)), ...
@@ -153,22 +167,28 @@ for p = 1:Psamples_
   PHI = zeros(Nvoxels,numel(tspan),Nreplicas);
   PHI(:,1,:) = repmat(phi0(:),1,1,Nreplicas);
   if ~strcmp(solver,'uds')
-    disp('   ...done.');
+      if verb
+          disp('   ...done.');
+      end
   end
 
   %% (4) solve
   if ~strcmp(solver,'uds')
-    disp('Solving...');
+      if verb
+          disp('Solving...');
+      end
   end
 
   for i = 2:numel(tspan)
     slab_ = P.meta.slabs(i-1);
     umod.tspan = tspan(i-1:i);
     if ~strcmp(solver,'uds')
-      fprintf('%d%% ',ceil(100*i/numel(tspan)));
+        if verb
+            fprintf('%d%% ',ceil(100*i/numel(tspan)));
+        end
     end
 
-    if mod(i,20) == 0, fprintf('\n'); end
+    if verb & mod(i,20) == 0, fprintf('\n'); end
     % update local state using present value of phi
     for k = 1:Nreplicas
       umod.u0 = reshape(U(:,i-1,k),Nspecies,Nvoxels);
@@ -213,6 +233,10 @@ for p = 1:Psamples_
 end
 umod.tspan = tspan;
 umod.U = Usamples;
-fprintf('\n');
+if verb
+    fprintf('\n');
+end
 
-disp('   ...done.');
+if verb
+    disp('   ...done.');
+end

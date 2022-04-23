@@ -11,10 +11,10 @@
 
 % run all regions
 if ~exist('reg','var')
-    reg = [1:22]
+    reg = [1:22];
 end
 if ~exist('type','var')
-    type = 1, lag = 14;
+    type = 1; lag = 14;
 end
 
 if type == 1
@@ -26,13 +26,20 @@ else
 end
 
 if ~exist('register','var')
-    register='C19'
+    register='C19';
 end
+
+if ~exist('verb','var')
+    verb=false;
+end
+
 % defaults
 posteriordate = '210531'; % change here
 ending        = '1_100'; % at what date does the slabs start.
-datadate     = [200401 210531] % change end date here
-
+datadate     = [200401 210531]; % change end date here
+if verb
+    datadate
+end
 
 useCSSS      = false;
 saveall      = true;
@@ -42,9 +49,16 @@ noNetwork    = true;
 regionList_ = regions(false);
 regionList_ = cat(1,regionList_,'Sweden');
 for rid = reg
-  region = regionList_{rid}
-  FINALRUN = true;
-  weekly_prediction
+    region = regionList_{rid};
+    if verb
+        disp(['running: ' region]);
+        disp(['with register: ' register]);
+        disp(['and datadate: ' num2str(datadate)])
+    end
+    FINALRUN = true;
+    weekly_prediction
 end
 
-disp('*** Done ***');
+if verb
+    disp('*** Done ***');
+end

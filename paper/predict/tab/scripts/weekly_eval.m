@@ -5,7 +5,9 @@
 if ~exist('savetofile','var')
     savetofile=false;
 end
-
+if ~exist('verb','var')
+    verb=false;
+end
 
 [~,~,~,N,date_tab,TAB] = readWeeklyTable();
 % if ~date_tab(1) == DATES(end-7)
@@ -49,7 +51,11 @@ if savetofile
   fileID = fopen(tabname,'w');
   fprintf(fileID,'%s\n',tableWeekly);
   fclose(fileID);
-  disp(['saved table: ' tabname]);
+  if verb
+      disp(['saved table: ' tabname]);
+  end
 else
-  disp(['didn''t save table: ' tabname]);
+    if verb
+        disp(['didn''t save table: ' tabname]);
+    end
 end

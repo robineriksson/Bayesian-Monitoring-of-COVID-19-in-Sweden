@@ -19,10 +19,17 @@ if numel(reg) > 1
     error('only one region at a time')
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 
 Data = loadData('C19');
 
-datetime = [200401 210531]
+datetime = [200401 210531];
+if verb
+    datetime
+end
 tspan_date = find(Data.date == datetime(1)):find(Data.date == datetime(2));
 Data.date = Data.date(tspan_date);
 Data.H = Data.H(tspan_date,:);
@@ -62,7 +69,7 @@ Dinc_smooth = max(sgolayfilt(Dinc_URDME,1,7),0);
 
 
 
-figure(1), clf,
+figure(1), clf, hold on
 bar([sparse(wd,1,Dinc0)./sum(Dinc0) ...
      sparse(wd,1,Dinc)./sum(Dinc)  ...
      sparse(wd,1,Dinc_URDME)./sum(Dinc_URDME)].*100);
@@ -76,12 +83,16 @@ legend('Original','Smoothed','Synthetic','interpreter','latex');
 % polish target output size
 set(gcf,'PaperPositionMode','auto');
 set(gcf,'Position',[100 100 500 350]);
-
+hold off
 printpath = mfilename('fullpath');
 printpath = [printpath(1:end-25) 'smoothing.pdf'];
 if savetofile
     print('-dpdf',printpath);
-    disp(['saved figure: ' printpath])
+    if verb
+        disp(['saved figure: ' printpath])
+    end
 else
-    disp(['didn''t save figure: ' printpath])
+    if verb
+        disp(['didn''t save figure: ' printpath])
+    end
 end

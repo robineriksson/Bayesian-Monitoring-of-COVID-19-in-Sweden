@@ -18,6 +18,9 @@ if ~exist('savetofile','var')
     savetofile=false;
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
 
 % load posterior
 Nsample = 1e4;
@@ -81,7 +84,7 @@ try
     hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
     hypfile = hypfile{:};
   end
-  temp = load(hypfile)
+  temp = load(hypfile);
   clear temp;
 catch
   hypfile = [];
@@ -154,10 +157,6 @@ for i = 1:numel(rateNamesSubset)
             pobias= pobias*24;
         end
     end
-
-%     disp(name)
-%     disp(quantile(posterior,[0.025,0.975]))
-%     disp(pomean)
 
     % posterior
     [fp,xip] = ksdensity(posterior,'Function','pdf');
@@ -237,7 +236,11 @@ if savetofile
   print('-dpdf',printpath);
   % *** does not always work, run manually in this case:
   %unix(['epstopdf ' printpath '.eps']);
-  disp(['saved figure: ' printpath]);
+  if verb
+      disp(['saved figure: ' printpath]);
+  end
 else
-  disp(['didn''t save figure: ' printpath]);
+    if verb
+        disp(['didn''t save figure: ' printpath]);
+    end
 end

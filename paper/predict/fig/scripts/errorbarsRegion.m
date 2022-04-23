@@ -13,11 +13,17 @@ if ~exist('savetofile','var')
     savetofile=false;
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 
 %clear ratenames
 % load data
 if ~exist('ratenames','var')
-    disp('reading from file');
+    if verb
+        disp('reading from file');
+    end
     ratenames = {'sigma', 'gammaI', 'gammaH' 'gammaW', ...
                  'R0' 'thetaA_' 'thetaE_','half_life',...
                  'E2I','HOSP','IC_HOSP','IFR'  };
@@ -40,7 +46,9 @@ if ~exist('ratenames','var')
     [meanpost, stdpost, regionList] = l_getpost(postdate,ratenames,ending,inverted);
 
 else
-    disp('using in-memory');
+    if verb
+        disp('using in-memory');
+    end
 end
 
 % bar plot
@@ -93,14 +101,18 @@ set(gcf,'PaperPositionMode','auto');
 %%
 set(gcf,'Position',[100 100 900 500]);
 %%
+printpath = mfilename('fullpath');
+printpath=[printpath(1:end-23) 'errorbars.pdf'];
 if savetofile
-    printpath = mfilename('fullpath');
-    printpath=[printpath(1:end-23) 'errorbars.pdf'];
 
     print('-dpdf',printpath);
-    disp(['saved figure: ' printpath]);
-    % *** does not always work, run manually in this case:
-    %unix(['epstopdf ' printpath '.eps']);
+    if verb
+        disp(['saved figure: ' printpath]);
+    end
+else
+    if verb
+        disp(['Didn''t save figure: ' printpath]);
+    end
 end
 
 

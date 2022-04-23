@@ -32,6 +32,9 @@ if ~all(ismember(regplot,reg))
     error('all regions that you intend to plot needs to be generated as well');
 end
 
+if ~exist('verb','var')
+    verb = false;
+end
 
 
 
@@ -76,8 +79,10 @@ end
 
 
 % main call
-disp(' generating data ...');
-disp('... ssa samples');
+if verb
+    disp(' generating data ...');
+    disp('... ssa samples');
+end
 covid19enger_run_post
 
 %
@@ -123,7 +128,9 @@ D.meta.hash = fsetop('check',D.U(:));
 save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
 %
 if includeUDS
-    disp('... mean field approximation');
+    if verb
+        disp('... mean field approximation');
+    end
     % run Euler forward
     solver = 'uds';
     temp = Nreplicas; % we only need 1 sample from UDS.
@@ -140,7 +147,9 @@ end
 
 %%
 % plot simulations with data
-disp('generating plots ...');
+if verb
+    disp('generating plots ...');
+end
 
 if divide
   Hcol = [5 9];
@@ -248,15 +257,20 @@ for regid=regplot
 
 
     print('-dpdf', savepath)
-    disp(['saved figure: ' savepath]);
-
+    if verb
+        disp(['saved figure: ' savepath]);
+    end
 
   else
-    disp(['did not save figure:' savepath])
+      if verb
+          disp(['did not save figure:' savepath])
+      end
   end
 
 end
-disp(' ... done with plots');
+if verb
+    disp(' ... done with plots');
+end
 
 
 

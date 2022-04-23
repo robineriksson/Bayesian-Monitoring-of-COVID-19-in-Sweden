@@ -11,6 +11,10 @@ if ~exist('savetofile','var')
     savetofile = true; % print to file false/true
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 % posterior dates to plot
 dateend_ = '210531';
 
@@ -18,10 +22,8 @@ shiftstr = '_1';
 datestart = 200401; % where to start the plot
 
 regions_ = regions();
-% pick one region (if not these specified)
-% Uppsala:2, largest:1,10,12; smallest: 8,9,19
-for reg = [2]% 1 10 12 8 9 19]
-  region = regions_{reg}
+for reg = [2]
+  region = regions_{reg};
 
   % construct posterior files
   postname = cell(4,1);
@@ -223,19 +225,24 @@ for reg = [2]% 1 10 12 8 9 19]
   set(gcf,'Position',[100 100 500 350]);
 
   % print to file
+  printpath = mfilename('fullpath');
+  printpath = [printpath(1:end-15) '..' printpath(end-15:end)];
+  printpath = [printpath '_' strrep(region,' ','_')];
+  printpath = strrep(printpath,'å','a');
+  printpath = strrep(printpath,'ä','a');
+  printpath = strrep(printpath,'ö','o');
+
   if savetofile
     figure(1)
-    printpath = mfilename('fullpath');
-    printpath = [printpath(1:end-15) '..' printpath(end-15:end)];
-    printpath = [printpath '_' strrep(region,' ','_')];
-    printpath = strrep(printpath,'å','a');
-    printpath = strrep(printpath,'ä','a');
-    printpath = strrep(printpath,'ö','o');
     %print('-depsc',printpath);
     print('-dpdf',printpath);
 
-    disp(['saved figure: ' printpath]);
-    % *** does not always work, run manually in this case:
-    %unix(['epstopdf ' printpath '.eps']);
+    if verb
+        disp(['saved figure: ' printpath]);
+    end
+  else
+      if verb
+          disp(['didn''t save figure: ' printpath]);
+      end
   end
 end

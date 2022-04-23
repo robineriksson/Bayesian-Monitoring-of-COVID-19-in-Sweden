@@ -28,11 +28,18 @@ end
 if ~exist('windowlength','var')
     windowlength=150;
 end
+
+if ~exist('verb','var')
+    verb=false;
+end
+
 %% region list
 regionList = regions(false);
 
 for region = reg % region to estimate beta for
-    disp(['running: ' regionList{region}]);
+    if verb
+        disp(['running: ' regionList{region}]);
+    end
     startdate = 200401;
     enddate = 210531;
     prevresdate = 210531; % previous result for initial guess
@@ -136,17 +143,26 @@ for region = reg % region to estimate beta for
         oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
         beta0 = getC19beta(oldrates_daily,oldres.R_post);
         beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
-        disp('found old guess')
+        if verb
+            disp('found old guess')
+        end
     catch
         beta0 = 0.1*ones(1,ntime);
-        disp('from scratch')
+        if verb
+            disp('from scratch')
+        end
     end
 
     %%
+    if verb
+        display = 'iter-detailed';
+    else
+        display = 'off';
+    end
     options = optimoptions(@fmincon,'MaxFunctionEvaluations',1700000,...
-                           'MaxIterations',6000,'Display','off',...'iter-detailed',...
+                           'MaxIterations',6000,'Display',display,...
                            'OptimalityTolerance',2e-5);
-    %options.Algorithm = 'sqp';
+
 
     F=cell(nslab,1);
     for m = 1:nslab
@@ -160,7 +176,10 @@ for region = reg % region to estimate beta for
     [x0_post,betaOpt,J,misfit,beta_mpc,ix_mpc] = mpcloop_beta_S(squeeze(Ydata(:,1,:)),F,H(:,1:7),...
                                                                 betaIdx,wbeta,slab,squeeze(S(:,:,:,1)),steplength,windowlength,x0,...
                                                                 beta0,options);
-    toc
+    toctime = toc;
+    if verb
+        toctime
+    end
     %%
     rates_daily = dailyrates(postrates,slab);
     rates_daily.beta=betaOpt';
@@ -251,7 +270,9 @@ for region = reg % region to estimate beta for
             hold off
         end
     catch
-        disp('LPsim_slabs is not really working');
+        if verb
+            disp('LPsim_slabs is not really working');
+        end
     end
 
     %%
@@ -260,13 +281,17 @@ for region = reg % region to estimate beta for
     if urdme
         savename = [savename '_URDME' num2str(urdme)];
     end
-    savename = [savename '.mat']
+    savename = [savename '.mat'];
     savename = [prefix 'dynOpt/' savename];
     if savetofile
         save(savename,'R_post','dates','x0_post','postrates','xSim')
-        disp(['saved: ' savename]);
+        if verb
+            disp(['saved: ' savename]);
+        end
     else
-        disp(['didn''t save: ' savename]);
+        if verb
+            disp(['didn''t save: ' savename]);
+        end
     end
 
 end

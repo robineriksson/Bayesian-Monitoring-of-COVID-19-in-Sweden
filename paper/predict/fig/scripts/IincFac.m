@@ -32,6 +32,10 @@ if ~exist('reg','var')
     reg = [1 2];
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 
 % ****************************************************
 
@@ -142,13 +146,6 @@ for ri = reg
 
     DATES = datastore.(region).DATES;
     t = 1:numel(DATES);
-
-    %   if numel(reg) > 1
-    %     disp([num2str(ri) ': ' region '. ' '<key>']);
-    %     pause;
-    %   end
-    %
-
 
     figure(1), clf,  hold on
 
@@ -284,9 +281,13 @@ for ri = reg
         set(h,'PaperPositionMode','auto');
         set(h,'Position',[100 100 500 350]);
         print('-dpdf', savepath1)
-        disp(['saved figure: ' savepath1]);
+        if verb
+            disp(['saved figure: ' savepath1]);
+        end
     else
-        disp(['didn''t save figure: ' savepath1]);
+        if verb
+            disp(['didn''t save figure: ' savepath1]);
+        end
     end
 
     %% Factor of underestimation (Model / Confirmed test)
@@ -391,10 +392,13 @@ for ri = reg
         set(h2,'PaperPositionMode','auto');
         set(h2,'Position',[100 100 500 350]);
         print('-dpdf', savepath2)
-        disp(['saved figure: ' savepath2]);
-
+        if verb
+            disp(['saved figure: ' savepath2]);
+        end
     else
-        disp(['didn''t save figure: ' savepath2]);
+        if verb
+            disp(['didn''t save figure: ' savepath2]);
+        end
     end
 
 

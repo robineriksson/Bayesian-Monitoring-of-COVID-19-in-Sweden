@@ -16,6 +16,10 @@ if ~exist('reg','var')
     reg = [2 1 10 12 8 9 19];
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 printNtest = true; % write out the number of tests in period 200805-210526
 
 % posterior dates to plot
@@ -27,8 +31,10 @@ datestart = 200401; % where to start the plot
 regions_ = regions(false);
 
 for rid = reg
-
-  region = regions_{rid}
+    region = regions_{rid};
+    if verb
+        disp(['Running: ' region]);
+    end
 
   % construct posterior files
   postname = ['/slam' dateend_ '_' region '_monthly' ...
@@ -187,11 +193,11 @@ for rid = reg
     printpath = strrep(printpath,'å','a');
     printpath = strrep(printpath,'ä','a');
     printpath = strrep(printpath,'ö','o');
-    %print('-depsc',printpath);
     print('-dpdf',printpath);
-    % *** does not always work, run manually in this case:
-    %unix(['epstopdf ' printpath '.eps']);
-    disp(['saved figure: ' printpath])
+
+    if verb
+        disp(['saved figure: ' printpath])
+    end
   end
 
 end
@@ -206,7 +212,8 @@ if printNtest
   Ntest100k = sum(test.Nper100k(tspan_test,reg),1);
   Ntest100k_c = sprintfc('%d',round(Ntest100k,5,'significant')');
   names = regions();
-  cat(2,names(reg),Ntest_c, Ntest100k_c)
-
-
+  Ntest_tab = cat(2,names(reg),Ntest_c, Ntest100k_c);
+  if verb
+      disp(Ntest_tab);
+  end
 end

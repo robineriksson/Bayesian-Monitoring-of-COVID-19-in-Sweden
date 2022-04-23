@@ -33,13 +33,15 @@ if 0
   % defaults
   posteriordate = '210531'; % change here
   ending        = '1_100'; % at what date does the slabs start.
-  datadate     = [200401 210531] % change end date here
+  datadate     = [200401 210531]; % change end date here
 
   register   = 'C19'; % Employs C19 if not Uppsala, then Uppsala Region
   useCSSS      = false;
   saveall      = true;
+
+  verb = false;
   % run all regions
-  type = 1, lag = 14;
+  type = 1; lag = 14;
   regionList = regions(false);
 
   for reg = [1:21]
@@ -50,29 +52,27 @@ if 0
 
   % lag7-plot, Uppsala
   FINALRUN = true;
-  type = 2, lag = 7;
+  type = 2; lag = 7;
   region = 'Uppsala'
   weekly_prediction
 
   % lag7-plot, Stockholm
   FINALRUN = true;
-  type = 2, lag = 7;
+  type = 2; lag = 7;
   region = 'Stockholm'
   weekly_prediction
 
   % lag14-plot, Sweden
   FINALRUN = true;
-  type = 1, lag = 14;
+  type = 1; lag = 14;
   region = 'Sweden'
   weekly_prediction
 
   % lag7-plot, Sweden
   FINALRUN = true;
-  type = 2, lag = 7;
+  type = 2; lag = 7;
   region = 'Sweden'
   weekly_prediction
-
-  disp('*** Done ***');
 end
 
 % Change below for standard parameters
@@ -80,7 +80,7 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % type =
   %   1: without historic lag, but prediction lag days ahead
   %   2: with historic lag
-  type = 1
+  type = 1;
   if type == 1
     lag = 14;
   else
@@ -94,7 +94,7 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   saveall=true;
 
   % for reference
-  region = 'Uppsala'
+  region = 'Uppsala';
 
   % posterior file date
   posteriordate = '210531';
@@ -106,9 +106,14 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % exclude the network (only affects 'Sweden')
   noNetwork = 1;
 
+  % print verb information
+  verb = false;
+
   register = 'C19';
 else
-  disp('*** Running as script... ***');
+    if verb
+        disp('*** Running as script... ***');
+    end
   FINALRUN = false;
   % (will only run once as script to avoid misunderstandings)
 end
@@ -370,7 +375,7 @@ exception.AbsMagn = 1e4;
 switch type
   case 1
     % without:
-    if exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '.mat'],'file')
+    if verb & exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '.mat'],'file')
         warning(['Already saved prediction for ' posterior(1:end-4)]);
     end
     [Z,covZ,~,L] = C19filt([],[],G,rates,D,obsrates,Ydata,slabs, ...
@@ -397,11 +402,13 @@ switch type
          'useCSSS','register','DATES','TSPAN','lag','slabs','Data');
   case 2
     % with:
-    if exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
+    if verb & exist([abspath(1:end-24) 'weekly/save/runs/' posterior(1:end-4) '_lag.mat'],'file')
         warning(['Already saved lag prediction for ' posterior(1:end-4)]);
     end
 
-    disp(['qdiag: ' num2str(Q.qdiag)]);
+    if verb
+        disp(['qdiag: ' num2str(Q.qdiag)]);
+    end
     [Z_,covZ_,Z,covZ] = ...
         C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
                     numel(ixfilter),lag,Q);

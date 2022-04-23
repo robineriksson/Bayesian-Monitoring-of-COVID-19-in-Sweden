@@ -33,6 +33,10 @@ if reg ~= 1
     warning('validating data is not present for regions other than Stockholm');
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 % dates of interest | for table
 doi = [200801 201001 201201 210201 210401];
 % ****************************************************
@@ -201,9 +205,13 @@ if savetofile
     fileID = fopen(tabname,'w');
     fprintf(fileID,'%s\n',TAB_tex);
     fclose(fileID);
-    disp(['saved table: ' tabname]);
+    if verb
+        disp(['saved table: ' tabname]);
+    end
 else
-    disp(['didn''t save table: ' tabname]);
+    if verb
+        disp(['didn''t save table: ' tabname]);
+    end
 end
 
 
@@ -254,7 +262,10 @@ if illustrate
     xx_vac_rev = find(ismember(data_vac.date,dates));
     %% Plot
     for i = reg
-        region = regionList{i}
+        region = regionList{i};
+        if verb
+            disp(['running: ' region]);
+        end
         figure(1), clf;
         % Sample trajectories
         Nsamples = 0;
@@ -428,9 +439,13 @@ if illustrate
 
             print('-dpdf', figname)
 
-            disp(['saved figure: ' figname])
+            if verb
+                disp(['saved figure: ' figname])
+            end
         else
-          disp(['didn''t save figure: ' figname])
+            if verb
+                disp(['didn''t save figure: ' figname])
+            end
         end
 
     end

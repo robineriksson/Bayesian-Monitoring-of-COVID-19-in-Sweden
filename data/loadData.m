@@ -301,7 +301,7 @@ Data.hash = fsetop('check',cat(2,c{:})');
 hashpath = [fullpath(1:end-8) 'sources/' regName_ '/' regName 'hash.mat'];
 if ~exist(hashpath,'file')
   % (§2a) full load of data, no old hash found so new hash generated
-  warning(sprintf('Could not load hash for register ''%s''.',regName));
+  warning('loadData:hash',sprintf('Could not load hash for register ''%s''.',regName));
   disp('Saving new hash, saving data, and updating sources.csv...');
   hash0 = hash;
   save(hashpath,'hash0');
@@ -393,18 +393,18 @@ function ok = l_comparehash(hash0,hash)
 
 ok = 1;
 if hash0.nmonths ~= hash.nmonths
-  warning('Hash: Number of months mismatch.');
+  warning('loadData:hash','Hash: Number of months mismatch.');
   ok = 0;
 end
 nmonths = max(hash0.nmonths,hash.nmonths);
 if hash0.regions ~= hash.regions
-  warning('Hash: Region names or ordering mismatch.');
+  warning('loadData:hash','Hash: Region names or ordering mismatch.');
   ok = 0;
 end
 
 fnames = fieldnames(hash0);
 if numel(fsetop('setxor',fnames,fieldnames(hash))) ~= 0
-  warning('Field names mismatch.');
+  warning('loadData:hash','Field names mismatch.');
   ok = 0;
 end
 
@@ -417,7 +417,7 @@ for i = 1:numel(fnames)
   hsh = [hash.(fnames{i}) zeros(1,nmonths-hash.nmonths,'uint32')];
   ind = find(hsh0 ~= hsh); % (now has the same length)
   if ~isempty(ind)
-    warning(sprintf(['Hash: field ''%s'' mismatch in index: [%s]'], ...
+    warning('loadData:hash',sprintf(['Hash: field ''%s'' mismatch in index: [%s]'], ...
                     fnames{i},num2str(ind)));
     ok = 0;
   end

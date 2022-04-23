@@ -6,6 +6,16 @@
 % R. Marin 2022-03-22 (stream lined for the results we want in paper)
 % S. Engblom 2021-03-11
 
+if ~exist('verb','var')
+    verb=false;
+end
+
+if ~exist('reg','var')
+    reg=1:21;
+end
+
+%%
+rng(222);
 
 %% load posterior
 % load posterior
@@ -16,7 +26,7 @@ prefix = 'KLAM/perRegion/';
 date = '210531';
 ending = '_1_100';
 regionList = regions(false);
-reg = 1:21;
+
 regname = regionList(reg);
 files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
 load Ncounties;
@@ -30,8 +40,6 @@ rates = posteriorenger(Nsample,filename,Weights,true);
 
 
 
-%%
-rng(222);
 
 
 k = 1:Nsample;
@@ -92,21 +100,25 @@ quant = [0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2];
 ID = 100*(rates.F2dave+rates.F2ave.*(rates.F3dave+rates.F3ave.*rates.F4ave))./(1-rates.F3ave.*(1-rates.F4ave));
 ID = weights * ID;
 ID_q = quantile(ID, quant);
-CFR_I = l_formatCI(round(ID_q,2,'significant'))
+CFR_I = l_formatCI(round(ID_q,2,'significant'));
 
 % H --> D *eventually*
 HD = 100*(rates.F3dave + rates.F3ave.*rates.F4ave)./(1-rates.F3ave.*(1-rates.F4ave));
 HD = weights * HD;
 HD_q = quantile(HD, quant);
-CFR_H = l_formatCI(round(HD_q,2,'significant'))
+CFR_H = l_formatCI(round(HD_q,2,'significant'));
 
 % W --> D *eventually*
 WD = 100*(rates.F4ave+(1-rates.F4ave).*rates.F3dave) ./ ( 1-rates.F3ave.*(1-rates.F4ave));
 WD = weights * WD;
 WD_q = quantile(WD, quant);
-CFR_W = l_formatCI(round(WD_q,2,'significant'))
+CFR_W = l_formatCI(round(WD_q,2,'significant'));
 
-
+if verb
+    CFR_I
+    CFR_H
+    CFR_W
+end
 
 
 %% Distribution of the dead (from what compartment)
@@ -142,11 +154,14 @@ D_SS_IHW(1) = D_SS_tot-nansum(D_SS_IHW); % imputed value
 D_scale_tot = sum(Data_scale.D(Data_scale.date == stopdate,:));
 D_scale = D_scale_tot/D_SS_tot;
 D_SS_IHW = D_SS_IHW*D_scale;
-disp('number of dead')
-round(D_SS_IHW,0)
-disp('... of which the total is')
-sum(round(D_SS_IHW,0))
-disp(['... and scaled uniformly by: ' num2str(D_scale)])
+
+if verb
+     disp('number of dead')
+      round(D_SS_IHW,0)
+      disp('... of which the total is')
+      sum(round(D_SS_IHW,0))
+      disp(['... and scaled uniformly by: ' num2str(D_scale)])
+end
 
 
 D_SS_IHW_norm = 100*D_SS_IHW/sum(D_SS_IHW);

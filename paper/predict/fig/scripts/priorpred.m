@@ -23,6 +23,9 @@ end
 if ~exist('reg','var')
     reg = 1;
 end
+if ~exist('verb','var')
+    verb=false;
+end
 
 smoothD = true;
 plotfun = @plot;
@@ -33,14 +36,18 @@ region = regionList{reg};
 
 abspath = mfilename('fullpath');
 if ~regen
-    disp(['loading priorpred_' region '.mat'])
+    if verb
+        disp(['loading priorpred_' region '.mat'])
+    end
     try
         load([abspath(1:end-9) 'priorpred_' region '.mat'])
     catch
         error('file seems to be missing, run again with regen=true');
     end
 else
-    disp(['generating priorpred_' region '.mat']);
+    if verb
+        disp(['generating priorpred_' region '.mat']);
+    end
 
     lag = 7;
 
@@ -189,9 +196,7 @@ else
     exception.SDFAC = 0.25;
     exception.AbsMagn = 1e4;
 
-    % with historic lag or not
-
-    disp(['qdiag: ' num2str(Q.qdiag)]);
+    % with historic lag
     [Z_,covZ_,Z,covZ] = ...
         C19filt_lag(G,rates,D,obsrates,Ydata,slabs,...
                     numel(ixfilter),lag,Q);
@@ -207,7 +212,9 @@ else
          'Z_','covZ_','Z','covZ','meta','Ydata','tspan_filter',...
          'tspan_data','lan','useCSSS','register','DATES','TSPAN',...
          'lag','slabs','Data');
-    disp('saved priorpred.mat')
+    if verb
+        disp('saved priorpred.mat')
+    end
 end
 
 
@@ -269,7 +276,7 @@ if Nsamples_ > 0
     yyaxis left
     plotfun(tspan_filter,squeeze(Y_swe_plot(Hcomp,:,1:Nsamples_)),'-','Color',[color(1,:) alpha], ...
             'HandleVisibility','off')
-    hold on,
+    hold on;
     yyaxis right
     plotfun(tspan_filter,squeeze(Y_swe_plot(Wcomp,:,1:Nsamples_)),'-','Color',[color(2,:) alpha], ...
             'HandleVisibility','off')
@@ -284,9 +291,9 @@ comp_vec = [Hcomp Wcomp Dcomp Icomp];
 for i = comp_vec
     % note: lognormal interpretation
     if any(i == [Hcomp Icomp])
-        yyaxis left, hold on
+        yyaxis left, hold on;
     else
-        yyaxis right, hold
+        yyaxis right, hold on;
     end
     if i == Dcomp
         plotfun(tspan_filter,mean(squeeze(Y_sweF_plot(i,:,:)),2),'-','Color',color(i,:));
@@ -372,7 +379,7 @@ end
 for k = slabstops
     xline(tspan_data(k),':k');
 end
-hold off,
+hold off;
 
 xlim(tspan_data([1 end]))
 xtk = fliplr(tspan_data(end:-28:1));
@@ -436,7 +443,7 @@ legend(leg, ...
 
 
 
-hold off
+hold off;
 
 
 
@@ -457,7 +464,11 @@ if savetofile % true if we should compute the error table
 
     %print(h, ['~/Desktop/lag_' region '.eps'], '-depsc')
     print(h, figname, '-dpdf')
-    disp(['saved figure:' figname])
+    if verb
+        disp(['saved figure:' figname])
+    end
 else
-    disp(['didn''t save figure:' figname])
+    if verb
+        disp(['didn''t save figure:' figname])
+    end
 end

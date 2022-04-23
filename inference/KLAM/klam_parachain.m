@@ -28,7 +28,7 @@
 rng(0)
 
 if ~exist('nMCMC','var')
-    nMCMC    = 5e4;
+    nMCMC=5e4;
 end
 
 if ~exist('savetofile','var')
@@ -40,7 +40,7 @@ if ~exist('reg','var')
 end
 
 if ~exist('gelmanRub','var')
-    gelmanRub = true;
+    gelmanRub=true;
 end
 
 if ~exist('burnin','var')
@@ -48,15 +48,18 @@ if ~exist('burnin','var')
 end
 
 if ~exist('runs','var')
-    runs = 4;
+    runs=4;
 end
 
 if ~exist('register','var')
     register = 'C19';
 end
 
+if ~exist('verb','var')
+    verb = false;
+end
 
-verb     = false; % debug text
+verb     = false; % verb text
 nslab    = 1; % {1: 1st, 8: 8th, 15: 15th, 22:22nd} monthly slabs
 date     = [200401 210531];
 scaleS   = 0.04; %0.1 in Uppsala gives acceptance rate ~ 10-20%
@@ -97,7 +100,9 @@ try
         roundid = round_(i);
         regid = reg_(i);
         region = regionList{regid};
-        disp(['starting: ' region ', id: ' num2str(roundid)])
+        if verb
+            disp(['starting: ' region ', id: ' num2str(roundid)])
+        end
 
         posterior = ['slam210531_' region '_monthly_1_100.mat'];
         if ismember(regid,[1 10 12])
@@ -117,18 +122,19 @@ try
                       init,scaleS,register,useCSSS,perslab,...
                       fix,0,state0);
 
-
-        disp(['completed: ' region ', id: ' num2str(roundid) ...
-              ', early reject rate: ' ...
-              num2str(outverb.early_reject_rate) ...
-              ', early reject rate 10: ' ...
-              num2str(outverb.early_reject_rate_10) ...
-              ', early reject rate 10-90: ' ...
-              num2str(outverb.early_reject_rate_10_90) ...
-              ', early reject rate 90-100: ' ...
-              num2str(outverb.early_reject_rate_90_100) ...
-              ', accept rate: ' ...
-              num2str(outverb.accept_rate)])
+        if verb
+            disp(['completed: ' region ', id: ' num2str(roundid) ...
+                  ', early reject rate: ' ...
+                  num2str(outverb.early_reject_rate) ...
+                  ', early reject rate 10: ' ...
+                  num2str(outverb.early_reject_rate_10) ...
+                  ', early reject rate 10-90: ' ...
+                  num2str(outverb.early_reject_rate_10_90) ...
+                  ', early reject rate 90-100: ' ...
+                  num2str(outverb.early_reject_rate_90_100) ...
+                  ', accept rate: ' ...
+                  num2str(outverb.accept_rate)])
+        end
 
 
 
@@ -138,7 +144,9 @@ try
     end
     stopped = 0;
 catch
-    disp(['*** CATCH ***']);
+    if verb
+        disp(['*** CATCH ***']);
+    end
 
 
     p = gcp; delete(p);
@@ -147,15 +155,23 @@ end
 if ~stopped
     p = gcp; delete(p);
 end
-disp('*** DONE ***');
-toc
+if verb
+    disp('*** DONE ***');
+end
+toctime = toc;
+if verb
+    toctime
+end
 
 %% fast eval of multi-chain rates
 if gelmanRub
     % date(end) = 210331;
     % nslab=1;
     for i = reg
-        region=regionList{i}
+        region=regionList{i};
+        if verb
+            disp(['region: ' region]);
+        end
         try
             for roundid = 1:runs
                 file = [prefix 'slam' num2str(date(end)) '_' ...
@@ -201,9 +217,12 @@ if gelmanRub
 
             % GR-statistic
             R = (W*(L-1)/L + B/L) ./ W;
-            R_mean = mean(R)
+            R_mean = mean(R);
+            if verb
+                disp(['GR: ' R_mean]);
+            end
         catch
-            warning(['GR missing region: ' region])
+            error(['GR missing region: ' region])
         end
     end
 end
@@ -238,7 +257,7 @@ for i = reg
                     sl = cat(2,sl,sl_burn(:,burnin+1:end));
                 end
             catch
-                warning(['did not find: ' file{i}])
+                error(['did not find: ' file{i}])
             end
         end
 
@@ -247,7 +266,7 @@ for i = reg
                                                  1e0, true, useCSSS, savetofile, ...
                                                  fix,nslab,0,[],{'full' '100'},false);
     catch
-        warning(['missing region: ' region])
+        error(['missing region: ' region])
     end
 end
 

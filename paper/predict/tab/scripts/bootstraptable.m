@@ -14,6 +14,10 @@ if ~exist('savetofile','var')
     savetofile=false;
 end
 
+if ~exist('verb','var')
+    verb=false;
+end
+
 includeSmoothing = true;
 includePop = true;
 prefix = postpath;
@@ -80,7 +84,10 @@ tableBoot = arr2latex(X,{'g' '1.1f' 'g' 'g' '1.1e$'}, ...
   'colspec',colspec, ...
   'hline','off','centering','on', ...
   'caption',caption, ...
-  'label',label)
+                      'label',label);
+if verb
+    tableBoot
+end
 
 
 
@@ -93,11 +100,17 @@ if savetofile
   fileID = fopen(tabname,'w');
   fprintf(fileID,'%s\n',tableBoot);
   fclose(fileID);
-  disp(['saved table: ' tabname]);
+  if verb
+      disp(['saved table: ' tabname]);
+  end
 
   marginal_name = [postpath() 'KLAM/marginal_bias.mat'];
   save(marginal_name,'marginal')
-  disp(['saved marginals: ' marginal_name]);
+  if verb
+      disp(['saved marginals: ' marginal_name]);
+  end
 else
-  disp(['didn''t save table: ' tabname]);
+    if verb
+        disp(['didn''t save table: ' tabname]);
+    end
 end

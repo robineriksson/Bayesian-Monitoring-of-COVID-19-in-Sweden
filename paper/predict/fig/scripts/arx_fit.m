@@ -21,6 +21,13 @@ end
 if ~exist('reg','var')
     reg=2;
 end
+if ~exist('verb','var')
+    verb=false;
+end
+
+if ~exist('alldata','var')
+    alldate=true;
+end
 inferDincPlot = false; % true if generate Dinc as diff(D)
 
 register = 'C19'; % data source
@@ -44,15 +51,31 @@ data_all = polishData(data_all,'D','Dinc',1);
 data_all = smoothData(data_all,{'D' 'H' 'W'},{'Dinc' [] []});
 
 if ~exist('ypred','var')
+
+
     len = size(data_all.date,1);
+
+
+    stopvec = 10:len;
     ypred= nan(len,3);
     ysdpred = nan(len,3);
 
+    if ~alldata
+        stopvec = [251 258 265 272 279 286 293 307 314 321 ...
+                   328 335 342 349 356 363 370 377 384 391 ...
+                   398 405 412 419 426];
+    end
+
+
     % expanding window formulation
-    disp('fitting AR ...');
-    for stop = 10:len
-        if mod(stop,10)==0
-            disp([num2str(round(100*stop/len)) '%'])
+    if verb
+        disp('fitting AR ...');
+    end
+    for stop = stopvec
+        if mod(stop,20)==0
+            if verb
+                disp([num2str(round(100*stop/len)) '%'])
+            end
         end
         z = iddata([data_all.H(1:stop,reg), data_all.W(1:stop,reg),...
                     data_all.D(1:stop,reg)],[],1,'TimeUnit','days','Tstart',1);
@@ -103,7 +126,7 @@ kalman_nrmse = NRMSE(kalman_reported{1}.reported,kalman_reported{2}.reported)';
 kdata = [kalman_reported{1}.H',kalman_reported{1}.W',kalman_reported{1}.D'];
 kpred = [kalman_reported{2}.H',kalman_reported{2}.W',kalman_reported{2}.D'];
 ksdpred = [kalman_reported{2}.Hsd',kalman_reported{2}.Wsd',kalman_reported{2}.Dsd'];
-kalman_es = energyscore(kdata,kpred,ksdpred,1e4)
+kalman_es = energyscore(kdata,kpred,ksdpred,1e4);
 
 
 
@@ -140,14 +163,19 @@ TAB68 = cat(2,[{' '} {'Posterior Kalman (68\% CrI)'} {'AR'}]',TAB68);
 TAB95 = cat(2,[{'Posterior Kalman (95\% CrI)'} {'AR'}]',num2cell(TAB95));
 TAB = cat(1,TAB68,TAB95);
 
-TAB_nrmse = cat(2,[{'Posterior Kalman (NRMSE)'} {'AR'}]',num2cell([kalman_nrmse;arx_nrmse]))
-TAB = cat(1,TAB,TAB_nrmse)
+TAB_nrmse = cat(2,[{'Posterior Kalman (NRMSE)'} {'AR'}]',num2cell([kalman_nrmse;arx_nrmse]));
+TAB = cat(1,TAB,TAB_nrmse);
 
-TAB_es = cat(2,[{'Posterior Kalman (Energy score)'} {'AR'}]',num2cell([kalman_es;arx_es]./100))
-TAB = cat(1,TAB,TAB_es)
+TAB_es = cat(2,[{'Posterior Kalman (Energy score)'} {'AR'}]',num2cell([kalman_es;arx_es]./100));
+if verb
+    TAB = cat(1,TAB,TAB_es)
+end
 
 
-tablePoly = l_latexify(TAB,numel(t_reported),[3 5 7])
+tablePoly = l_latexify(TAB,numel(t_reported),[3 5 7]);
+if verb
+    tablePoly
+end
 
 %% plotting
 ypred_plot = ypred;
@@ -285,17 +313,21 @@ if savetofile
   fileID = fopen(tabname,'w');
   fprintf(fileID,'%s\n',tablePoly);
   fclose(fileID);
-  disp(['saved table: ' tabname]);
-
+  if verb
+      disp(['saved table: ' tabname]);
+  end
   figure(1)
   set(gcf,'PaperPositionMode','auto');
   set(gcf,'Position',[100 100 500 350]);
   print(gcf, figname1, '-dpdf')
-  disp(['saved figure: ' figname1]);
+  if verb
+      disp(['saved figure: ' figname1]);
+  end
 else
-  disp(['didn''t save table: ' tabname]);
-  disp(['didn''t save figure: ' figname1]);
-
+    if verb
+        disp(['didn''t save table: ' tabname]);
+        disp(['didn''t save figure: ' figname1]);
+    end
 end
 
 

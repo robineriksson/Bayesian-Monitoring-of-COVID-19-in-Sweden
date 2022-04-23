@@ -22,7 +22,9 @@ if ~exist('reg','var')
     reg = [1 2 22];
 end
 
-
+if ~exist('verb','var')
+    verb=false;
+end
 % Compare with URDME runs to estimate the robustness of the CrI
 TOL_iqr = 0.32; % tolerances
 URDME_k = [1];% [1 2 3], repeat with multiple bootstrap realizations
@@ -253,10 +255,16 @@ for k = URDME_k
     % (dagger): if bias >= 0.5*diam(A)
     dagger = l_biascomp(ifr_t,ifr_b,[2 4]);
 
-    TAB_tex = l_texify(TAB_outer,asterisk, dagger, TOL_iqr)
+    TAB_tex = l_texify(TAB_outer,asterisk, dagger, TOL_iqr);
+    if verb
+        TAB_tex
+    end
 end
 %%
-interval_averages = l_intervalwrap(intervals_quantiles, regname, Dweight, Rweight)
+interval_averages = l_intervalwrap(intervals_quantiles, regname, Dweight, Rweight);
+if verb
+    interval_averages
+end
 %%
 %%
 % save .tex tables
@@ -269,9 +277,13 @@ if savetofile
     end
     fprintf(fileID,'%s\n',TAB_tex);
     fclose(fileID);
-    disp(['saved table: ' tabname]);
+    if verb
+        disp(['saved table: ' tabname]);
+    end
 else
-    disp(['didn''t save table: ' tabname]);
+    if verb
+        disp(['didn''t save table: ' tabname]);
+    end
 end
 return;
 %%
@@ -281,7 +293,9 @@ for k = 1:size(P_.IFR,1)
 
     ifr_q = quantile(ifr,[0.5 0.025 0.975]);
     iqr = diff(ifr_q(2:3));
-    disp([num2str(k) ': ' num2str(ifr_q) ', iqr: ' num2str(iqr)])
+    if verb
+        disp([num2str(k) ': ' num2str(ifr_q) ', iqr: ' num2str(iqr)])
+    end
     [y,x] = ksdensity(ifr);
     plot(x,y)
 end

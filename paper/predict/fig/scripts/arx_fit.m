@@ -28,6 +28,10 @@ end
 if ~exist('alldata','var')
     alldate=true;
 end
+
+if ~exist('evalconst','var')
+    evalconst=false;
+end
 inferDincPlot = false; % true if generate Dinc as diff(D)
 
 register = 'C19'; % data source
@@ -331,6 +335,11 @@ else
 end
 
 
+if evalconst
+    figure(2)
+    evalcorr(zd.y,50);
+end
+
 function [kalman_reported, date_comp, TABkalman] = l_getKalmanScore()
 %L_GETKALMANSCORE unpacks the READWEEKLYTABLE output into the format we want
     [Uppsala,~,~,week,date_comp,TABkalman] = readWeeklyTable();
@@ -429,4 +438,34 @@ function tex = l_latexify(TAB,N,hmid)
            '\hline' newline ...
            '\end{tabular}' newline ...
            '\end{table}'];
+end
+
+function [] = evalcorr(y,stop)
+% EVALCORR generates the acf and pacf plots plots per data dimensions
+% to help evaluate the order of AR constants. y is the input data, and
+% needs to be of size [N x 3]. STOP indicates the datastop for
+% training.
+%
+% A systematic approach is to use the following programatic solutions
+% given by Matlab:
+% V1 = arxstruc(y(1:stop-10,1),zd(stop+9:stop,1),(1:10)');
+% V2 = arxstruc(y(1:stop-10,2),zd(stop+9:stop,2),(1:10)');
+% V3 = arxstruc(y(1:stop-10,3),zd(stop+9:stop,3),(1:10)');
+% na1 = selstruc(V1,0)
+% na2 = selstruc(V2,0)
+% na3 = selstruc(V3,0)
+
+    [n,m] = size(y);
+
+    stop = min(n,stop);
+
+    for i = 1:3
+        subplot(2,3,i)
+        autocorr(y(1:stop,i),stop-1)
+    end
+
+    for i = 4:6
+        subplot(2,3,i)
+        parcorr(y(1:stop,i-3),stop-1)
+    end
 end

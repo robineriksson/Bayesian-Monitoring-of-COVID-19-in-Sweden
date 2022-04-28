@@ -440,11 +440,11 @@ Deadsplit; % run spectral, and unpacks the simulation file.
 
 # Dependencies
 * stenglib: https://github.com/stefanengblom/stenglib
-* URDME: https://github.com/URDME/urdme
-* MATLAB (>= release 2021a)
+* URDME: https://github.com/URDME/urdme (Windows platform not currently supported)
+* MATLAB (>= release 2019a)
 
 ## Tested on
-* Linux (Pop!_OS 20.10, 64 bit) [not yet]
-* Linux (Pop!_OS 21.10, 64 bit) [not yet]
+* Linux (Pop!_OS 20.10, 64 bit), MATLAB 2021a
+* Linux (Pop!_OS 21.10, 64 bit) MATLAB 2021a
 * macOS Monterey Version 12.3 [not yet]
-* Windows 10 Education 64 bit, MATLAB R2019a 
+* Windows 10 Education 64 bit, MATLAB R2019a

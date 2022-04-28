@@ -271,11 +271,11 @@ if date(1) > date(2)
   error('Date(1) > Date(2) | not allowed');
 end
 if date(1) < Data.date(1)
-  warning("Supplied starting date < Data.date(end), overwritten")
+  warning('Supplied starting date < Data.date(end), overwritten')
   date(1) = Data.date(1);
 end
 if date(2) > Data.date(end)
-  warning("Supplied stopping date > Data.date(end), overwritten")
+  warning('Supplied stopping date > Data.date(end), overwritten')
   date(2) = Data.date(end);
 end
 
@@ -384,12 +384,12 @@ slabstart_find = find(slabstart);
 
 % first and last period might be small, remove if they are
 if slabstart_find(1) < 13
-  disp('first period too small, merge with second');
+    warning('klam:slabs','first period too small, merge with second');
   slabstart(slabstart_find(1)) = 0;
 end
 if numel(slabstart) - slabstart_find(end) < 13
-  disp('final period too small, merge with second to last');
-  slabstart(slabstart_find(end)) = 0;
+    warning('klam:slabs','final period too small, merge with second to last');
+    slabstart(slabstart_find(end)) = 0;
 end
 slabstop = [1 find(slabstart) numel(ixdata)];
 [~,~, slab] = histcounts(Data.date(ixdata), [Data.date(ixdata(slabstart)); inf]);

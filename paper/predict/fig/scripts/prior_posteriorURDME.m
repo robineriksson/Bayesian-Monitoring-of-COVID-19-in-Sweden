@@ -213,7 +213,7 @@ for i = 1:numel(rateNamesSubset)
 end
 
 legend([h_post(1), h_prior(1), h_boot(1)], ...
-       'Posterior','Prior','Boostrapped Posterior', ...
+       'Posterior','Prior','Bootstrapped Posterior', ...
        'Orientation','horizontal','interpreter','latex', ...
        'Position',[0.47 0.95 0.1 0.03],'FontSize',14);
 
@@ -228,7 +228,7 @@ legend boxoff
 
 %% publication-friendly formats
 abspath = mfilename('fullpath');
-figname = [abspath(1:end-21) '/posterior_urdmesweden.pdf'];
+figname = [abspath(1:end-29) '/posterior_urdmesweden.pdf'];
 if savetofile
     % figure(1),
     set(gcf,'PaperPositionMode','auto');

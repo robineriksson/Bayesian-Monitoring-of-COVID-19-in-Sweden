@@ -97,6 +97,8 @@ reg_ = reshape(repmat(reg,runs,1),1,[]);
 parpool;
 try
     parfor i = 1:numel(round_)
+
+            %for i = 1:numel(round_)
         roundid = round_(i);
         regid = reg_(i);
         region = regionList{regid};
@@ -115,8 +117,9 @@ try
         state0 = getInitState(useinitstate,210331,region);
 
 
-
-
+        if ~verb
+            warning('off','klam:slabs');
+        end
         [thetas, sl, slab, amparam, amfunc, outverb] = ...
             klam_init(region, nMCMC, verb, nslab, date,...
                       init,scaleS,register,useCSSS,perslab,...
@@ -154,6 +157,9 @@ catch
 end
 if ~stopped
     p = gcp; delete(p);
+end
+if ~verb
+    warning('off','klam:slabs');
 end
 if verb
     disp('*** DONE ***');

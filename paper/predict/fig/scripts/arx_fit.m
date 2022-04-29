@@ -25,6 +25,10 @@ else
         error(['Only supported to run 21 regions,'...
                'National posterior is sampled from a basket of region']);
     end
+
+    if numel(reg) > 1
+        error('Only one reg at a time');
+    end
 end
 if ~exist('verb','var')
     verb=false;
@@ -106,10 +110,10 @@ if ~exist('ypred','var')
         [yf1,~,~,ysd1] = forecast(sysARMA, z, 7, forecastOpt);
 
         % and save the 7th day
-        ypred(stop,:) = yf1.y(end,:);
+        ypred(stop,:) = yf1.outputData(end,:);
         ysdpred(stop,:) = ysd1(end,:);
     end
-    ydata = z.y;
+    ydata = z.outputData;
 end
 
 

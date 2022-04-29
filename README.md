@@ -359,7 +359,14 @@ ahead predictions. The performance is then evaluated on the frequency
 of "inside [X%] CrI" and the NRMSE per the days we have recorded for
 the posterior filter. The reasoning for only doing it on the recorded
 dates is that this ensures that the Kalman filter had not seen any
-future data when making predictions. The code also generates Tab. S5.
+future data when making predictions. The code also generates
+Tab. S5. *Note:* in the start of the data fit, a warning `Warning:
+Noise variance and Final Prediction Error (FPE) [...]` is possibly
+thrown by Matlab. The reason for this warning is due to low amounts of
+data considered in the start of the process. Leadning to uncertain
+predictions. As we are aware of this problem and it is in the start of
+the prediction-process (outside of the quantitative comparison region)
+we do not address the warning further..
 ```
 savetofile = false;
 reg = 2; % Uppsala region
@@ -394,15 +401,11 @@ national average. The posterior CrI is computed as marginal
 quantiles. The table include footnotemarks (§ and ‡) and we use these
 marks to indicate that the estimates should be considered less robust
 due to a somewhat worse bootstrap match. See the discussion in
-Materials & Methods. *Note:* we only distribute a thinned
-posterior due to data limitation. To fully reproduce the results,
-larger sample size is needed.
-```
-% generates a table of the same format as in the paper
-clear reg bimonthly
-verb = 1;
-reg = [1 2 22]
-IFRtableURDME; % Stockholm, Uppsala, Sweden
+Materials & Methods. *Note:* we only distribute a thinned posterior
+due to data limitation. To fully reproduce the results, larger sample
+size is needed.  ``` % generates a table of the same format as in the
+paper clear reg bimonthly verb = 1; reg = [1 2 22] IFRtableURDME; %
+Stockholm, Uppsala, Sweden
 
 reg = [1:22];  % all regions and Sweden
 IFRtableURDME

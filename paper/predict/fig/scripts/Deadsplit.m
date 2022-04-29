@@ -55,9 +55,9 @@ h2=plot(squeeze(sum(Z(sel_H(1),:,:),1)),'b');
 h3=plot(squeeze(sum(Z(sel_H(2),:,:),1)),'g');
 h4=plot(sum(Data.H(tspan_data,:),2),'--r');
 legend([h1(1) h2(1) h3(1) h4(1)], ...
-  {'H+H2' 'H' 'H2' 'data'},...
-'Location','northwest')
-title('H_{data} vs H + H_2')
+  {'$H+H2$' '$H$' '$H2$' 'data'},...
+'Location','northwest','interpreter','latex')
+title('$H_{data}$ vs $H + H_2$','interpreter','latex')
 
 %% Does D_I+D_H+D_W match D_data?
 figure(2), clf;
@@ -69,9 +69,9 @@ h4 = plot(squeeze(sum(Z(sel_D(3),:,:),1)),'g');
 h5 = plot(sum(Data.D(tspan_data,:),2),'--r');
 xh = xline(find(Data.date(tspan_data) == stopdate),':');
 legend([h1(1) h2(1) h3(1) h4(1) h5(1) xh(1)], ...
-  {'sum(D_*)' 'D_I' 'D_H' 'D_W' 'data' '210323'},...
-'Location','northwest')
-title('D_{data} vs D_I + D_H + D_W')
+  {'$sum(D_*)$' '$D_I$' '$D_H$' '$D_W$' 'data' '210323'},...
+'Location','northwest','interpreter','latex')
+title('$D_{data}$ vs $D_I + D_H + D_W$','interpreter','latex')
 
 
 
@@ -121,10 +121,10 @@ for k = 1:3
 end
 
 hold off
-legend({'D_I' 'D_H' 'D_W'})
+legend({'$D_I$' '$D_H$' '$D_W$'},'interpreter','latex')
 xlim([1e1 1e4])
 xlabel('Total # of dead per compartment source')
-title('Density at date: D_I + D_H + D_W')
+title('Density at date: $D_I + D_H + D_W$','interpreter','latex')
 
 %% X --> D (eventually) = X/D
 figure(4), clf
@@ -157,7 +157,7 @@ xline(1*(mu_Id+2*sig_Id),'--r','Linewidth',2,'Color',colors{2})
 xline(ID_q(3),'-','Linewidth',2)
 xline(ID_q(1),'--','Linewidth',2)
 xline(ID_q(5),'--','Linewidth',2)
-title('I \rightarrow D (eventually)')
+title('$I \rightarrow D$ (eventually)','interpreter','latex')
 xlabel('%')
 
 
@@ -183,7 +183,7 @@ xline(1*(mu_Hd+2*sig_Hd),'--r','Linewidth',2,'Color',colors{2})
 xline(HD_q(3),'-','Linewidth',2)
 xline(HD_q(1),'--','Linewidth',2)
 xline(HD_q(5),'--','Linewidth',2)
-title('H \rightarrow D (eventually)')
+title('$H \rightarrow D$ (eventually)','interpreter','latex')
 xlabel('%')
 
 
@@ -211,7 +211,7 @@ xline(1*(mu_Wd+2*sig_Wd),'--r','Linewidth',2,'Color',colors{2})
 xline(WD_q(3),'-','Linewidth',2)
 xline(WD_q(1),'--','Linewidth',2)
 xline(WD_q(5),'--','Linewidth',2)
-title('W \rightarrow D (eventually)')
+title('$W \rightarrow D$ (eventually)','interpreter','latex')
 %legend({'P. pred' 'T. mean' 'T. 95% CrI'})
 xlabel('%')
 

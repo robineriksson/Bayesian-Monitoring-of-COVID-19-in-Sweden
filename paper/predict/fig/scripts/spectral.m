@@ -12,6 +12,15 @@ end
 
 if ~exist('reg','var')
     reg=1:21;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
+end
+
+if ~exist('sig','var') % when rounding, the number of significant numbers.
+    sig=2;
 end
 
 %%
@@ -100,19 +109,19 @@ quant = [0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2];
 ID = 100*(rates.F2dave+rates.F2ave.*(rates.F3dave+rates.F3ave.*rates.F4ave))./(1-rates.F3ave.*(1-rates.F4ave));
 ID = weights * ID;
 ID_q = quantile(ID, quant);
-CFR_I = l_formatCI(round(ID_q,2,'significant'));
+CFR_I = l_formatCI(round(ID_q,sig,'significant'));
 
 % H --> D *eventually*
 HD = 100*(rates.F3dave + rates.F3ave.*rates.F4ave)./(1-rates.F3ave.*(1-rates.F4ave));
 HD = weights * HD;
 HD_q = quantile(HD, quant);
-CFR_H = l_formatCI(round(HD_q,2,'significant'));
+CFR_H = l_formatCI(round(HD_q,sig,'significant'));
 
 % W --> D *eventually*
 WD = 100*(rates.F4ave+(1-rates.F4ave).*rates.F3dave) ./ ( 1-rates.F3ave.*(1-rates.F4ave));
 WD = weights * WD;
 WD_q = quantile(WD, quant);
-CFR_W = l_formatCI(round(WD_q,2,'significant'));
+CFR_W = l_formatCI(round(WD_q,sig,'significant'));
 
 if verb
     CFR_I

@@ -22,6 +22,11 @@ end
 
 if ~exist('reg','var')
     reg = 1:21;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 
 if ~exist('regplot','var')
@@ -59,8 +64,8 @@ DR = load('dynOptPosterior210531_all');
 
 % check: that we are talking about the same thing:
 if any(P.meta.hash ~= DR.postrates.meta.hash) || ...
-      any(P.meta.dataHash ~= DR.postrates.meta.dataHash)
-  error('Posterior mismatch.');
+        any(P.meta.dataHash ~= DR.postrates.meta.dataHash)
+    error('Posterior mismatch.');
 end
 
 % get daily beta
@@ -74,7 +79,7 @@ beta = R.^2./denum(DR.postrates.meta.slabs);
 u0 = DR.xSim_all(reg,:,1)';
 phi0 = DR.xSim_all(reg,4,1)';
 if divide
-  u0 = [u0; zeros(3,numel(reg))];
+    u0 = [u0; zeros(3,numel(reg))];
 end
 
 
@@ -97,18 +102,18 @@ D.vars = umod.private.Species;
 Rates.beta = beta;
 Rates.R = R;
 if Psamples > 1
-  Rates.sigma = P.sigma;
-  Rates.gammaI = P.gammaI;
-  Rates.gammaH = P.gammaH;
-  Rates.gammaW = P.gammaW;
+    Rates.sigma = P.sigma;
+    Rates.gammaI = P.gammaI;
+    Rates.gammaH = P.gammaH;
+    Rates.gammaW = P.gammaW;
 
-  Rates.F0 = P.F0ave;
-  Rates.F1 = P.F1ave;
-  Rates.F2 = P.F2ave;
-  Rates.F2d = P.F2dave;
-  Rates.F3 = P.F3ave;
-  Rates.F3d = P.F3dave;
-  Rates.F4 = P.F4ave;
+    Rates.F0 = P.F0ave;
+    Rates.F1 = P.F1ave;
+    Rates.F2 = P.F2ave;
+    Rates.F2d = P.F2dave;
+    Rates.F3 = P.F3ave;
+    Rates.F3d = P.F3dave;
+    Rates.F4 = P.F4ave;
 end
 Rates.rho = P.rho;
 Rates.thetaI = P.thetaI;
@@ -152,120 +157,123 @@ if verb
 end
 
 if divide
-  Hcol = [5 9];
+    Hcol = [5 9];
 else
-  Hcol = [5];
+    Hcol = [5];
 end
 Wcol = [6];
 
 alpha=0.1;
+plotid=0;
 for regid=regplot
-  H = squeeze(sum(D.U(:,Hcol,regid,:),[2 3]));
-  W = squeeze(sum(D.U(:,Wcol,regid,:),[2 3]));
-  plot(H,'Color',[0 0 1 alpha],'HandleVisibility','off'), hold on
-  plot(W,'Color',[1 0 0 alpha],'HandleVisibility','off')
+    plotid = plotid+1;
+    figure(plotid)
+    H = squeeze(sum(D.U(:,Hcol,regid,:),[2 3]));
+    W = squeeze(sum(D.U(:,Wcol,regid,:),[2 3]));
+    plot(H,'Color',[0 0 1 alpha],'HandleVisibility','off'), hold on
+    plot(W,'Color',[1 0 0 alpha],'HandleVisibility','off')
 
-  if includeUDS
-      Hmean = sum(D.EulFwd(:,Hcol,regid),[2 3]);
-      Wmean = sum(D.EulFwd(:,Wcol,regid),[2 3]);
-  else
-      Hmean = mean(sum(D.U(:,Hcol,regid,:),[2 3]),4);
-      Wmean = mean(sum(D.U(:,Wcol,regid,:),[2 3]),4);
-  end
-  plot(Hmean,'b')
-  plot(Wmean,'r')
+    if includeUDS
+        Hmean = sum(D.EulFwd(:,Hcol,regid),[2 3]);
+        Wmean = sum(D.EulFwd(:,Wcol,regid),[2 3]);
+    else
+        Hmean = mean(sum(D.U(:,Hcol,regid,:),[2 3]),4);
+        Wmean = mean(sum(D.U(:,Wcol,regid,:),[2 3]),4);
+    end
+    plot(Hmean,'b')
+    plot(Wmean,'r')
 
-  data = loadData('C19');
-  tspan_post = find(data.date == D.date(1)):find(data.date == D.date(end));
-  plot(sum(data.H(tspan_post,reg(regid)),2),'.b')
-  plot(sum(data.W(tspan_post,reg(regid)),2),'.r')
-  title(l_getlatex(reg(regid)),'Interpreter', 'Latex')
+    data = loadData('C19');
+    tspan_post = find(data.date == D.date(1)):find(data.date == D.date(end));
+    plot(sum(data.H(tspan_post,reg(regid)),2),'.b')
+    plot(sum(data.W(tspan_post,reg(regid)),2),'.r')
+    title(l_getlatex(reg(regid)),'Interpreter', 'Latex')
 
-  % Apply correct formating
-  ax = gca;
-  ax.TickLabelInterpreter = 'latex';
+    % Apply correct formating
+    ax = gca;
+    ax.TickLabelInterpreter = 'latex';
 
-  x0 = 1:numel(tspan_post);
-  xtk = fliplr(x0(end:-28:1));
-  %xtk = fliplr(tspan_post(end:-28:1));
+    x0 = 1:numel(tspan_post);
+    xtk = fliplr(x0(end:-28:1));
+    %xtk = fliplr(tspan_post(end:-28:1));
 
-  set(gca,'xtick',xtk);
-
-
-  % wanted xticks
-  % for abbreviations, see https://www.bydewey.com/monthdayabb.html
-  strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
-    'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
-
-  % 15th each month:
-
-  ixdates = find(mod(D.date,100) == 1);
-  tspan_urdme = 1:numel(D.date);
-  xxdates = tspan_urdme(ixdates);
-  dates=D.date(xxdates);
-  xticks(xxdates);
-  % what month:
-  months = mod(floor(dates/1e2),1e2);
-  slabtitle = strmonths(months);
-  slabtitle(2:2:end) = {''}; % only every 2nd
-
-  % xticks & -labels
-  xticklabels(slabtitle);
-  xtickangle(45);
+    set(gca,'xtick',xtk);
 
 
-  % 2021 delimiter
-  xline(find(D.date == 210101),'--k','2021', ...
-    'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
-    'interpreter','latex','HandleVisibility','off');
+    % wanted xticks
+    % for abbreviations, see https://www.bydewey.com/monthdayabb.html
+    strmonths = {'Jan' 'Feb' 'Mar' 'Apr' 'May' 'June'...
+                 'July' 'Aug' 'Sept' 'Oct' 'Nov' 'Dec'};
+
+    % 15th each month:
+
+    ixdates = find(mod(D.date,100) == 1);
+    tspan_urdme = 1:numel(D.date);
+    xxdates = tspan_urdme(ixdates);
+    dates=D.date(xxdates);
+    xticks(xxdates);
+    % what month:
+    months = mod(floor(dates/1e2),1e2);
+    slabtitle = strmonths(months);
+    slabtitle(2:2:end) = {''}; % only every 2nd
+
+    % xticks & -labels
+    xticklabels(slabtitle);
+    xtickangle(45);
 
 
-  legentries = {'Hospital [H]','Intensive [W]'};
-  leg= legend(legentries, ...
-    'Location','northwest','interpreter','latex','FontSize',12,...
-    'Orientation','horizontal',...
-    'NumColumns', 1);
+    % 2021 delimiter
+    xline(find(D.date == 210101),'--k','2021', ...
+          'LabelVerticalAlignment','top','LabelOrientation','horizontal', ...
+          'interpreter','latex','HandleVisibility','off');
 
 
-
-  grid on
-  axis tight
-
-  switch regionList{regid}
-    case 'Gotland'
-      ylim([0,25]);
-    case 'Blekinge'
-      ylim([0,60]);
-    case 'Jamtland'
-      ylim([0,35]);
-  end
-
-  hold off
-
-  savepath = [filename(1:end-21) 'URDME_samples'];
-  savepath = [savepath '_' strrep(regionList{reg(regid)},' ','_')];
-  savepath = strrep(savepath,'å','a');
-  savepath = strrep(savepath,'ä','a');
-  savepath = strrep(savepath,'ö','o');
-  if savetofile % true if we should compute the error table
+    legentries = {'Hospital [H]','Intensive [W]'};
+    leg= legend(legentries, ...
+                'Location','northwest','interpreter','latex','FontSize',12,...
+                'Orientation','horizontal',...
+                'NumColumns', 1);
 
 
 
+    grid on
+    axis tight
 
-    set(gcf,'PaperPositionMode','auto');
-    set(gcf,'Position',[100 100 500 350]);
-
-
-    print('-dpdf', savepath)
-    if verb
-        disp(['saved figure: ' savepath]);
+    switch regionList{regid}
+      case 'Gotland'
+        ylim([0,25]);
+      case 'Blekinge'
+        ylim([0,60]);
+      case 'Jamtland'
+        ylim([0,35]);
     end
 
-  else
-      if verb
-          disp(['did not save figure:' savepath])
-      end
-  end
+    hold off
+
+    savepath = [filename(1:end-21) 'URDME_samples'];
+    savepath = [savepath '_' strrep(regionList{reg(regid)},' ','_')];
+    savepath = strrep(savepath,'å','a');
+    savepath = strrep(savepath,'ä','a');
+    savepath = strrep(savepath,'ö','o');
+    if savetofile % true if we should compute the error table
+
+
+
+
+        set(gcf,'PaperPositionMode','auto');
+        set(gcf,'Position',[100 100 500 350]);
+
+
+        print('-dpdf', savepath)
+        if verb
+            disp(['saved figure: ' savepath]);
+        end
+
+    else
+        if verb
+            disp(['did not save figure:' savepath])
+        end
+    end
 
 end
 if verb
@@ -279,12 +287,12 @@ end
 
 
 function latexname = l_getlatex(regid)
-%L_GETLATEX quick and dirty to get the translation from text to latex
-%  friendly Swedish's region names.
-regionList_tex = {'Stockholm' 'Uppsala' 'S\"{o}dermanland' '\"{O}sterg\"{o}tland' ...
-  'J\"{o}nk\"{o}ping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
-  'Sk\aa{}ne' 'Halland' 'V\"{a}stra G\"{o}taland' 'V\"{a}rmland' '\"{O}rebro' ...
-  'V\"{a}stmanland' 'Dalarna' 'G\"{a}vleborg' 'V\"{a}sternorrland' ...
-  'J\"{a}mtland' 'V\"{a}sterbotten' 'Norrbotten'}';
-latexname = regionList_tex{regid};
+    %L_GETLATEX quick and dirty to get the translation from text to latex
+    %  friendly Swedish's region names.
+    regionList_tex = {'Stockholm' 'Uppsala' 'S\"{o}dermanland' '\"{O}sterg\"{o}tland' ...
+                      'J\"{o}nk\"{o}ping' 'Kronoberg' 'Kalmar' 'Gotland' 'Blekinge' ...
+                      'Sk\aa{}ne' 'Halland' 'V\"{a}stra G\"{o}taland' 'V\"{a}rmland' '\"{O}rebro' ...
+                      'V\"{a}stmanland' 'Dalarna' 'G\"{a}vleborg' 'V\"{a}sternorrland' ...
+                      'J\"{a}mtland' 'V\"{a}sterbotten' 'Norrbotten'}';
+    latexname = regionList_tex{regid};
 end

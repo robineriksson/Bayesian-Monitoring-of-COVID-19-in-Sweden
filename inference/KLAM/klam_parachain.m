@@ -37,6 +37,11 @@ end
 
 if ~exist('reg','var')
     reg=2;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 
 if ~exist('gelmanRub','var')
@@ -59,7 +64,7 @@ if ~exist('verb','var')
     verb = false;
 end
 
-verb     = false; % verb text
+
 nslab    = 1; % {1: 1st, 8: 8th, 15: 15th, 22:22nd} monthly slabs
 date     = [200401 210531];
 scaleS   = 0.04; %0.1 in Uppsala gives acceptance rate ~ 10-20%
@@ -97,8 +102,6 @@ reg_ = reshape(repmat(reg,runs,1),1,[]);
 parpool;
 try
     parfor i = 1:numel(round_)
-
-            %for i = 1:numel(round_)
         roundid = round_(i);
         regid = reg_(i);
         region = regionList{regid};
@@ -115,7 +118,6 @@ try
 
         init = getInit(useinit, [prefix posterior],false);
         state0 = getInitState(useinitstate,210331,region);
-
 
         if ~verb
             warning('off','klam:slabs');
@@ -142,7 +144,8 @@ try
 
 
         rates = savePosterior(thetas, sl, slab, amparam, burnin, ...
-                              jump, true, useCSSS, true, fix,nslab,0,roundid,{'full'},false);
+                              jump, true, useCSSS, true, fix,nslab,...
+                              0,roundid,{'full'},false,verb);
 
     end
     stopped = 0;
@@ -152,7 +155,7 @@ catch
     end
 
 
-    p = gcp; delete(p);
+        p = gcp; delete(p);
     stopped = true;
 end
 if ~stopped
@@ -225,7 +228,7 @@ if gelmanRub
             R = (W*(L-1)/L + B/L) ./ W;
             R_mean = mean(R);
             if verb
-                disp(['GR: ' R_mean]);
+                disp(['GR: ' num2str(R_mean)]);
             end
         catch
             error(['GR missing region: ' region])
@@ -270,7 +273,7 @@ for i = reg
         load(file{1},'amparam','slabs');
         [rates,rates100,ratesR0] = savePosterior(mat, sl, slabs, amparam, 1e0, ...
                                                  1e0, true, useCSSS, savetofile, ...
-                                                 fix,nslab,0,[],{'full' '100'},false);
+                                                 fix,nslab,0,[],{'full' '100'},false,verb);
     catch
         error(['missing region: ' region])
     end

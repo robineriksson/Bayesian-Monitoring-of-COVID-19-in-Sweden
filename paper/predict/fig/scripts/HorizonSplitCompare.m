@@ -1,17 +1,44 @@
+% HORIZONSPLITCOMPARE illustrates how the dividing of optimization
+% horizon is implemented. The script shares a lot of coverage with
+% DYNAMIC_BETA_ML.m.
+%
+% The script allows for a TEST=true version, which does not generate the
+% same figure as in the paper results, but instead allows for a speedy
+% run-through of the code to check for potential errors. Note, the
+% TEST=false versions of the script takes a long time to run, compared
+% to test.
+
+
 rng(0)
 
 if ~exist('reg','var')
     reg=2; % region to estimate beta for
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
+
 if ~exist('savetofile','var')
     savetofile = false;
+end
+if ~exist('test','var')
+    test=false;
+end
+if ~exist('verb','var')
+    verb=false;
 end
 
 ntime = 365;
 startdate = 200319;
 enddate = 210531;
 prevresdate = 210531; % previous result for initial guess
-windowlength=150
+if test
+    windowlength=25;
+else
+    windowlength=150
+end
 wbeta=300000;
 steplength=20;
 
@@ -65,9 +92,13 @@ beta0 = 0.1*ones(1,ntime);
 
 
 %%
+if verb
+    display = 'iter-detailed';
+else
+    display='off';
+end
 options = optimoptions(@fmincon,'MaxFunctionEvaluations',2700000,...
-                       'MaxIterations',6000,'Display',...
-                       'iter-detailed',...                       %'off',...
+                       'MaxIterations',6000,'Display',display,...
                        'OptimalityTolerance',2e-5);
 
 F=cell(nslab,1);
@@ -84,8 +115,13 @@ tic
     beta0,options);
 t1=toc;
 
-ub = 5*beta0;
-lb = 0*beta0;
+if test
+    ub = 1.05*beta0;
+    lb = 0.95*beta0;
+else
+    ub = 5*beta0;
+    lb = 0*beta0;
+end
 %%
 tic
 betaFunc = @(u)betaCost_S(u,squeeze(Ydata),F,H(:,1:7),betaIdx,wbeta,slab,squeeze(S(:,:,:,1)),x0);
@@ -93,8 +129,10 @@ betaFunc = @(u)betaCost_S(u,squeeze(Ydata),F,H(:,1:7),betaIdx,wbeta,slab,squeeze
             lb,ub,[],options);
 t2=toc;
 %%
-disp(['With divided horizon: ' num2str(t1)]);
-disp(['Batch optimization: ' num2str(t2)]);
+if verb
+    disp(['With divided horizon: ' num2str(t1)]);
+    disp(['Batch optimization: ' num2str(t2)]);
+end
 
 %%
 figure(1)
@@ -119,7 +157,11 @@ if savetofile
     set(h2,'PaperPositionMode','auto');
     set(h2,'Position',[100 100 500 350]);
     print('-dpdf', savepath2)
-    disp(['saved figure: ' savepath2]);
+    if verb
+        disp(['saved figure: ' savepath2]);
+    end
 else
-    disp(['didn''t save figure: ' savepath2]);
+    if verb
+        disp(['didn''t save figure: ' savepath2]);
+    end
 end

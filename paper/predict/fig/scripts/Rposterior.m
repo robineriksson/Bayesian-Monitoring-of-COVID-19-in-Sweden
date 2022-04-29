@@ -14,6 +14,11 @@ end
 % Uppsala:2, largest:1,10,12; smallest: 8,9,19
 if ~exist('reg','var')
     reg = [2 1 10 12 8 9 19];
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 
 if ~exist('verb','var')
@@ -29,8 +34,9 @@ shiftstr = '_1';
 datestart = 200401; % where to start the plot
 
 regions_ = regions(false);
-
+plotid = 0;
 for rid = reg
+    plotid=plotid+1;
     region = regions_{rid};
     if verb
         disp(['Running: ' region]);
@@ -65,7 +71,7 @@ for rid = reg
   t = 1:numel(dates);
 
   % (1) the boxplot
-  figure(1), clf, hold on;
+  figure(plotid), clf, hold on;
   boxw = 15;
   color_softgreen = [64 166 33]/255; % color of line
   color_lightblue = [0.2 0.2 0.8];
@@ -186,7 +192,7 @@ for rid = reg
 
   % print to file
   if savetofile
-    figure(1)
+    figure(plotid)
     printpath = mfilename('fullpath');
     printpath = [printpath(1:end-10) '..' printpath(end-10:end)];
     printpath = [printpath '_' strrep(region,' ','_')];

@@ -22,6 +22,11 @@ if ~exist('regen','var')
 end
 if ~exist('reg','var')
     reg = 1;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 if ~exist('verb','var')
     verb=false;
@@ -85,14 +90,10 @@ else
     catch
         slabs = rates.meta.slabs;
     end
-    if strcmp(region,'Sweden')
-        slabs = slabs(1,:); % assume all the regions, had the same slabs.
-    end
-
 
     rates = priorenger(Nprior,true,numel(rates.meta.slabstop)-1);
     rates.meta.date = datadate;
-    posterior = 'perRegion/prior_Uppsala.mat';
+
     % transmission matrix D
     load Dcounties
 

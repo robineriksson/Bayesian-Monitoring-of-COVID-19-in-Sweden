@@ -1,6 +1,6 @@
 function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, ...
                                                     burnin,jump, perRegion, useCSSS,tosave,...
-                                                    fix,slabtype,smc,id,type,fromNordic)
+                                                    fix,slabtype,smc,id,type,fromNordic,verb)
 %RATES = SAVEPOSTERIOR saves the posterior in the correct format.
 %   SAVEPOSTERIOR formulates the posterior file that is generated using
 %   KLAM and then loaded by other functions, e.g., posteriorenger.m
@@ -43,6 +43,8 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
 %   FROMNORDIC - if region name in the filename should be converted
 %   from Nordic formating åäö to English friendly name.
 %
+%   VERB if to give printed responses
+%
 %   *Output*
 %   RATES    - the struct that is stored in the display message.
 %   RATES100 - 100 long version of (thinned) rates.
@@ -59,9 +61,13 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
         slabtype=0;
         smc=0;
         id=[];
-        type
+        type={'full'};
+        verb=0;
     end
 
+    if verb
+        disp("starting")
+    end
     if smc
         rates = mat2struct(thetas(:,:,end)',amparam.ratenames,...
                            amparam.hyp, amparam.fix,amparam.nslab);
@@ -192,32 +198,45 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
         filename = [filename '_' meta.dataReg];
     end
 
+
     filename100 = [filename '_100.mat'];
     filenameR0 = [filename '_R0.mat'];
     filename = [filename '.mat'];
+
     if tosave
         if ismember('full', type)
             save(filename, 'rates', 'slabs', 'sl_burn', 'amparam');
-            %disp(['saved: ' filename]);
+            if verb
+                disp(['saved: ' filename]);
+            end
         else
-            % disp(['did not save: ' filename]);
+            if verb
+                disp(['did not save: ' filename]);
+            end
         end
 
         if ismember('100', type)
             rates = rates100;
             save(filename100, 'rates', 'slabs', 'sl_burn100', 'amparam');
-            %disp(['saved: ' filename100]);
+            if verb
+                disp(['saved: ' filename100]);
+            end
         else
-            %  disp(['did not save: ' filename100]);
+            if verb
+                disp(['did not save: ' filename100]);
+            end
         end
 
         if ismember('R0', type)
             rates = ratesR0;
             save(filenameR0, 'rates', 'sl_burn', 'slabs', 'amparam');
-            %disp(['saved: ' filenameR0]);
+            if verb
+                disp(['saved: ' filenameR0]);
+            end
         else
-            %  disp(['did not save: ' filenameR0]);
+            if verb
+                disp(['did not save: ' filenameR0]);
+            end
         end
     end
 end
-

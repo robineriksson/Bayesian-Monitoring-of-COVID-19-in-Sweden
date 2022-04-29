@@ -20,13 +20,18 @@ if ~exist('savetofile','var')
 end
 if ~exist('reg','var')
     reg=2;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 if ~exist('verb','var')
     verb=false;
 end
 
 if ~exist('alldata','var')
-    alldate=true;
+    alldata=true;
 end
 
 if ~exist('evalconst','var')
@@ -225,26 +230,41 @@ for i = 1:3
           [0.9 0.9 0.9],'FaceAlpha',0.15, ...
           'LineStyle','None', 'FaceColor',color(i,:),...
           'HandleVisibility','off');
-    plot(ypred_plot(:,i),'-','Color',color(i,:))
+    if alldata
+        plot(ypred_plot(:,i),'-','Color',color(i,:))
+    else
+        plot(t_reported,ypred_plot(t_reported,i),'-','Color',color(i,:))
+    end
 end
 
-xline(t_reported(1),'HandleVisibility','off','Label','Reporting',...
-     'interpreter','latex');
-patch([t_reported(1) t_reported(end) t_reported(end) t_reported(1)],...
-      [0 0 32 32],[0.9 0.9 0.9],...
-      'FaceAlpha',0.075, ...
-      'LineStyle','None', 'FaceColor',[0 0 0],...
-      'HandleVisibility','off');
 
 
 
 axis tight
 grid on
-yyaxis left
-ylim([0 160])
-yyaxis right
-ylim([0 32])
-yticks(0:4:32)
+if reg == 2
+    yyaxis left
+    ylim([0 160])
+    yyaxis right
+    ylim([0 32])
+    yticks(0:4:32)
+else
+    yyaxis left
+    ylims = max(ydata,[],1);
+    ylim([0 ylims(1)])
+    yyaxis right
+    ylim([0 ylims(2)])
+end
+ylims = ylim;
+
+xline(t_reported(1),'HandleVisibility','off','Label','Reporting',...
+     'interpreter','latex');
+patch([t_reported(1) t_reported(end) t_reported(end) t_reported(1)],...
+      [0 0 ylims(2) ylims(2)],[0.9 0.9 0.9],...
+      'FaceAlpha',0.075, ...
+      'LineStyle','None', 'FaceColor',[0 0 0],...
+      'HandleVisibility','off');
+
 
 % update ticks
 TSPAN = z.SamplingInstants;

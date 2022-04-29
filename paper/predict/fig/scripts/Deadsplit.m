@@ -2,23 +2,30 @@
 % compartment split.
 %
 % WARNING in order to generate the data you must first checkout the H2
-% branch and generate the data file. Then preferably pull it into the
+% branch and generate the data file. (not included in release, but can
+% be shared if asked for). Then preferably pull it into the
 % current branch for furhter processing by this script. The reason for
 % this procedure is that H2 introduces breaking changes to the
-% 'legacy' solutions by adding new compartments. A full merge can be
-% done, but is not a priority as of writing.
+% 'legacy' solutions by adding new compartments.
 %
 % Robin Marin 22-03-22
 
-% Load simulation
-ending = '1';
-try
-  load(['weekly/save/runs/slam210531_Sweden_monthly_' ending])
-catch
-    weekly_prediction
+if ~exist('verb','var')
+    verb=0;
 end
 
+% Load simulation
+try
+    load('paper/predict/fig/scripts/slam210531_Sweden_monthly_1_100_H2','Z','covZ','tspan_data')
+catch
+    error('missing file?');
+end
+
+verb_ = verb;
+verb = 0;
+reg=[1:21];
 spectral; % fetch ODE CFR:s and D_SS_IHW
+verb=verb_;
 
 % load data
 Data = loadData('C19');
@@ -79,15 +86,27 @@ D_post_IHW_sig = squeeze(covZ.stdZ(sel_D,Data.date(tspan_data) == stopdate,:));
 D_post_IHW_mu = squeeze(D_post_IHW);
 
 xx = linspace(0,1e4,1e3);
-[mu_IHW, sig_IHW] = l_MoG(D_post_IHW,D_post_IHW_sig)
+[mu_IHW, sig_IHW] = l_MoG(D_post_IHW,D_post_IHW_sig);
 
 pd = normpdf(xx,mu_IHW,sig_IHW);
 
 
 % quantiles on data
-D_post_IHW_q = quantile(squeeze(D_post_IHW),[0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2],2)
+percentiles = [0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2];
+D_post_IHW_q = quantile(squeeze(D_post_IHW)',percentiles)';
 % and normalized
-D_post_IHW_norm_q = quantile(squeeze(D_post_IHW_norm),[0.05/2 0.32/2 0.5 1-0.32/2 1-0.05/2],2)
+D_post_IHW_norm_q = quantile(squeeze(D_post_IHW_norm)',percentiles)';
+if verb
+    postsim = cat(2,{'Percentile' 'H' 'W' 'D'}',...
+                  cat(1,num2cell(percentiles),num2cell(D_post_IHW_q)))
+    disp('Quantiles on posterior simulation: ')
+    disp(postsim);
+    postsim_norm = cat(2,{'Percentile' 'H' 'W' 'D'}',...
+                       cat(1,num2cell(percentiles),num2cell(D_post_IHW_norm_q)));
+    disp('Quantiles on posterior simulation (normalized):');
+    disp(postsim_norm)
+end
+
 
 
 colors = {'#0072BD' '#D95319' '#EDB120'};
@@ -119,7 +138,7 @@ I_post = Z(sel_Ic,Data.date(tspan_data) == stopdate,:);
 histogram(100*squeeze(sum(D_post_IHW([1 2 3],:,:),1)./I_post),'normalization','pdf'), hold on
 
 % Z = X/Y, where X~Normal and Y~normal
-% is a weird distribution, see https://rstudio-pubs-static.s3.amazonaws.com/287838_7c982110ffe44d1eb5184739c5724926.html
+% is an exotic distribution, see https://rstudio-pubs-static.s3.amazonaws.com/287838_7c982110ffe44d1eb5184739c5724926.html
 % but is ~Normal if delta_Y := CV(Y) < 0.1
 [mu_Id, sig_Id] = l_MoG(sum(D_post_IHW([1 2 3],:,:),1),sqrt(sum(D_post_sig([1 2 3],:,:).^2,1)), I_post, I_post_sig);
 
@@ -196,7 +215,35 @@ title('W \rightarrow D (eventually)')
 %legend({'P. pred' 'T. mean' 'T. 95% CrI'})
 xlabel('%')
 
-% %%
+%% Format intervals for LaTeX use
+D_Kalman_IHW = l_formatCI(mu_IHW + [-2*sig_IHW, - sig_IHW, zeros(3,1), sig_IHW, 2*sig_IHW], 4);
+if verb
+    disp('D split distribution')
+    disp('From simulation:');
+    disp(D_Kalman_IHW);
+    disp('From SS data:');
+    disp(D_SS_IHW);
+end
+
+CFR_Kalman_IHW = l_formatCI([mu_Id;mu_Hd;mu_Wd] + ...
+                          [-2*sig_Id, - sig_Id, 0, sig_Id, 2*sig_Id;...
+                           -2*sig_Hd, - sig_Hd, 0, sig_Hd, 2*sig_Hd;...
+                           -2*sig_Wd, - sig_Wd, 0, sig_Wd, 2*sig_Wd],2);
+ID_ODE = l_formatCI([ID_q;HD_q;WD_q],2);
+if verb
+    disp('CFR calculation')
+    disp('From Kalman simulation:');
+    disp(CFR_Kalman_IHW);
+    disp('From ODE simulation:');
+    disp(ID_ODE);
+end
+
+
+
+
+return;
+
+%% Additional figure
 % figure(5), clf,
 %
 % histogram(100*squeeze(sum(D_post_IHW(3,:,:),1)./W_post),'normalization','pdf'), hold on
@@ -219,22 +266,6 @@ xlabel('%')
 % xlabel('%')
 % xlim([30,60])
 % hold off
-
-%% Format intervals for LaTeX use
-disp('D split distribution')
-D_Kalman_IHW = l_formatCI(mu_IHW + [-2*sig_IHW, - sig_IHW, zeros(3,1), sig_IHW, 2*sig_IHW], 4)
-D_SS_IHW
-
-disp('CFR calculation')
-CFR_Kalman_IHW = l_formatCI([mu_Id;mu_Hd;mu_Wd] + ...
-                          [-2*sig_Id, - sig_Id, 0, sig_Id, 2*sig_Id;...
-                           -2*sig_Hd, - sig_Hd, 0, sig_Hd, 2*sig_Hd;...
-                           -2*sig_Wd, - sig_Wd, 0, sig_Wd, 2*sig_Wd],2)
-ID_ODE = l_formatCI([ID_q;HD_q;WD_q],2)
-
-
-
-return;
 
 %%
 function [mu,sig] = l_MoG(X_mu,X_sig,Y_mu,Y_sig)

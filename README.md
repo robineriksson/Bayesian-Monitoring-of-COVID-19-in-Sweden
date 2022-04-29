@@ -16,6 +16,13 @@ and allows for a replication of the results in the paper.
 3. Initialize by starting Matlab and running `startup` in the main
    directory
 
+# Posteriors on file
+The posterior files that are supplied in `/inference/results/KLAM/`
+have all been reduced in size to length 100 parameter for storage size
+reasons. See Section *KLAM* on how to generate a full size posterior
+and reproduce the results in the paper fully.
+
+
 # Code
 Basic functionallity to generate the results in the paper. If further
 explanation is wanted, see the extensive Matlab `help` each function
@@ -24,7 +31,7 @@ generation.
 
 ## Data (/data/)
 To access data, run `d = loadData(rep)` where `rep` is a specificed
-source, see `help loadData`. Note: not all sources listed are
+source, see `help loadData`. *Note:* not all sources listed are
 distributed. Raw .csv files are stored under `/data/sources/REP` for
 the source `REP`. We often use pre-processing steps on the data before
 performing any calculations, e.g.,
@@ -120,7 +127,7 @@ mean posterior. See the example for Fig. S8 below for some sample
 code. The following example will generate the bootstrap replicate
 samples, infer one posterior using KLAM on that data for the Uppsala
 region, and finally perform the upscaling of the reproduction number
-on that posterior. *NOTE* these results take a long time to generate.
+on that posterior. *Note:* these results take a long time to generate.
 ```
 savetofile = true;
 dynamic_beta_ML_all; % if not already run
@@ -135,15 +142,15 @@ dynamic_beta_ML;
 ```
 
 # Examples (paper/predict/)
-All the examples are referenced to a presented figure in the paper.
+All examples below are associated with a display item in the paper.
 
 Prior to generating the figure, simulation files are needed for some
-the figures/examples listed below. In order to run the properly we
+of the figures/examples listed below. In order to run them properly we
 suggest you first generate them by first running the `laggen` script.
 It will take a while, but it needs only to be called once. The
 `laggen` call should be called as follows
 ```
-% *suggested approach* to reproduce the Figures in the paper.
+% *suggested approach* to reproduce the results
 type = 1;
 reg = [1 2 22];
 laggen;
@@ -158,7 +165,6 @@ laggen; % filter output + 14 days of prediciton
 
 type = 2;
 laggen % Continous 7-day ahead prediction
-
 ```
 
 ## Figures (paper/predict/img/scripts)
@@ -166,84 +172,86 @@ laggen % Continous 7-day ahead prediction
 Illustrate the marginal prior and posterior with
 `prior_posterior`. The illustration can be the weighted national
 average or any combination of regional posteriors, see the variable
-`reg` which include all if set to `[1:21]` or only Uppsala if `[2]`.
+`reg` which include all if set to `[1:21]`, or only Uppsala if `[2]`.
 ```
-savetofile=false;
-reg = [1:21]
-prior_posterior; % generates the weighted national average, as in the paper.
+savetofile = false;
+reg = [1:21];
+prior_posterior; % generates the weighted national average
+                 % (as in the paper)
 
 reg = [2]
-prior_posterior; % generates the same but only for Uppsala.
+prior_posterior; % Uppsala only
 ```
+
 ### Fig. 3:
 7-day ahead predictions per region, and exemplified for Uppsala in
 `lagplot`. The function unpacks prediction samples generated using
-`weekly_predict` wrapper `laggen`
+the `weekly_predict` wrapper `laggen`
 
 ```
-savetofile=false;
-generateData=0; % if the laggen call was already made
-reg = [2]; % Uppsala figure, [1] for Stockholm and so on.
+savetofile = false;
+generateData = 0; % if the laggen call was already made
+reg = [2];        % Uppsala figure, [1] for Stockholm and so on
 lagplot;
-
 ```
 
 ### Fig. 4:
 The proportion of recovered invididuals per region, and Stockholm in
-particular `recovered`. Stockholm in particular because we have
-included validating sources which themselves only consider that
-region. The validating sources are included by .csv: [`fhmAnti`,
-`fhmAntiGivare`, `RecPaperEstimate`], see the paper for the sources.
-The call is simply
+particular, see `recovered`. Stockholm in particular because we have
+included validating sources which only consider that region. The
+validating sources are included as .csv: [`fhmAnti`, `fhmAntiGivare`,
+`RecPaperEstimate`], see the paper for the sources.  The call is
+simply
 ```
-savetofile=false;
-recovered; % generates the recoverd plot in the paper.
+savetofile = false;
+recovered; % generates the plot in the paper
 ```
 
 ### Fig. 5 (& 7)
-The posterior reproduction number (4-week) and the marginal boostrap
-(daily) per region can be illustrated by `Rposterior`. In which the
+The posterior reproduction number (4-week constant) and the marginal
+boostrap (daily) per region can be illustrated by `Rposterior`. The
 region of interest is specified by `reglist`. In Fig. 5 `= [2]`, and
 in Fig. S2 `= [1 10 12 8 9 19]`. The 4-week posterior is illustrated
-using a boxplot, the daily as a red line, and for comparison (or
-validation) we also include the estimate given by PHA per region.
+using a boxplot, the daily as a red line, and for comparison we also
+include the estimate given by PHA per region.
 ```
 clear reg
-savetofile=false;
-Rposterior; % generates the figures for the 7 regions in the paper
+savetofile = false;
+Rposterior; % generates the figures for the 7 selected
+            % regions in the paper
 
-reg = [2]
+reg = [2];
 Rposterior; % only generates the figure for Uppsala
 ```
 
 ### Fig. 6:
 As the posterior Kalman filter can give an estimate of the proportion
 of recovered individuals, similarly the filter can also give an
-estimate of the number of symptomatic or the symptomatic
-incidence. The latter is often what servailence studies (testing)
-tries to uncover. In `IincFac` we do exactly this, we recover the
-symtomatic incidence and compare it to the positive tests by PHA in
-Stockholm and Uppsala. Figures can be generates in batch, or by region.
+estimate of the number of symptomatic and/or the symptomatic
+incidence. The latter is often what screening studies via testing try
+to uncover. In `IincFac` we do exactly this, we query the model for
+the symptomatic incidence and compare it to the positive tests by PHA
+in Stockholm and Uppsala. Figures can be generates in batch, or by
+region.
 ```
 savetofile = false;
 reg = [1] % Stockolm
 IincFac;
 
-savetofile = true; % the figure names are re-used and we suggest saving.
+% (the figure names are re-used and we suggest saving:)
+savetofile = true;
 reg = [1 2] % Stockholm and Uppsala
 IincFac;
 ```
 
 ### Fig. 9:
-The pre-processing of the data (as discussed under Results → Data)
-corrects the distribution of diseased incidence per weekday to achieve
-one that is closer to uniformly distributed. If not close to uniform,
-it is telling to be a data entry issue as nothing intrisict about the
-infection should decide that one day is >5 times likely to have more
-reported deaths on. The illustration is reproducable in
+The pre-processing of the data (as discussed under Results → Data) and
+further detailed in the SI smoothes the distribution of deceased
+incidence per weekday to achieve one that is closer to uniformly
+distributed. The illustration in the SI is reproducable in
 `weekday_smoothing`.
 ```
-savetofile=false;
+savetofile = false;
 reg = 1; % Stockholm
 weekday_smoothing;
 
@@ -252,199 +260,207 @@ weekday_smoothing;
 ```
 
 ### Fig. 11:
-Our effort of exploring the prior predictive distribution is given in
-`priorpred`. The parameters directly samples from the prior is used as
-the ones from the posterior is used in `laggen`. A first inital run
+Our exploration of the prior predictive distribution is given by
+`priorpred`. The parameters are here direct samples from the prior in
+the same way as the posterior is used in `laggen`. A first inital run
 should include `gendata = true` and then it can be set to `false`. The
 first run generates the prior sample predictions and save the file (it
 can be large, therefore we do not include it). After it has been
-generated, the file can simply be loaded the the predictive
+generated, the file can simply be loaded and the predictive
 distribution can be explored further.
 ```
-savetofile=false;
-regen=1; % generate the samples
-reg=2; % Uppsala | can be swapped for othe regions, e.g., Stockholm (1).
-Nprior=1e3; % number of prior samples
+savetofile = false;
+regen = 1;    % generate the samples
+reg = 2;      % Uppsala
+Nprior = 1e3; % number of prior samples
 priorpred;
 
-regen=0;
-priorpred; % same figure, but loading the prior samples from file.
+regen = 0;
+priorpred;    % same figure format, but loading the prior samples from file
 ```
 
 ### Fig. 12:
-The daily estimate of β is expensive to run; superlinear in the number
-of days *K*. We illustrate the splitting of horizions to make the
-calculations feasable in `HorizonSplitCompare`. *WARNING* this script
-takes a long time to compute.
+The daily estimate of β is expensive to run; superlinear complexity in
+the number of days *K*. We illustrate the splitting of horizions to
+make the calculations feasable in `HorizonSplitCompare`. *WARNING*
+this script takes a long time.
 ```
-savetofile=false;
-reg=2; % Uppsala region, as in paper.
+savetofile = false;
+reg = 2; % Uppsala region, as in paper
 HorizonSplitCompare;
-
 ```
 
 ### Fig. 13:
 The posterior for all regions is tricker to visualize all at once. In
 `errorbarsRegion` we give the posterior mean ± 1 std per region. This
-quick illustration gives a quick overview of potential outlier regions
-but also the similarity between regional results.
+gives a quick overview of potential outlier regions but also displays
+the nice agreement between regional results.
 ```
+% load data into memory and generate figure
 clear ratenames
-savetofile=false;
-errorbarsRegion; % load data into memory and generate figure.
+savetofile = false;
+errorbarsRegion;
 
-errorbarsRegion; % from memory generate figure.
+% alternatively, generate figure from memory:
+errorbarsRegion;
 ```
 
 ### Fig. 14:
-The bootstrap samples are, as mentioned, generated using URDME. The
-function `URDMEsampling` generates the samples for all regions, stores
-the file, and generates the figures. The latter allows for visualized
-comparison with the underlying data. There will be some missmatch
-assumed as the posterior we use in the simulations is a national
-average (except per the reproduction number) and therefore if the
-regional posterior differed significantly from the weighted national
-average, we then expect the simulations to differ more. *Note* URDME
-does currently not support the Windows platform, meaning that this
-example is not possible to generate if using that system.
+The bootstrap samples are generated using URDME. The function
+`URDMEsampling` generates the samples for all regions, stores the
+file, and generates the figures. The latter allows for visual
+comparison with the underlying data. There will be some mismatch since
+the posterior we use in the simulations is a national average (except
+for the reproduction number) and therefore, if the regional posterior
+differed significantly from the weighted national average, we then
+expect the simulations to differ somewhat. *Note:* URDME needs to be
+modified a bit to work on the Windows platform, meaning that this
+example is not possible to quickly generate on that system.
 ```
-savetofile=false;
-reg = [1:21]; % national average
+savetofile = false;
+reg = [1:21];  % national average
 regplot = [2];
-URDMEsampling; % Only the Uppsala figure
+URDMEsampling; % only the Uppsala figure
 
 clear regplot
-URDMEsampling; % All the figures in the paper.
+URDMEsampling; % all the figures in the paper
 ```
 
 ### Fig. 15:
-The reproduced posterior samples on the bootstrap replicate data can
-we visualized together with the weighted national average (as Fig 2)
+The reproduced posterior samples from the bootstrap replicate data can
+be visualized together with the weighted national average (cf. Fig. 2)
 as another marginal density in `prior_posteriorURDME`.
 ```
-savetofile=false;
-reg = [1:21]; % national average
-prior_posteriorURDME; % same figure as in the paper
+savetofile = false;
+reg = [1:21];         % national average
+prior_posteriorURDME; % same figure format as in the paper
 
 reg = [2];
 prior_posteriorURDME; % only for Uppsala.
 ```
 
 ### Fig. 16:
-Similarly as the boostrap replicate posterior was compared to the the
+Similarly to how the boostrap replicate posterior was compared to the
 marginal posterior and prior in Fig. S9, we can include the replicate
 mean for the reproduction number in `RposteriorURDME`. We only include
-the files necessary for the Uppsala region plot, as given in the
-paper. The following results in the same figure.
+the files necessary for the Uppsala region plot (as given in the
+paper).
 ```
-savetofile=false;
+savetofile = false;
 RposteriorURDME;
 ```
 
 ### Fig. 17:
-To compare the the Posterior Kalman filter predictor with something,
-we construct a Autoregressive (AR) model in `arx_fit`. The AR model
-considers data (H,W,D) in an expanding window and makes 7-day ahead
-predictions. The performance is then evaluated on the frequency of
-"inside [X%] CrI" and the NRMSE per the days we have recorded for the
-Kalman filter. The reasoning for only doing it on the recorded dates
-is that it makes sure that the Kalman filter had not seen "future"
-data when making predictions. The code also generates the Tab. S5.
+To compare the posterior Kalman filter predictor with something more
+basic, we construct an Autoregressive (AR) model in `arx_fit`. The AR
+model considers data `(H,W,D)` in an expanding window and makes 7-day
+ahead predictions. The performance is then evaluated on the frequency
+of "inside [X%] CrI" and the NRMSE per the days we have recorded for
+the posterior filter. The reasoning for only doing it on the recorded
+dates is that this ensures that the Kalman filter had not seen any
+future data when making predictions. The code also generates Tab. S5.
 ```
-savetofile=false;
-reg=2; % Uppsala region
+savetofile = false;
+reg = 2; % Uppsala region
 arx_fit; % first time loads solution into memory
 
 arx_fit; % no new fitting, only plotting
 clear ypred;
-reg=1; % Stockholm data
+reg = 1; % Stockholm data
 arx_fit; % fit anew.
 ```
 
 ## Tables (paper/predict/tab/scripts)
 ### Tab. 1
-We describe in the paper how the research underlying the paper was
-used, and developed, for weekly prediction in reports published for
-the local authorities. The result from those reports are summarized in
-a table and `weekly_eval` extracts the results.
+We describe in the paper how the techniques from the paper was used
+for weekly prediction in reports communicated with the local
+authorities. The results from those reports are summarized in a table
+and `weekly_eval` extracts the results.
 ```
-savetofile=false;
+savetofile = false;
 weekly_eval; % reads the table
-tableWeekly % the summarized and stored .tex table
+tableWeekly  % the final LaTeX-table
 ```
 
 ### Tab. 2
-The Infection Fatality rate (IFR), like the reproduction number, is a
-4-week dynamical parameter. We present the IFR by the `IFRtableURDME`
-script. The IFR update frequency of once per month (4-week) is however
-not very stable (in a loose sense) and we decide to give the
-bi-monthly estimate instead. Still, by including two months in the
-estimate, we observe a downward trend forming. Per region, we give an
-our estimate (posterior sample) for Stockholm and Uppsala. Next we
-also give the weighted national average. The posterior CrI is computed
-as the marginal quantiles. The table include footnotemarks (§ and ‡)
-and we use these marks to indicate that the estimate should be
-considered with care.  ``` clear reg, bimonthly IFRtableURDME; %
-generates the same table as in the paper
+Like the reproduction number, the Infection Fatality Rate (IFR) is a
+4-week dynamical parameter. We present the IFR using the
+`IFRtableURDME` script. The IFR estimator per 4 week is, however,
+somewhat noisy and we decided to report bi-monthly estimate instead. A
+downward trend could be seen quite early on. We give our estimate
+(posterior sample) for Stockholm and Uppsala and also the weighted
+national average. The posterior CrI is computed as marginal
+quantiles. The table include footnotemarks (§ and ‡) and we use these
+marks to indicate that the estimates should be considered less robust
+due to a somewhat worse bootstrap match. See the discussion in
+Materials & Methods. *Note:* we only distribute a thinned
+posterior due to data limitation. To fully reproduce the results,
+larger sample size is needed.
+```
+% generates a table on the same format as in the paper
+clear reg bimonthly
+verb = 1;
+reg = [1 2 22]
+IFRtableURDME; % Stockholm, Uppsala, Sweden
+% (NOTE: the discussion above on the posterior)
 
-reg = [2]
-IFRtableURDME; % only for Uppsala
-
-reg = [1:22]; % all regions and Sweden
+reg = [1:22];  % all regions and Sweden
 IFRtableURDME
 
 reg = [2];
 bimonthly = false;
-IFRtableURDME; %Uppsala but IFR per month.
+IFRtableURDME; % Uppsala, but IFR per month
 ```
 
 ### Tab. S4
-With the estimated bias, we compute the uncertainty statistics:
+With the estimated bias we compute some uncertainty statistics:
 Coefficient of Variation (CoV), Coefficient of Bias (CoB), and
 normalized root mean square error (NRMSE), per region in
 `bootstraptable`. We estimate the bias for the regional posteriors by
 using the known bias of the bootstrap replicates. The bias is computed
-per parameter, and as a robust estimator of the bias for the entire
-region (over all parameters) we give the median instead of the mean.
-Deeper investigation into the working of the table construction is to
-be done by examining `posterror` which processes the posterior files
-that `bootstraptable` supplies it with.
+per parameter, and is intended as a basic measure of the bias for the
+entire region (over all parameters). Some deeper investigation into
+the working of the table construction can be achieved by examining
+`posterror` which processes the posterior files that `bootstraptable`
+supplies it with.
 ```
-saveetofile=false;
+saveetofile = false;
 bootstraptable; % generates the table in the paper.
 ```
 
 ## Other
-### CFR if [I,H,W]
-In the paper we give estimates for the CFR when considering I, H, and
-W. These esimates are generated using `spectral`.
+### CFR conditioned on [I,H,W]
+In the paper we give estimates for the CFR when conditioned on I, H,
+and W. These esimates are generated using `spectral`.
 ```
-reg=1:21; % national average
-spectral; % same as in the paper
+reg = 1:21; % national average
+sig = 3; % change to sig = 2 if same order of signifiant numbers.
+spectral;   % same format as in the paper
 
-reg=2; % Uppsala CFR
+reg = 2;    % Uppsala CFR
 spectral;
 ```
 
 ### Death per source compartment
-For completion, we include the script for estimates of the number of
-death per source compartment I, H or W: `Deadsplit`. By completion means that in
-order to run the script a simulation output generated by an extended
-version of our Kalman model that keep track of the different sources
-that the diseased enter from. If necessary, we can happily share the
-the additional code needed. Please contact the owner of the repository
-to make that inquiry. *If the simulation file needed is available*
+We include also the script for estimates of the number of death per
+source compartment `(I,H,W)`: `Deadsplit`. In order to run the script
+a simulation output generated by an extended version of our posterior
+model that keeps track of the different sources that the diseased
+entered from. If necessary, we can happily share the the additional
+code needed. Please contact the owner of the repository to make that
+inquiry. *If the simulation file needed is available*.
 ```
-Deadsplit; % run spectral, and unpacks the simulation file.
+Deadsplit; % run spectral and unpacks the simulation file
 ```
 
 # Dependencies
 * stenglib: https://github.com/stefanengblom/stenglib
-* URDME: https://github.com/URDME/urdme (Windows platform not currently supported)
+* URDME: https://github.com/URDME/urdme
+  (Windows platform not currently supported)
 * MATLAB (>= release 2019a)
 
 ## Tested on
 * Linux (Pop!_OS 20.10, 64 bit), MATLAB 2021a
-* Linux (Pop!_OS 21.10, 64 bit) MATLAB 2021a
-* macOS Monterey Version 12.3 [not yet]
+* Linux (Pop!_OS 21.10, 64 bit), MATLAB 2021a
+* macOS Monterey Version 12.3, MATLAB 2021b
 * Windows 10 Education 64 bit, MATLAB R2019a

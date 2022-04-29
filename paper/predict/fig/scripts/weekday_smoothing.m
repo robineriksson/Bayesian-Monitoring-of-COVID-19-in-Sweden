@@ -13,6 +13,11 @@ end
 
 if ~exist('reg','var')
     reg = 1;
+else
+    if max(reg) > 21
+        error(['Only supported to run 21 regions,'...
+               'National posterior is sampled from a basket of region']);
+    end
 end
 
 if numel(reg) > 1

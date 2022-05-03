@@ -2,7 +2,7 @@
 
 ## About
 This README describes the code we use in the paper with the same name
-and allows for a replication of the results in the paper.
+and allows for a replication of the results in the paper; see the preprint https://arxiv.org/abs/2205.00859.
 
 ## Authors
 * Robin Marin (robin.marin 'at' it.uu.se), Primary contact

@@ -12,7 +12,7 @@ end
 if ~exist('reg','var')
     reg=2
 else
-     if max(reg) > 21
+    if max(reg) > 21
         error(['Only supported to run 21 regions,'...
                'National posterior is sampled from a basket of region']);
     end
@@ -34,9 +34,31 @@ if ~exist('windowlength','var')
     windowlength=150;
 end
 
+if ~exist('ntime','var')
+
+end
+
+if ~exist('horizon','var')
+    horizon=false;
+end
+
+if horizon
+    ntime = 365;
+    maxfunceval = 2700000;
+else
+    ntime = 1;
+    maxfunceval = 1700000;
+end
+
+if horizon & numel(reg) > 1
+    error('err:horizon','only run horizon for 1 region');
+end
+
 if ~exist('verb','var')
     verb=false;
 end
+
+
 
 %% region list
 regionList = regions(false);
@@ -45,9 +67,16 @@ for region = reg % region to estimate beta for
     if verb
         disp(['running: ' regionList{region}]);
     end
+
     startdate = 200401;
     enddate = 210531;
+    if horizon
+        enddate_ = startdate;
+    else
+        enddate_ = enddate;
+    end
     prevresdate = 210531; % previous result for initial guess
+
 
     wbeta=300000;
     steplength=20;
@@ -94,7 +123,7 @@ for region = reg % region to estimate beta for
         Data = smoothData(Data,{'D' 'H' 'W'},{'Dinc' [] []});
     end
     % define data and filter periods
-    ixdata = find(Data.date == startdate):find(Data.date == enddate);
+    ixdata = find(Data.date == startdate):find(Data.date == enddate_)+ntime-1;
     if numel(slab) < numel(ixdata)
         % (posterior is from a shorter period of time)
         warning('Extending final slab to match data.');
@@ -109,17 +138,17 @@ for region = reg % region to estimate beta for
                 Data.D(ixdata,region));
     Ydata = permute(Ydata,[3 2 1]);
 
-    % define a common time frame, including dates
-    TSPAN = 1:max(ixfilter);
-    DATES = datenum(2e3+floor(Data.date(1)/1e4), ...
-                    mod(floor(Data.date(1)/1e2),1e2) ,...
-                    mod(Data.date(1),1e2));
-    DATES = DATES:DATES+numel(TSPAN)-1;
-    DATES = datevec(DATES);
-    DATES = DATES(:,1:3)*[1e4 1e2 1]'-2e7; % finally!
-                                           % selections of the above:
-    tspan_filter = TSPAN(ixfilter); % filter output
-    tspan_data = TSPAN(ixdata);  % data used
+    % % define a common time frame, including dates
+    % TSPAN = 1:max(ixfilter);
+    % DATES = datenum(2e3+floor(Data.date(1)/1e4), ...
+    %                 mod(floor(Data.date(1)/1e2),1e2) ,...
+    %                 mod(Data.date(1),1e2));
+    % DATES = DATES:DATES+numel(TSPAN)-1;
+    % DATES = datevec(DATES);
+    % DATES = DATES(:,1:3)*[1e4 1e2 1]'-2e7; % finally!
+    %                                        % selections of the above:
+    % tspan_filter = TSPAN(ixfilter); % filter output
+    % tspan_data = TSPAN(ixdata);  % data used
 
     % specify observation model
     obsrates.states = {5 6 7}; % state #5, #6, #7
@@ -142,19 +171,23 @@ for region = reg % region to estimate beta for
     betaIdx = false(obsrates.nstate-1);
     betaIdx(3,4) = true;
 
-    try
-        oldres = load([prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_'...
-                       regionList{region} '.mat']);
-        oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
-        beta0 = getC19beta(oldrates_daily,oldres.R_post);
-        beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
-        if verb
-            disp('found old guess')
-        end
-    catch
+    if horizon
         beta0 = 0.1*ones(1,ntime);
-        if verb
-            disp('from scratch')
+    else
+        try
+            oldres = load([prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_'...
+                           regionList{region} '.mat']);
+            oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
+            beta0 = getC19beta(oldrates_daily,oldres.R_post);
+            beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
+            if verb
+                disp('found old guess')
+            end
+        catch
+            beta0 = 0.1*ones(1,ntime);
+            if verb
+                disp('from scratch')
+            end
         end
     end
 
@@ -164,7 +197,7 @@ for region = reg % region to estimate beta for
     else
         display = 'off';
     end
-    options = optimoptions(@fmincon,'MaxFunctionEvaluations',1700000,...
+    options = optimoptions(@fmincon,'MaxFunctionEvaluations',maxfunceval,...
                            'MaxIterations',6000,'Display',display,...
                            'OptimalityTolerance',2e-5);
 
@@ -181,122 +214,126 @@ for region = reg % region to estimate beta for
     [x0_post,betaOpt,J,misfit,beta_mpc,ix_mpc] = mpcloop_beta_S(squeeze(Ydata(:,1,:)),F,H(:,1:7),...
                                                                 betaIdx,wbeta,slab,squeeze(S(:,:,:,1)),steplength,windowlength,x0,...
                                                                 beta0,options);
-    toctime = toc;
+    t1 = toc;
     if verb
-        toctime
+        t1
     end
     %%
-    rates_daily = dailyrates(postrates,slab);
-    rates_daily.beta=betaOpt';
-    R_post = getC19R0(rates_daily);
-
-    dates = Data.date(ixdata);
-
-    postrates.dataReg = Data.reg;
-    postrates.dataRev = Data.rev;
-    postrates.dataHash = Data.hash;
-
-    %%
-
-    if evalplot
-        figure(1), clf
-        plot(R_post)
-    end
-
-    beta_mpc(end,:)=[];
-    ix_mpc(end,:)=[];
-
-    %%
-
-    if evalplot
-
-        beta_temp = 0.1*ones(size(betaOpt,2),size(beta_mpc,1));
-        for k=1:size(beta_mpc,1)
-            beta_temp(ix_mpc(k,:),k)=beta_mpc(k,:);
-        end
-        rates_daily.beta=beta_temp;
-        R_mpc = getC19R0(rates_daily);
-
-        Ic_diff=zeros(size(beta_mpc));
-        beta_diff=zeros(size(beta_mpc));
-
-
-        for k=1:size(beta_mpc,1)
-            Ic_diff(k,:) = R_mpc(ix_mpc(k,:),k)-R_post(ix_mpc(k,:));
-            beta_diff(k,:) = beta_mpc(k,:)-betaOpt(ix_mpc(k,:));
-        end
-
-        figure(2), clf
-        plot(Ic_diff','color',[0.9 0.9 1])
-        yline(0,':');
-        xline(steplength,'--');
-        hold on
-        plot(mean(Ic_diff),'b')
-        plot(mean(Ic_diff)+std(Ic_diff),'--b')
-        plot(mean(Ic_diff)-std(Ic_diff),'--b')
-        hold off
-
-
-        figure(3), clf
-        plot(beta_diff','color',[0.9 0.9 1])
-        yline(0,':');
-        xline(steplength,'--');
-        hold on
-        plot(mean(beta_diff),'b')
-        plot(mean(beta_diff)+std(beta_diff),'--b')
-        plot(mean(beta_diff)-std(beta_diff),'--b')
-        hold off
-
-        figure(4), clf
-        plot(ix_mpc',beta_mpc')
-    end
-    %%
-    try
-        % betaStruct.vals=betaOpt';
-        % betaStruct.idx = betaIdx;
-        %xSim = LPVsim_slabs(F,x0_post,betaStruct,slab);
-        xSim = LPVsim_slabs_par(F,x0_post,betaOpt',betaIdx,slab);
-        if evalplot
-            figure(5), clf
-            subplot(3,1,1)
-            plot(xSim(5,:))
-            hold on
-            plot(squeeze(Ydata(1,1,:)))
-            hold off
-            subplot(3,1,2)
-            plot(xSim(6,:))
-            hold on
-            plot(squeeze(Ydata(2,1,:)))
-            hold off
-            subplot(3,1,3)
-            plot(xSim(7,:))
-            hold on
-            plot(squeeze(Ydata(3,1,:)))
-            hold off
-        end
-    catch
-        if verb
-            disp('LPsim_slabs is not really working');
-        end
-    end
-
-    %%
-    regionList_notnordic = regions(false);
-    savename=['dynOptPosterior' num2str(enddate) '_' regionList{region}];
-    if urdme
-        savename = [savename '_URDME' num2str(urdme)];
-    end
-    savename = [savename '.mat'];
-    savename = [prefix 'dynOpt/' savename];
-    if savetofile
-        save(savename,'R_post','dates','x0_post','postrates','xSim')
-        if verb
-            disp(['saved: ' savename]);
-        end
+    if horizon
+        return;
     else
-        if verb
-            disp(['didn''t save: ' savename]);
-        end
-    end
+        rates_daily = dailyrates(postrates,slab);
+        rates_daily.beta=betaOpt';
+        R_post = getC19R0(rates_daily);
 
+        dates = Data.date(ixdata);
+
+        postrates.dataReg = Data.reg;
+        postrates.dataRev = Data.rev;
+        postrates.dataHash = Data.hash;
+
+        %%
+
+        if evalplot
+            figure(1), clf
+            plot(R_post)
+        end
+
+        beta_mpc(end,:)=[];
+        ix_mpc(end,:)=[];
+
+        %%
+
+        if evalplot
+
+            beta_temp = 0.1*ones(size(betaOpt,2),size(beta_mpc,1));
+            for k=1:size(beta_mpc,1)
+                beta_temp(ix_mpc(k,:),k)=beta_mpc(k,:);
+            end
+            rates_daily.beta=beta_temp;
+            R_mpc = getC19R0(rates_daily);
+
+            Ic_diff=zeros(size(beta_mpc));
+            beta_diff=zeros(size(beta_mpc));
+
+
+            for k=1:size(beta_mpc,1)
+                Ic_diff(k,:) = R_mpc(ix_mpc(k,:),k)-R_post(ix_mpc(k,:));
+                beta_diff(k,:) = beta_mpc(k,:)-betaOpt(ix_mpc(k,:));
+            end
+
+            figure(2), clf
+            plot(Ic_diff','color',[0.9 0.9 1])
+            yline(0,':');
+            xline(steplength,'--');
+            hold on
+            plot(mean(Ic_diff),'b')
+            plot(mean(Ic_diff)+std(Ic_diff),'--b')
+            plot(mean(Ic_diff)-std(Ic_diff),'--b')
+            hold off
+
+
+            figure(3), clf
+            plot(beta_diff','color',[0.9 0.9 1])
+            yline(0,':');
+            xline(steplength,'--');
+            hold on
+            plot(mean(beta_diff),'b')
+            plot(mean(beta_diff)+std(beta_diff),'--b')
+            plot(mean(beta_diff)-std(beta_diff),'--b')
+            hold off
+
+            figure(4), clf
+            plot(ix_mpc',beta_mpc')
+        end
+        %%
+        try
+            % betaStruct.vals=betaOpt';
+            % betaStruct.idx = betaIdx;
+            %xSim = LPVsim_slabs(F,x0_post,betaStruct,slab);
+            xSim = LPVsim_slabs_par(F,x0_post,betaOpt',betaIdx,slab);
+            if evalplot
+                figure(5), clf
+                subplot(3,1,1)
+                plot(xSim(5,:))
+                hold on
+                plot(squeeze(Ydata(1,1,:)))
+                hold off
+                subplot(3,1,2)
+                plot(xSim(6,:))
+                hold on
+                plot(squeeze(Ydata(2,1,:)))
+                hold off
+                subplot(3,1,3)
+                plot(xSim(7,:))
+                hold on
+                plot(squeeze(Ydata(3,1,:)))
+                hold off
+            end
+        catch
+            if verb
+                disp('LPsim_slabs is not really working');
+            end
+        end
+
+        %%
+        regionList_notnordic = regions(false);
+        savename=['dynOptPosterior' num2str(enddate) '_' regionList{region}];
+        if urdme
+            savename = [savename '_URDME' num2str(urdme)];
+        end
+        savename = [savename '.mat'];
+        savename = [prefix 'dynOpt/' savename];
+        if savetofile
+            save(savename,'R_post','dates','x0_post','postrates','xSim')
+            if verb
+                disp(['saved: ' savename]);
+            end
+        else
+            if verb
+                disp(['didn''t save: ' savename]);
+            end
+        end
+
+    end
 end

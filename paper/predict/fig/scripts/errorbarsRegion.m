@@ -53,7 +53,7 @@ end
 
 % bar plot
 regionid = 1:numel(regionList);
-figure(1)
+figure(1), clf
 
 meanpost_plot = meanpost;
 stdpost_plot = stdpost;
@@ -99,7 +99,7 @@ end
 % polish target output size
 set(gcf,'PaperPositionMode','auto');
 %%
-set(gcf,'Position',[100 100 900 500]);
+set(gcf,'Position',[100 100 850 500]);
 %%
 printpath = mfilename('fullpath');
 printpath=[printpath(1:end-23) 'errorbars.pdf'];

@@ -209,11 +209,31 @@ savetofile = false;
 recovered; % generates the plot in the paper
 ```
 
-### Fig. 5 (& 7)
+### Fig. 5 (& 7):
+As the posterior Kalman filter can give an estimate of the proportion
+of recovered individuals, similarly the filter can also give an
+estimate of the number of symptomatic and/or the symptomatic
+incidence. The latter is often what screening studies via testing try
+to uncover. In `IincFac` we do exactly this, we query the model for
+the symptomatic incidence and compare it to the positive tests by PHA
+in Stockholm and Uppsala. Figures can be generates in batch, or by
+region.
+```
+savetofile = false;
+reg = [2] % Uppsala Fig 5
+IincFac;
+
+% (the figure names are re-used and we suggest saving:)
+savetofile = true;
+reg = [1 2] % Stockholm and Uppsala, Fig 7 and 5.
+IincFac;
+```
+
+### Fig. 6 (& 8):
 The posterior reproduction number (4-week constant) and the marginal
 boostrap (daily) per region can be illustrated by `Rposterior`. The
-region of interest is specified by `reglist`. In Fig. 5 `= [2]`, and
-in Fig. S2 `= [1 10 12 8 9 19]`. The 4-week posterior is illustrated
+region of interest is specified by `reglist`. In Fig. 6 `= [2]`, and
+in Fig. 8 `= [1 10 12 8 9 19]`. The 4-week posterior is illustrated
 using a boxplot, the daily as a red line, and for comparison we also
 include the estimate given by PHA per region.
 ```
@@ -226,27 +246,7 @@ reg = [2];
 Rposterior; % only generates the figure for Uppsala
 ```
 
-### Fig. 6:
-As the posterior Kalman filter can give an estimate of the proportion
-of recovered individuals, similarly the filter can also give an
-estimate of the number of symptomatic and/or the symptomatic
-incidence. The latter is often what screening studies via testing try
-to uncover. In `IincFac` we do exactly this, we query the model for
-the symptomatic incidence and compare it to the positive tests by PHA
-in Stockholm and Uppsala. Figures can be generates in batch, or by
-region.
-```
-savetofile = false;
-reg = [1] % Stockolm
-IincFac;
-
-% (the figure names are re-used and we suggest saving:)
-savetofile = true;
-reg = [1 2] % Stockholm and Uppsala
-IincFac;
-```
-
-### Fig. 9:
+### Fig. 10:
 The pre-processing of the data (as discussed under Results → Data) and
 further detailed in the SI smoothes the distribution of deceased
 incidence per weekday to achieve one that is closer to uniformly
@@ -261,7 +261,7 @@ reg = 2; % Uppsala
 weekday_smoothing;
 ```
 
-### Fig. 11:
+### Fig. 12:
 Our exploration of the prior predictive distribution is given by
 `priorpred`. The parameters are here direct samples from the prior in
 the same way as the posterior is used in `laggen`. A first inital run
@@ -281,7 +281,7 @@ regen = 0;
 priorpred;    % same figure format, but loading the prior samples from file
 ```
 
-### Fig. 12:
+### Fig. 13:
 The daily estimate of β is expensive to run; superlinear complexity in
 the number of days *K*. We illustrate the splitting of horizions to
 make the calculations feasable in `HorizonSplitCompare`. *Warning:*
@@ -292,7 +292,7 @@ reg = 2; % Uppsala region, as in paper
 HorizonSplitCompare;
 ```
 
-### Fig. 13:
+### Fig. 14:
 The posterior for all regions is tricker to visualize all at once. In
 `errorbarsRegion` we give the posterior mean ± 1 std per region. This
 gives a quick overview of potential outlier regions but also displays
@@ -307,7 +307,7 @@ errorbarsRegion;
 errorbarsRegion;
 ```
 
-### Fig. 14:
+### Fig. 15:
 The bootstrap samples are generated using URDME. The function
 `URDMEsampling` generates the samples for all regions, stores the
 file, and generates the figures. The latter allows for visual
@@ -329,7 +329,7 @@ clear regplot
 URDMEsampling;
 ```
 
-### Fig. 15:
+### Fig. 16:
 The reproduced posterior samples from the bootstrap replicate data can
 be visualized together with the weighted national average (cf. Fig. 2)
 as another marginal density in `prior_posteriorURDME`.
@@ -342,7 +342,7 @@ reg = [2];
 prior_posteriorURDME; % only for Uppsala.
 ```
 
-### Fig. 16:
+### Fig. 17:
 Similarly to how the boostrap replicate posterior was compared to the
 marginal posterior and prior in Fig. S9, we can include the replicate
 mean for the reproduction number in `RposteriorURDME`. We only include
@@ -353,7 +353,7 @@ savetofile = false;
 RposteriorURDME;
 ```
 
-### Fig. 17:
+### Fig. 18:
 To compare the posterior Kalman filter predictor with something basic,
 we construct an Autoregressive (AR) model in `arx_fit`. The AR model
 considers data `(H,W,D)` in an expanding window and makes 7-day ahead

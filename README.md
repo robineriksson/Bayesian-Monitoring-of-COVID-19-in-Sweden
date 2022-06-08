@@ -2,7 +2,7 @@
 
 ## About
 This README describes the code we use in the paper with the same name
-and allows for a replication of the results.
+and which allows for a replication of the results.
 
 Find the preprint at https://arxiv.org/abs/2205.00859.
 

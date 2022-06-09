@@ -178,6 +178,8 @@ obsrates.rdiag = (1e-3)^2*ones(3,1);
 % transmission matrix D
 load Dcounties % D, lan
 
+% get list of regions
+regionslist = regions(0);
 
 %% Prepare data
 % load data
@@ -220,8 +222,8 @@ else % load empirical data
     Data.D = sum(Data.D,2);
     T = 1;
     D = 1;
-  elseif any(strcmp(region, Data.regions))% other: Stockholm, Uppsala, etc.
-    ixRegion = find(strcmp(region,Data.regions));
+  elseif any(strcmp(region, regionslist))% other: Stockholm, Uppsala, etc.
+    ixRegion = find(strcmp(region,regionslist));
     lan = lan(ixRegion);
     fnames = fieldnames(Data);
     for k = 1:numel(fnames)
@@ -232,25 +234,6 @@ else % load empirical data
     end
     T = 1;
     D = 1;
-  elseif strcmp(region, 'super1')
-    regions = {'Uppsala' 'Dalarna' 'Gävleborg' 'Västmanland'};
-
-    ixRegion = find(fsetop('ismember',Data.regions,regions));
-
-    lan = {reshape(char(regions)',1,[])};
-    fnames = fieldnames(Data);
-    for k = 1:numel(fnames)
-      name = fnames{k};
-      if ~any(strcmp({'date', 'hash', 'rev', 'reg'},name))
-        Data.(name) = Data.(name)(:,ixRegion);
-        if ~strcmp(name,'regions') && size(Data.(name),2) > 1
-          Data.(name) = sum(Data.(name),2);
-        end
-      end
-    end
-    T = 1;
-    D = 1;
-
   else % use all data, no aggregate, i.e., Sweden with transport
     T = [speye(numel(lan)); sparse(1,1:numel(lan),1)];
   end

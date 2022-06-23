@@ -198,9 +198,19 @@ if contains(register,'URDME') % synthetic data
   catch
     runid = 1;
   end
-  Data.H = Data_raw.D.U(:,5,regid,runid);
-  Data.W = Data_raw.D.U(:,6,regid,runid);
-  Data.D = Data_raw.D.U(:,7,regid,runid);
+
+  if any(strcmp('H2',Data_raw.D.vars))
+      H_id = find(fsetop('ismember',Data_raw.D.vars,{'H' 'H2'}));
+      W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
+      D_id = find(fsetop('ismember',Data_raw.D.vars,{'D_I' 'D_H' 'D_W'}));
+  else
+      H_id = find(fsetop('ismember',Data_raw.D.vars,{'H'}));
+      W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
+      D_id = find(fsetop('ismember',Data_raw.D.vars,{'D'}));
+  end
+  Data.H = sum(Data_raw.D.U(:,H_id,regid,runid),2);
+  Data.W = sum(Data_raw.D.U(:,W_id,regid,runid),2);
+  Data.D = sum(Data_raw.D.U(:,D_id,regid,runid),2);
 
   Data.hash = fsetop('check',Data_raw.D.U(:));
 

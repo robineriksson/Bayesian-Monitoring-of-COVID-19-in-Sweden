@@ -14,7 +14,10 @@ if ~exist('savetofile','var')
     savetofile = false;
 end
 
-includeUDS = false; % don't generate samples using the uds solver
+if ~exist('includeUDS','var')
+  includeUDS = false; % don't generate samples using the uds solver
+end
+
 if ~exist('Nreplicas','var')
     Nreplicas = 25;
 end
@@ -41,13 +44,23 @@ if ~exist('verb','var')
     verb = false;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
 
+if interp == 1
+    ending  = ''; % at what date does the slabs start.
+elseif interp == 2
+    ending  = '_update'; % at what date does the slabs start.
+else
+    error('Only supporting interp 1 or 2');
+end
 
 % note: comment away 'solver', 'reg', and consider to pre-compile once
 % (set 'compile' = 0 when conctructing the umod struct)
 solver = 'ssa';
-date = '210531';
-stopdate = '210531';
+date = 210531;
+stopdate = 210531;
 divide = true; % I -> H, W -> H2, D = {D_I, D_H, D_W};
 Psamples = inf;% % inf: mean posterior, else: N # of posterior samples.
 
@@ -58,9 +71,9 @@ filename = mfilename('fullpath');
 
 
 % construct the rates to run
-P = load('slam210531_mean_monthly_1');
+P = load(['slam210531_mean_monthly_1' ending]);
 P = P.rates;
-DR = load('dynOptPosterior210531_all');
+DR = load(['dynOptPosterior210531_all' ending]);
 
 % check: that we are talking about the same thing:
 if any(P.meta.hash ~= DR.postrates.meta.hash) || ...
@@ -130,7 +143,7 @@ D.meta = P.meta;
 D.meta.posteriorHash = P.meta.hash;
 D.meta.hash = fsetop('check',D.U(:));
 
-save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
+save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all' ending],'D');
 %
 if includeUDS
     if verb
@@ -142,12 +155,12 @@ if includeUDS
     Nreplicas = 1;
     covid19enger_run_post
     Nreplicas = temp;
-    load([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
-    D.EulFwd = reshape(permute(umod.U,[2 1 3]),numel(DATES),Nspecies,Nvoxels,Nreplicas);
+    load([filename(1:end-39) '/URDME/URDMEoutput/URDME_all' ending],'D');
+    D.EulFwd = reshape(permute(umod.U,[2 1 3 4]),numel(DATES),Nspecies,Nvoxels,1);%Nreplicas);
     Nspecies_ = 7;
-    D.dynOpt = reshape(permute(DR.xSim_all(reg,:,:),[3 2 1]),numel(DATES),Nspecies_,Nvoxels,Nreplicas);
+    D.dynOpt = reshape(permute(DR.xSim_all(reg,:,:),[3 2 1]),numel(DATES),Nspecies_,Nvoxels,1);%Nreplicas);
 
-    save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all'],'D');
+    save([filename(1:end-39) '/URDME/URDMEoutput/URDME_all' ending],'D');
 end
 
 %%

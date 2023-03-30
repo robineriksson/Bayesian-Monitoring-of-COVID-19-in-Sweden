@@ -10,6 +10,7 @@ function [Z,covZ,ZLag,covZLag,L] = C19filt_lag(G,rates,D,obsrates,Ydata,slab,nti
 %
 %   See also C19FILT.
 
+% J. Evaeus 2022-03-24  (Sewage option added)
 % S. Engblom 2020-10-22 (Revision, slab)
 % H. Runvik, S. Engblom 2020-10-02 (H+P rather than H)
 % S. Engblom 2020-09-18 (Major revision)
@@ -105,14 +106,21 @@ T = zeros(nstate); T(4,4) = 1; % (variable phi)
 Id_lan = speye(nlan);
 Deff = kron(Deff,T);
 
+
 % loop over parameters
 for n = 1:nparams
   % create Kalman filters
-  for m = 1:nslab
-    C19 = getC19syst(rates,m,n);
-    KF = getC19filt(C19);
-    F_loc{m} = KF.F;
-    Qp{m} = KF.Qp;
+    for m = 1:nslab
+        % create new obsrates.indobspars for each sample of k_sew
+        % used to construct matrix H below
+        if isfield(rates,'k_sew')
+            obsrates.indobspars = {rates.k_sew(m,n)};
+        end
+        
+        C19 = getC19syst(rates,m,n);
+        KF = getC19filt(C19);
+        F_loc{m} = KF.F;
+        Qp{m} = KF.Qp;
 
     % "networkify" the model: this construct understands the state to be
     % ordered nstate states at a time, repeated nlan times on an
@@ -132,12 +140,23 @@ for n = 1:nparams
   % filter measurement models:
 
   % 1st phase (H+P,W,D), i.e., state (#5 + #8,#6,#7)
-  [H_loc,R0,rdiag] = getC19obs(obsrates);
+  if ~isfield(obsrates,'R0_p2') % Equivalent to no k_sew amongst
+                                % rates
+    
+    [H_loc,R0,rdiag] = getC19obs(obsrates);
+    % measurement error model
+    R0 = kron(Id_lan,R0);
+    rdiag = repmat(rdiag,nlan,1);
+  else
+    [H_loc, R0, rdiag,R0_p2, rdiag_p2] = getC19obs(obsrates);
+    % measurement error model
+    R0 = kron(Id_lan, R0);
+    rdiag = repmat(rdiag,nlan,1);
+    R0_p2= kron(Id_lan, R0_p2);
+    rdiag_p2 = repmat(rdiag,nlan,1);
+  end
+    
   H = kron(Id_lan,H_loc);
-
-  % measurement error model
-  R0 = kron(Id_lan,R0);
-  rdiag = repmat(rdiag,nlan,1);
 
   % initial state
   xx = zeros(nstate*nlan,1);
@@ -156,8 +175,6 @@ for n = 1:nparams
   % base assembly
   KF.Q0 = Q.Q0;
   KF.qdiag = Q.qdiag;
-  KF.R0 = R0;
-  KF.rdiag = rdiag;
 
   % measurements according to H1
   KF.H = H;
@@ -169,6 +186,17 @@ for n = 1:nparams
     slabix = slab(slabloop(j));
     KF.F = F{slabix};
     KF.Qp = Qp{slabix};
+    
+    if exist('obsrates.sew_change','var') & j > obsrates.sew_change ...
+          & exist('R0_p2', 'var')
+      % second period constants:
+      KF.R0 = R0_p2;
+      KF.rdiag = rdiag_p2;
+    else
+      % first period constants:
+      KF.R0 = R0;
+      KF.rdiag = rdiag;
+    end
 
     dataslab = reshape(Ydata(:,:,slabloop(j):slabloop(j+1)),size(H,1),[]);
     if computeL

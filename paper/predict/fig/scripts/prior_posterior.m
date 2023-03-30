@@ -27,13 +27,25 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp = 2;
+end
+
 % load posterior
 Nsample = 1e4;
 path = postpath;
 prefix = 'KLAM/perRegion/';
+
+if interp == 1
+    ending = '_1_100';
+elseif interp == 2
+    ending = '_1_100_update';
+else
+    error('only supporting interp 1 and 2')
+end
+
 % "super-posterior"
 date = '210531';
-ending = '_1_100';
 regionList = regions(false);
 
 includeBias=false; % true if to include the bias estimate.
@@ -88,6 +100,11 @@ try
     stop = stop(1);
     hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
     hypfile = hypfile{:};
+
+    if hypfile ==  '/home/robin/Gits/c19Kalman/inference/c19prior'
+        hypfile = 'c19prior';
+    end
+
   end
   temp = load(hypfile);
   clear temp;

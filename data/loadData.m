@@ -29,10 +29,11 @@ function Data = loadData(regName,quiet)
 %   'CSSS_swe'       Covid symptom study, Sweden estimate (Uppsala adjusted)
 %   'FHM_mutate'     Estimated % of suspected B.1.1.7 variants
 %   'FHM_R'          Estimated R per region
-%   'UWW'            Uppsala Waste water reported level for Uppsala county.
+%   'WW'             Reported levels of mRNA in wastewater reported per county.
 %   'FHM_vac'        FHM, # of vaccinated, 1st and 2nd dose, per region
-%   'OWID_swe'           Number of tests administered in Sweden total
+%   'OWID_swe'       Number of tests administered in Sweden total
 %   'FHM_test'       Number of tests per 1000 per region
+%   'FHM_prev_swe'   Estimated prevalence in Sweden given by FHM.
 %
 %    For further information, see the file source.csv.
 
@@ -127,7 +128,7 @@ switch regName
   case 'FHM_R'
     regName_ = 'FHM';
     fileName = 'FHM/FHM_R.csv';
-  case 'UWW'
+  case 'WW'
     regName_ = 'UWW';
     fileName = 'UWW/UWW.csv';
   case 'FHM_vac'
@@ -139,6 +140,9 @@ switch regName
   case 'FHM_test'
     regName_ = 'FHM';
     fileName = 'FHM/FHM_test.csv';
+  case 'FHM_prev_swe'
+    regName_ = 'FHM';
+    fileName = 'FHM/FHM_prev_swe.csv';
   case 'test1'
     fileName = 'test1.csv';
   case 'test2'

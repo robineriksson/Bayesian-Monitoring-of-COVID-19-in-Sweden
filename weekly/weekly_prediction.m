@@ -80,13 +80,12 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   % type =
   %   1: without historic lag, but prediction lag days ahead
   %   2: with historic lag
-  type = 1;
+  type = 2;
   if type == 1
     lag = 14;
   else
     lag = 7;
   end
-
   % use CSSS?
   useCSSS=false;
 
@@ -97,17 +96,24 @@ if ~exist('FINALRUN','var') || ~FINALRUN
   region = 'Uppsala';
 
   % posterior file date
-  posteriordate = '210531';
-  ending         = '1_100'; % at what date does the slabs start.
+  posteriordate = '220228';
+
+
+  if waste
+    ending = '1_waste_100';
+  else
+    ending         = '1_100'; % at what date does the slabs
+                              % start.
+  end
 
   % dates that "date" the data used
-  datadate     = [200401 210531]; % change end date here
+  datadate     = [200401 220228]; % change end date here
 
   % exclude the network (only affects 'Sweden')
   noNetwork = 1;
 
   % print verb information
-  verb = false;
+  verb = true;
 
   register = 'C19';
 else
@@ -117,6 +123,10 @@ else
   FINALRUN = false;
   % (will only run once as script to avoid misunderstandings)
 end
+
+  if ~exist('waste','var')
+    waste=false;
+  end
 
 % folder for posteriors
 abspath = mfilename('fullpath');
@@ -133,15 +143,15 @@ if isempty(test)
   if strcmp(region,'Sweden')
     test = 0;
     % construct the Sweden posteriorfile
-    if ~exist([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'file')
+    if ~exist([prefix 'slam' posteriordate '_Sweden_monthly_' ending],'file')
       regs = 1:21;
       files = cell(size(regs));
       for r = 1:numel(regs)
-        files{r} = [prefix 'perRegion/slam' posteriordate '_' regionList{regs(r)} '_monthly_' ending '.mat'];
+        files{r} = [prefix 'perRegion/slam' posteriordate '_' regionList{regs(r)} '_monthly_' ending];
       end
       Weights = Npop;
       rates = posteriorenger(100,files,Weights);
-      save([prefix 'slam' posteriordate '_Sweden_monthly_' ending '.mat'],'rates')
+      save([prefix 'slam' posteriordate '_Sweden_monthly_' ending],'rates')
     end
   else
     error(['Missing region: ' region]);
@@ -162,7 +172,7 @@ if useCSSS
   posterior = [posterior '_csss'];
 end
 
-posterior = [posterior '_' ending '.mat'];
+posterior = [posterior '_' ending];
 
 % sample rates
 rng(0);
@@ -324,7 +334,56 @@ if useCSSS
   Idata_lo = permute([NaN(ixcsss(1)-ixdata(1),numel(lan)); Ilo; ...
     NaN(ixdata(end)-ixcsss(end),numel(lan))],[3 2 1]);
   Ydata = cat(1,Ydata,Idata);
-else % don't use CSSS.
+elseif waste % Use wastewater data
+  WW = loadData('WW');
+  ixRegion = find(strcmp(region,regionList));
+  phi_sew = WW.phi(:,ixRegion);
+
+  % align phi_sew with rest of data, move to function
+  ixWW_start_index = find(Data.date == WW.date(1));
+
+  %index of last phi_sew that lies within data period
+  phi_sew_stop = find(WW.date <= datadate(2), 1, 'last');
+  if ~isempty(phi_sew_stop)
+    ixWW_end_index = find(Data.date == WW.date(phi_sew_stop));
+    ixWW_start = find(ixdata == ixWW_start_index);
+
+    if any(ixdata == ixWW_end_index)
+      ixWW_end = find(ixdata == ixWW_end_index);
+    else
+      ixWW_end = ixdata(end)
+    end
+
+    phi_sew_final = NaN(length(ixdata),1);
+    phi_sew_final(ixWW_start:7:ixWW_end) = phi_sew(1:phi_sew_stop);
+
+    % Append phi_sew data
+    phi_sew_data = permute(phi_sew_final,[3 2 1]);
+  else
+    phi_sew_data = NaN(length(ixdata),1);
+    phi_sew_data = permute(phi_sew_data,[3 2 1]);
+  end
+  Ydata = cat(1,Ydata, phi_sew_data);
+
+  % specify observation model
+  obsrates.states = {5 6 7};
+  obsrates.indobs = {4}; % sewage data for phi compartment
+  abspath = mfilename('fullpath');
+  meanrates = priorenger(inf,false,1,[abspath(1:end-24) 'inference/c19prior']);
+  obsrates.indobspars = {meanrates.k_sew};
+  obsrates.nstate = 8;
+
+  load_phi_sew_noise_constants % load sigma_1, sigma_2 into workspace
+
+  % Append sigma_1 and sigma_2, see sew_plots.m
+  obsrates.rdiag = [(1e-3)^2*ones(3,1); sigma_2_period1^2];
+  obsrates.R0 = [1*ones(3,1);sigma_1_period1^2];
+
+  %after experimental method change:
+  obsrates.rdiag_p2 = [(1e-3)^2*ones(3,1); sigma_2_period2^2];
+  obsrates.R0_p2 = [1*ones(3,1);sigma_1_period2^2];
+
+else % don't use wastewater or CSSS.
   % specify observation model
   obsrates.states = {5 6 7}; % state #5, #6, #7
   obsrates.indobs = {}; % No indirect measurements

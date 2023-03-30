@@ -33,9 +33,21 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
+
+if interp == 1
+    ending = '1_100';
+elseif interp == 2
+    ending ='1_100_update.mat';
+else
+    error('Only supporting interp 1 or 2')
+end
+
 % defaults
 posteriordate = '210531'; % change here
-ending        = '1_100'; % at what date does the slabs start.
+
 datadate     = [200401 210531]; % change end date here
 if verb
     datadate

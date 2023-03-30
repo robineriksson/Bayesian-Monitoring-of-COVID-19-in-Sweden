@@ -1,6 +1,6 @@
 function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
   region,nMCMC,verb,nslab,date,init,scaleS,register,useCSSS, ...
-  perslab,fix,ksmc,state0)
+  perslab,fix,ksmc,state0,waste)
 %KLAM_INIT initializes the Kalman Likelihood Adaptive Metropolis
 % sampler. The object is constructed with the data (YDATA) and so on. Finally,
 % the AM sampler is called and NMCMC samples are generated from the posterior.
@@ -56,6 +56,8 @@ function [thetas,sl,slab,amparam,amfunc,outverb,Ydata] = klam_init(...
 %   STATE0 - initial state to start simulations from. If left empty,
 %   start from scratch.
 %
+%   WASTE - true if add waste water data and k_sew in parameter vector
+%
 %   See also, AM.m which is called from this function to generate the
 %   posterior samples.
 
@@ -75,6 +77,7 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 2
     verb=false;
     nslab=inf;
@@ -87,6 +90,7 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 3
     nslab=inf;
     date=[200319, 201231];
@@ -98,6 +102,7 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 4
     date=[200319, 201231];
     init=[];
@@ -108,6 +113,7 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 5
     init=[];
     scaleS=1;
@@ -117,6 +123,7 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 6
     scaleS=1;
     register='C19';
@@ -125,33 +132,42 @@ switch nargin
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 7
     register='C19';
     useCSSS=false;
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 8
     useCSSS=false;
     perslab=true;
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 9
     perslab=true;
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 10
     fix=false;
     ksmc=0;
     state0 = [];
+    waste = false;
   case 11
     ksmc=0;
     state0 = [];
+    waste = false;
   case 12
     state0 = [];
+    waste = false;
   case 13
+    waste = false;
+  case 14
     ; %do nothing
   otherwise
     error('wrong number of input parameters');
@@ -171,9 +187,10 @@ obsrates.states = {5, 6, 7}; % state #5, #6, #7
 obsrates.indobs = {}; % No indirect measurements
 obsrates.indobspars = {};
 obsrates.nstate = 8;
+%Cannot simply remove these lines here, because important for
+%"H =getC19obs(obsrates);" below.
 obsrates.R0 = 1*ones(3,1);
 obsrates.rdiag = (1e-3)^2*ones(3,1);
-
 
 % transmission matrix D
 load Dcounties % D, lan
@@ -181,44 +198,69 @@ load Dcounties % D, lan
 % get list of regions
 regionslist = regions(0);
 
+
 %% Prepare data
 % load data
-if contains(register,'URDME') % synthetic data
-  filename = mfilename('fullpath');
-  Data_raw = load([filename(1:end-24) ...
-    'URDME/URDMEoutput/URDME_all']);
+if contains(register,'URDMEsew') % synthetic data for sewage analysis
+    filename = mfilename('fullpath');
+    load([filename(1:end-24) ...
+                     'sewage/urdme/data/sim_data_selected']);
 
-  Data = struct();
-  regid = strcmp(Data_raw.D.regions,region);
-  Data.regions = Data_raw.D.regions(regid);
-  Data.date = Data_raw.D.date;
-  % which data "page"
-  try
-    runid = str2double(register(end));
-  catch
-    runid = 1;
-  end
+    Data = struct();
+    %regid = strcmp(Data_raw.D.regions,region);
+    Data.regions = umod.reg; 
+    Data.date = umod.DATES;
 
-  if any(strcmp('H2',Data_raw.D.vars))
-      H_id = find(fsetop('ismember',Data_raw.D.vars,{'H' 'H2'}));
-      W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
-      D_id = find(fsetop('ismember',Data_raw.D.vars,{'D_I' 'D_H' 'D_W'}));
-  else
-      H_id = find(fsetop('ismember',Data_raw.D.vars,{'H'}));
-      W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
-      D_id = find(fsetop('ismember',Data_raw.D.vars,{'D'}));
-  end
-  Data.H = sum(Data_raw.D.U(:,H_id,regid,runid),2);
-  Data.W = sum(Data_raw.D.U(:,W_id,regid,runid),2);
-  Data.D = sum(Data_raw.D.U(:,D_id,regid,runid),2);
+    Data.H = umod.U(5,:);
+    Data.H = Data.H';
+    Data.W = umod.U(6,:);
+    Data.W = Data.W';
+    Data.D = umod.U(7,:);
+    Data.D = Data.D';
+    
+    Data.hash = fsetop('check',Data.D(:));
+    
+    Data.rev = umod.DATES(end);
+    Data.reg = register;
+    T = 1;
+    D = 1;
+    lan = {Data.regions};
+elseif contains(register,'URDME') % synthetic data
+    filename = mfilename('fullpath');
+    Data_raw = load([filename(1:end-24) ...
+                     'URDME/URDMEoutput/URDME_all']);
 
-  Data.hash = fsetop('check',Data_raw.D.U(:));
+    Data = struct();
+    regid = strcmp(Data_raw.D.regions,region);
+    Data.regions = Data_raw.D.regions(regid);
+    Data.date = Data_raw.D.date;
+    % which data "page"
+    try
+        runid = str2double(register(end));
+    catch
+        runid = 1;
+    end
 
-  Data.rev = Data_raw.D.date(end);
-  Data.reg = register;
-  T = 1;
-  D = 1;
-  lan = {Data.regions};
+    if any(strcmp('H2',Data_raw.D.vars))
+        H_id = find(fsetop('ismember',Data_raw.D.vars,{'H' 'H2'}));
+        W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
+        D_id = find(fsetop('ismember',Data_raw.D.vars,{'D_I' 'D_H' 'D_W'}));
+    else
+        H_id = find(fsetop('ismember',Data_raw.D.vars,{'H'}));
+        W_id = find(fsetop('ismember',Data_raw.D.vars,{'W'}));
+        D_id = find(fsetop('ismember',Data_raw.D.vars,{'D'}));
+    end
+    Data.H = sum(Data_raw.D.U(:,H_id,regid,runid),2);
+    Data.W = sum(Data_raw.D.U(:,W_id,regid,runid),2);
+    Data.D = sum(Data_raw.D.U(:,D_id,regid,runid),2);
+
+    Data.hash = fsetop('check',Data_raw.D.U(:));
+
+    Data.rev = Data_raw.D.date(end);
+    Data.reg = register;
+    T = 1;
+    D = 1;
+    lan = {Data.regions};
 
 else % load empirical data
   Data = loadData(register);
@@ -250,8 +292,6 @@ else % load empirical data
 
 end
 
-
-
 % keep information about the data in the posterior
 amparam.dataHash = Data.hash;
 amparam.dataRev = Data.rev;
@@ -277,7 +317,6 @@ if ~isempty(state0.file)
   amparam.origo = state0; % pointer reference for future merge.
 end
 
-
 % concatenate the data into an object which is easier to handle.
 ixdata = find(Data.date == date(1)):find(Data.date == date(2));
 Ydata = cat(3,Data.H(ixdata,:),Data.W(ixdata,:),Data.D(ixdata,:));
@@ -285,72 +324,80 @@ Ydata = permute(Ydata,[3 2 1]);
 
 amparam.date = Data.date(ixdata); % save dates
 
-% Note, CSSS data is not included in the release as it was not used in
-% the the paper to achieve any of the presented result.
-if useCSSS
-  % define a common time frame, including dates
-  TSPAN = Data.date;
-  DATES = datenum(2e3+floor(Data.date(1)/1e4), ...
-    mod(floor(Data.date(1)/1e2),1e2) ,...
-    mod(Data.date(1),1e2));
-  DATES = DATES:DATES+numel(TSPAN)-1;
-  DATES = datevec(DATES);
-  DATES = DATES(:,1:3)*[1e4 1e2 1]'-2e7; % finally!
+% *** CORRECT ME ***
+if waste
+  %% APPEND PHI_SEW DATA
+  if contains(register,'URDMEsew') % synthetic case
+    load([filename(1:end-24) ...
+          'sewage/urdme/data/simulated_sew_' register]);
+    phi_sew = WW_sim.phi_sew;
+    sigma_1_period1 = WW_sim.sigma_1_period1;
+    sigma_2_period1 = WW_sim.sigma_2_period1;
+    sigma_1_period2 = WW_sim.sigma_1_period2;
+    sigma_2_period2 = WW_sim.sigma_2_period2;
+    
+    phi_sew_data = phi_sew(ixdata);
+    phi_sew_data = permute(phi_sew_data',[3 2 1]);
+  else % real wastewater data:
+    WW = loadData('WW');
+    %ixRegion = find(strcmp(region,regionList));
+    phi_sew = WW.phi(:,ixRegion);
 
+    % align phi_sew with rest of data, move to function
+    ixWW_start_index = find(Data.date == WW.date(1));
 
-  % CSSS-data
-  csss = loadData('CSSS');
-  Ihi = csss.Ihi(:,ixRegion);
-  Ilo = csss.Ilo(:,ixRegion);
-  Imid = csss.Imid(:,ixRegion);
+    %index of last phi_sew that lies within data period
+    phi_sew_stop = find(WW.date <= date(2), 1, 'last');
+    if ~isempty(phi_sew_stop)
+      ixWW_end_index = find(Data.date == WW.date(phi_sew_stop));
+      ixWW_start = find(ixdata == ixWW_start_index);
 
-  Ihi(csss.date > 201231) = []; % data post 31 Dec 2020, is "bad".
-  Imid(csss.date > 201231) = [];
-  Ilo(csss.date > 201231) = [];
-  csss.date(csss.date > 201231) = [];
+      if any(ixdata == ixWW_end_index)
+        ixWW_end = find(ixdata == ixWW_end_index);
+      else
+        ixWW_end = ixdata(end)
+      end
 
-  ixcsss = find(DATES == csss.date(1)):find(DATES == csss.date(end));
+      phi_sew_final = NaN(length(ixdata),1);
+      phi_sew_final(ixWW_start:7:ixWW_end) = phi_sew(1:phi_sew_stop);
 
-  % settle on a relative variance from given asymmetric 95% CI
-  % Assume a larger error than what they present.
-  varI = mean(((Ihi-Ilo)/2./Imid))^2;
-
-  % insert CSSS data
-  Idata = permute([NaN(ixcsss(1)-ixdata(1),1); Imid; NaN(ixdata(end)-ixcsss(end),1)],[3 2 1]);
-  Ydata = cat(1,Ydata,Idata);
-  %
-  amparam.dataHash = [amparam.dataHash csss.hash];
-  amparam.dataRev  = [amparam.dataRev ' | ' csss.rev];
-  amparam.dataReg  = [amparam.dataReg ' | ' csss.reg];
-
-
-  % demographics
-  load Ncounties
-  Npop = sum(N,1);
-
-  % correction factor in xmod = fac*x
-  load Fcases_interp
-  fac = sum(Eave(3:end))/sum(Iave(3:end));
+      % Append phi_sew data
+      phi_sew_data = permute(phi_sew_final,[3 2 1]);
+     
+    end
+    load_phi_sew_noise_constants % load sigma_1, sigma_2 into
+                                 % workspace
+  end
+  Ydata = cat(1,Ydata, phi_sew_data);
 
   % specify observation model
-  obsrates.indobs = {1}; % CSSS data for the I-compartment
-  obsrates.indobspars = {100/(Npop(ixRegion)*fac)};
-  obsrates.R0 = [ones(3,1); 1e-4];
-  obsrates.rdiag = [(1e-3)^2*ones(3,1); varI];
+  obsrates.indobs = {4}; % sewage data for phi compartment
+  abspath = mfilename('fullpath');
+  meanrates = priorenger(inf,false,1,[abspath(1:end-14) 'c19prior']);
+  obsrates.indobspars = {meanrates.k_sew};
+
+  % Append sigma_1 and sigma_2, see sew_plots.m
+  obsrates.rdiag = [(1e-3)^2*ones(3,1); sigma_2_period1^2];
+  obsrates.R0 = [1*ones(3,1);sigma_1_period1^2];
+  
+  %after experimental method change:
+  obsrates.rdiag_p2 = [(1e-3)^2*ones(3,1); sigma_2_period2^2];
+  obsrates.R0_p2 = [1*ones(3,1);sigma_1_period2^2];
 end
+%% * END OF PHI_SEW SOLUTION
+% specify output model
+H = getC19obs(obsrates); % i.e., "H", "W", "D", "phi"
 
-
-
-%% specify output model
-H = getC19obs(obsrates); % i.e., "H", "W", "D", ["I (in percent)" if csss]
 % read as: "Stockholm", "Uppsala", "Sweden total"
 G = kron(T,H);
 
 % uncertainty parameters
 Q.Q0 = speye(numel(lan)*obsrates.nstate);
+if waste
+    rr = priorenger(inf,true,1);
+    Q.Q0(4,4) = 0.5e-2*nanmean(phi_sew/rr.k_sew);  % change(sew)
+end
 Q.qdiag = 0.05^2;
-
-
 
 %% Slabs
 % define the slabs
@@ -396,6 +443,13 @@ end
 amparam.nslab = numel(slabstop)-1;
 amparam.slabstop = slabstop;
 
+% Point at which experimental sewage method changes is 210801. Record which
+% slabs belong to period before this change. 
+if date(2) > 210801  
+  TTT = find(Data.date(ixdata(slabstop))<210801);
+  sew_change = TTT(end);
+  obsrates.sew_change = sew_change;
+end
 
 %% Initial guess and ratenames
 %
@@ -426,7 +480,11 @@ if ~amparam.fix
   amparam.fixed = [amparam.fixed 'gammaI'];% 'gammaA'];
 end
 %  While the dynamic ones are changing values over slabs.
-amparam.dynamic = {'R0' 'IFR'};
+amparam.dynamic = {'R0' 'IFR'}; % change (sew)
+if waste
+    amparam.dynamic = [amparam.dynamic 'k_sew'];
+end
+
 if numel(D) > 1
   amparam.dynamic = [amparam.dynamic 'lambda'];
 end
@@ -441,7 +499,6 @@ amparam.ratenames = [amparam.fixed amparam.dynamic];
 amparam.hypfile = [savepath(1:end-24) 'inference/c19prior'];
 [~,~,amparam.hyp] = priorenger(inf,amparam.fix,amparam.nslab,...
   amparam.hypfile);
-
 
 % initial guess
 if ksmc % use SMC
@@ -530,7 +587,22 @@ else % use AM
         rates = structMerge(rates,rates_, ...
           {1:size(rates.R0,1),1}, {keepnum+1:amparam.nslab,1});
       end
-
+      
+      % Now ensure k_sew held constant across 3 slabs:
+      rep_slabs = int16(3); % keep k_sew constant over 3 slabs
+      n_values = idivide(amparam.nslab,rep_slabs); % number of unique values of k_sew needed
+      
+      % replicate:
+      for j = 1:n_values
+        if j < n_values % replicate across rep_slabs slabs 
+          rates.k_sew((j-1)*rep_slabs+2:(j-1)*rep_slabs+rep_slabs) ...
+              = rates.k_sew((j-1)*rep_slabs+1);
+          
+        else % keep k_sew constant until end
+          rates.k_sew((j-1)*rep_slabs+2:end) = rates.k_sew((j-1)* ...
+                                                            rep_slabs+1);
+        end
+      end
 
     elseif size(rates.R0,1) > amparam.nslab % reduce
       error(['You`ve submitted a initialization file which' ...
@@ -540,10 +612,19 @@ else % use AM
 
     rates.meta = init.meta;
   else % no prior initialization
-    rates = priorenger(inf, amparam.fix, amparam.nslab,amparam.hypfile);
+      rates = priorenger(inf, amparam.fix, amparam.nslab,amparam.hypfile);
+      if waste 
+        % Why was this here? 
+        %rates.k_sew = 1e-6*ones(size(rates.k_sew));
+      else
+          rates.k_sew = NaN(size(rates.k_sew));
+      end
   end
 end
 
+
+% *** is this really the best way to add waste check?
+rates.meta.sew = waste;
 
 % The inference using AM is done in matrix form, and not struct for
 % that C19filt is using. Therefore,
@@ -588,9 +669,6 @@ exception0.LB = -inf;
 exception0.UB = inf;
 exception0.SDFAC = inf;
 exception0.AbsMagn = inf;
-
-
-
 
 if perslab
   logKL_func = @(x,state0,ixslab) logKL(x,state0,G,D,obsrates,Q,Ydata,...

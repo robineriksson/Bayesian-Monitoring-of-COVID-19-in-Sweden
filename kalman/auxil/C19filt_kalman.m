@@ -157,6 +157,7 @@ for m = 1:ntime
 
   % exceptional: check for NaN in measurement
   yNum = y(:,m);
+
   Hmod = H;
   if any(isnan(yNum))
     ixn = find(~isnan(yNum));

@@ -34,9 +34,22 @@ nslab = numel(slabloop)-1;
 for m = 1:nslab
   Fslab = F{m+slab(1)-1};
   for n=slabloop(m):slabloop(m+1)-1
+    
+    % exceptional: check for NaN in measurement
+    yNum = y(:,n);
+
+    Hmod = H;
+    if any(isnan(yNum))
+      ixn = find(~isnan(yNum));
+      Z = sparse(ixn,ixn,1,numel(yNum),numel(yNum));
+      % remove them:
+      yNum = Z*yNum;
+      Hmod = Z*H;
+    end
+    
     Fslab(betaIdx)=beta(n);
     x=Fslab*x;
-    yy = y(:,n)-H*x;
+    yy = yNum - Hmod*x;%y(:,n)-H*x;
     L = L -0.5*(yy'*(S(:,:,n)\yy));%+size(y,1)*log(2*pi)+log(det(S(:,:,n))));
   end
 end

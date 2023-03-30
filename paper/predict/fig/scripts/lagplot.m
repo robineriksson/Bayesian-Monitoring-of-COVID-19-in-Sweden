@@ -7,6 +7,25 @@
 %
 % and the regions of interests are{'Uppsala' 'Stockholm' 'Sweden'}
 
+type = 2;
+if ~exist('generateData','var')
+    generateData = 0; % 1 if you need to generate the dataset
+end
+if ~exist('waste', 'var')
+  waste=false;
+end
+
+if generateData
+    laggen;
+end
+
+smoothD = 1; % 1 if SG filter of Dinc
+
+% this controls the update of .tex- and .pdf-files (so not
+% .mat-files):
+if ~exist('savetofile','var')
+    savetofile = 0;
+end
 
 if ~exist('generateData','var')
     generateData = 0; % 1 if you need to generate the dataset
@@ -23,14 +42,28 @@ if ~exist('savetofile','var')
     savetofile = 0;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
+
 % ****************************************************
 % *** Change values here for different loaded posterior predictions
 % ****************************************************
 
 
 % posterior data
-posteriordate = '210531';
-ending        = '1_100'; % at what date does the slabs start.
+posteriordate = '220228';%'210531';
+if waste
+  ending = '1_waste_100';
+else
+    if interp == 1
+        ending = '1_100';
+    elseif interp == 2
+        ending = '1_100_update.mat';
+    else
+        error('Only supporting interp 1 or 2')
+    end
+end
 
 
 
@@ -111,7 +144,8 @@ for rid = reg
     % scaling for plots
     Ydata_swe_plot = Ydata_swe;
     smoothing = @(x) sgolayfilt(x,0,7);
-    Ydata_swe_plot(Dcomp,:) = Data.Dinc(tspan_data,find(strcmp(regions,region)));
+    Ydata_swe_plot(Dcomp,:) = Data.Dinc(tspan_data, ...
+                                        find(strcmp(regions,region))); %diff
     if smoothD
         Ydata_swe_plot(Dcomp,:) = smoothing(Ydata_swe_plot(Dcomp,:));
     end
@@ -229,7 +263,7 @@ for rid = reg
         plotfun(tspan_data,Ydata_swe_plot(3,:),'.','Color',color(3,:),'HandleVisibility','off')
         if size(Ydata_swe_plot,1) == 4
             yyaxis left
-            plotfun(tspan_data,Ydata_swe_plot(4,:),'.','Color',color(4,:),'HandleVisibility','off')
+            plotfun(tspan_data,Ydata_swe_plot(4,:),'pentagram','Color',color(4,:),'HandleVisibility','off')
         end
     end
 

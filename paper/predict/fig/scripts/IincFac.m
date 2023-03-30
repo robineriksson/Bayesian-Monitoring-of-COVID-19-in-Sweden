@@ -18,7 +18,7 @@
 
 % posterior data
 posteriordate = '210531';
-ending        = '1_100'; % at what date does the slabs start.
+
 
 % this controls the update of .tex- and .pdf-files (so not
 % .mat-files):
@@ -41,7 +41,17 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
 
+if interp == 1
+    ending  = '1_100'; % at what date does the slabs start.
+elseif interp == 2
+    ending  = '1_100_update'; % at what date does the slabs start.
+else
+    error('Only supporting interp 1 or 2');
+end
 % ****************************************************
 
 

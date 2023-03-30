@@ -1,4 +1,4 @@
-function [H,R0,rdiag] = getC19obs(obsrates)
+function [H,R0,rdiag,R0_p2, rdiag_p2] = getC19obs(obsrates)
 %GETC19OBS Observation model for Covid-19 model.
 %   [H,R0,rdiag] = GETC19OBS(obsrates) produces an observation matrix
 %   H and a matrix R0 and a vector rdiag based on the struct obsrates,
@@ -25,6 +25,12 @@ function [H,R0,rdiag] = getC19obs(obsrates)
 %   -R0: Array of additive measurement noise
 %
 %   -rdiag: Array of multiplicative measurement noise
+%
+%   -R0_p2: Array of additive measurement noise for after change to
+%   experimental sewage method
+%
+%   -rdiag_p2: Array of multiplicative measurement noise after
+%   change to experimental sewage method
 %   
 %   The output H is a sparse matrix with obsrate.nstate columns where
 %   every row represents one measurement. The measurements defined by
@@ -34,6 +40,7 @@ function [H,R0,rdiag] = getC19obs(obsrates)
 %   with diagonal elements defined by obsrates.R0, while rdiag is
 %   given directly by obsrates.rdiag.
 
+% J. Evaeus 2022-10-24 - Allow for change in sewage method
 % H. Runvik 2020-10-14
 
 % direct measurements (weight = 1)
@@ -55,3 +62,11 @@ H = sparse(ii,jj,ss,max(ii),obsrates.nstate);
 % covariance model assuming only diagonal elements
 R0 = spdiags(obsrates.R0,0,max(ii),max(ii));
 rdiag = obsrates.rdiag;
+
+if isfield(obsrates, 'R0_p2')
+  R0_p2 = spdiags(obsrates.R0_p2,0,max(ii),max(ii));
+  rdiag_p2 = obsrates.rdiag_p2;
+else
+  R0_p2 = NaN;
+  rdiag_p2 = NaN;
+end

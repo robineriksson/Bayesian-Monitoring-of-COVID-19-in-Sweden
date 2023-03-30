@@ -63,6 +63,49 @@ IFRmean = l_scaledbetastats(IFRHyp,IFRPQ);
 % (IFR is not used directly but later determines the rate I_MORT: I
 % --> D after taking {H,W} --> D into account)
 
+% k (scale factor between phi_sew and phi s.t. phi_sew = k_sew*phi
+
+%load k_sew into workspace, see sew_plots
+abspath = mfilename('fullpath');
+load([abspath(1:end-13) 'sewage/k_sew_timeseries'])
+
+% Set the desired mean and variance for beta prior
+mu_k_sew = 2.5*MK_mean;
+sigma2_k_sew = (4*MK_std)^2;
+
+%% This would take the mean and 2*variance from a uniform
+% distribution between the min and max of k_sew. However, does not
+% result in a "bubbly" beta distribution
+%a = 0;
+%b = 0.015;
+%mu_k_sew = (a+b)/2;
+%sigma2_k_sew = 2*(a-b)^2/12;
+
+% Set limits of beta prior
+k_sew_PQ = [0 0.015];
+
+% Calculate hyperparameters for beta prior that give the desired
+% mean and variance specified above:
+lambda_k_sew = (mu_k_sew - k_sew_PQ(1))*(k_sew_PQ(2)-mu_k_sew)/sigma2_k_sew-1;
+
+alpha_k_sew = lambda_k_sew*(mu_k_sew - k_sew_PQ(1))/(k_sew_PQ(2) - k_sew_PQ(1));
+beta_k_sew = lambda_k_sew*(k_sew_PQ(2)-mu_k_sew)/(k_sew_PQ(2)-k_sew_PQ(1)); 
+
+k_sew_Hyp = [alpha_k_sew beta_k_sew];
+
+if illustrate
+  figure(12), clf
+  XXX = 0:0.00001:0.015;
+  YYY = l_scaledbetapdf(XXX, k_sew_Hyp, k_sew_PQ);
+  plot(XXX, YYY, 'Color','red')
+  hold on
+  histogram(k_sew,20, 'Normalization', 'pdf', 'FaceColor','b')
+  legend('proposed beta-fit', '"data"')
+  title('$k_{sewage}$','interpreter','latex');
+end
+% (Should be same as mu_k_sew above)
+k_sew_mean = l_scaledbetastats(k_sew_Hyp, k_sew_PQ);
+
 % SIR_MORT: mortality under IC (W --> D)
 SIR = loadData('SIR_swe_mort'); % (source: [4])
 SIR_MORT = mean(SIR.SIR_MORT);
@@ -222,6 +265,10 @@ c19prior.E2Imean = E2Imean;
 c19prior.IFRPQ = IFRPQ;
 c19prior.IFRHyp = IFRHyp;
 c19prior.IFRmean = IFRmean;
+
+c19prior.k_sew_PQ = k_sew_PQ;
+c19prior.k_sew_Hyp = k_sew_Hyp;
+c19prior.k_sew_mean = k_sew_mean;
 
 % sole two point estimates:
 c19prior.SIR_MORT = SIR_MORT;

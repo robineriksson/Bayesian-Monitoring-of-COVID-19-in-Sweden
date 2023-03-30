@@ -35,7 +35,6 @@ end
 smoothD = true;
 plotfun = @plot;
 
-
 regionList = regions(false);
 region = regionList{reg};
 

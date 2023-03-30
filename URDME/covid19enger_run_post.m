@@ -50,7 +50,7 @@ resultdir = postpath();
 posterior = cell(1,Nvoxels);
 %u0 = []; phi0 = zeros(1,Nvoxels);
 for i = 1:Nvoxels
-  postfile = ['slam' date '_' regionList{reg(i)} '_monthly_1_100.mat'];
+  postfile = ['slam' num2str(date) '_' regionList{reg(i)} '_monthly_1_100.mat'];
   posterior{i} = strcat([resultdir 'KLAM/perRegion/'],postfile);
 end
 
@@ -67,7 +67,7 @@ end
 
 % define a common time frame, including dates
 DATES = P.meta.date;
-DATES = DATES(DATES <= str2double(stopdate));
+DATES = DATES(DATES <= stopdate);
 TSPAN = 1:numel(DATES);
 Usamples = zeros(Nspecies*Nvoxels,numel(DATES),Nreplicas,Psamples_);
 for p = 1:Psamples_

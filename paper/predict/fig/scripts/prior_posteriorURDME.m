@@ -22,27 +22,38 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp = 2;
+end
+
 % load posterior
 Nsample = 1e4;
 path = postpath;
 prefix = 'KLAM/perRegion/';
+
+ending_base = '_1';
+if interp == 1
+    ending = '_100';
+elseif interp == 2
+    ending ='_100_update';
+else
+    error('only supporting interp 1 and 2')
+end
+
 % "super-posterior"
 date = '210531';
-ending = '_1';
-ending_ = '_100';
-ending = [ending ending_];
 regionList = regions(false);
 
 
 regname = regionList(reg);
-files = strcat('slam',date,'_',regname,'_monthly', ending, '.mat');
+files = strcat('slam',date,'_',regname,'_monthly', ending_base, ending, '.mat');
 
 % pull all bootstrapped samples
 files_urdme = cell(0,1);
-for k = 1:3
+for k = [1:3]
 
-    ending_urdme = ['_1_URDME',num2str(k) ending_];
-    if strcmp(ending_,''), prefix_urdme = 'URDME/'; else, prefix_urdme = ''; end
+    ending_urdme = ['_1_URDME',num2str(k) ending];
+    if strcmp(ending,''), prefix_urdme = 'URDME/'; else, prefix_urdme = ''; end
     files_urdme = cat(1,files_urdme,strcat(prefix_urdme,'slam',date,'_',regname,'_monthly', ending_urdme, '.mat'));
 end
 
@@ -73,7 +84,13 @@ try
         stop = stop(1);
         hypfile = extractBetween(ratesPosterior.meta.hypfile,1,stop);
         hypfile = hypfile{:};
+
     end
+
+     if hypfile ==  '/home/robin/Gits/c19Kalman/inference/c19prior'
+            hypfile = 'c19prior';
+     end
+
     temp = load(hypfile);
     clear temp;
 catch
@@ -237,7 +254,7 @@ figname = [abspath(1:end-29) '/posterior_urdmesweden.pdf'];
 if savetofile
     % figure(1),
     set(gcf,'PaperPositionMode','auto');
-    set(gcf,'Position',[100 100 700 400]);
+    set(gcf,'Position',[100 100 550 400]);
     print('-dpdf', figname)
     if verb
         disp(['saved figure: ' figname])

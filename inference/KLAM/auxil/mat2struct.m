@@ -53,6 +53,12 @@ catch
    betarnd(hyp.lambdaHyp(1),hyp.lambdaHyp(2),nslab,Nreplicas);
 end
 
+try % check if lambda is included or not in the matrix.
+ rates.k_sew;
+catch
+    rates.k_sew = NaN(nslab,Nreplicas); %*** maybe switch to NaN
+end
+
 % add shedding
 rates.thetaI_ = ones(1, Nreplicas);
 rates.thetaI = rates.thetaI_.*rates.rho;
@@ -84,9 +90,6 @@ rates.F2ave = repmat(rates.HOSP,nslab,1);
 
 
 % deduced contraction rate beta
-rates.beta = rates.R0.^2./...
- (rates.thetaE_./rates.sigma+ ...
- (1-rates.F0ave).*rates.thetaA_./rates.gammaA+ ...
- (rates.F0ave + (1-rates.F0ave).*rates.F1ave)./rates.gammaI);
+rates.beta = getC19beta(rates,rates.R0,hyp.interp);
 
 end

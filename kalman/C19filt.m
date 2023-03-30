@@ -180,15 +180,23 @@ if isempty(exception)
   exception.SDFAC = 0.25;%0.5;
   exception.AbsMagn = 1e4;%1e6;
 end
+
+
 % loop over parameters
 for n = 1:nparams
-  % create all Kalman filters
-  for m = 1:nslab
-    C19 = getC19syst(rates,m,n);
-    KF = getC19filt(C19);
-    F_loc{m} = KF.F;
-    Qp{m} = KF.Qp;
-    Qv{m} = KF.Qv;
+    % create all Kalman filters
+    for m = 1:nslab
+        % create new obsrates.indobspars for each sample of k_sew
+        % used to construct matrix H below
+        if isfield(rates, 'k_sew')
+            obsrates.indobspars = {rates.k_sew(m,n)};
+        end
+
+        C19 = getC19syst(rates,m,n);
+        KF = getC19filt(C19);
+        F_loc{m} = KF.F;
+        Qp{m} = KF.Qp;
+        Qv{m} = KF.Qv;
 
     % "networkify" the model: this construct understands the state to be
     % ordered nstate states at a time, repeated nlan times on an
@@ -208,12 +216,21 @@ for n = 1:nparams
   % filter measurement models:
 
   % 1st phase (H,W,D), i.e., state (#5,#6,#7)
-  [H_loc,R0,rdiag] = getC19obs(obsrates);
-  H = kron(Id_lan,H_loc);
+  if ~isfield(obsrates, 'R0_p2') % Equivalent to no k_sew amongst rates
+    [H_loc,R0,rdiag,~,~] = getC19obs(obsrates);
+    % measurement error model
+    R0 = kron(Id_lan,R0);
+    rdiag = repmat(rdiag,nlan,1);
+  else
+    [H_loc, R0, rdiag, R0_p2, rdiag_p2] = getC19obs(obsrates);
+    % measurement error model
+    R0 = kron(Id_lan,R0);
+    rdiag = repmat(rdiag,nlan,1);
+    R0_p2 = kron(Id_lan, R0_p2);
+    rdiag_p2 = repmat(rdiag,nlan,1);
+  end
 
-  % measurement error model
-  R0 = kron(Id_lan,R0);
-  rdiag = repmat(rdiag,nlan,1);
+  H = kron(Id_lan,H_loc);
 
   % initial state
   xx = zeros(nstate*nlan,1);
@@ -236,8 +253,6 @@ for n = 1:nparams
   % assembly of constant part of Kalman filter
   KF.Q0 = Q.Q0;
   KF.qdiag = Q.qdiag;
-  KF.R0 = R0;
-  KF.rdiag = rdiag;
 
   % exception handling
   KF.exception = exception;
@@ -247,11 +262,22 @@ for n = 1:nparams
   x = zeros(nstate*nlan,size(Ydata,3));
   x_prior = zeros(nstate*nlan,size(Ydata,3));
   P = zeros(nstate*nlan,nstate*nlan,size(Ydata,3));
+
   for j = 1:nloop
     slabix = slab(slabloop(j));
     KF.F = F{slabix};
     KF.Qp = Qp{slabix};
     KF.Qv = Qv{slabix};
+      
+    if exist('obsrates.sew_change', 'var') & j > obsrates.sew_change & exist('R0_p2','var')
+      % second period constants:
+      KF.R0 = R0_p2; 
+      KF.rdiag = rdiag_p2;
+    else
+      % first period constants:
+      KF.R0 = R0;
+      KF.rdiag = rdiag;
+    end
 
     dataslab = reshape(Ydata(:,:,slabloop(j):slabloop(j+1)),size(H,1),[]);
     if isempty(beta)

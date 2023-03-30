@@ -45,7 +45,7 @@ function posterior = posteriorenger(Nreplicas,file,weights,perFile)
 
 % S. Engblom 2021-04-23 (Revision, new output)
 % R. Eriksson 2020-10-12 (New assumption on saving format)
-% R. Eriksson 2020-09-30 
+% R. Eriksson 2020-09-30
 
 if nargin < 4
   perFile = false;
@@ -67,7 +67,7 @@ if nargin > 2 % == 3
     % are not weighted correctly)
     return;
   end
-    
+
   % weights per file
   npost = numel(weights);
   weights = [0 cumsum(weights)];
@@ -88,14 +88,14 @@ if nargin > 2 % == 3
     else
       exclude = {'meta'};
     end
-    
+
     for j = 1:numel(fnames)
       if ~any(strcmp(fnames{j},exclude))
         posterior.(fnames{j}) = posterior.(fnames{j})*diff(weights(:));
       end
     end
     if perFile % region based R0 with weighted mean of the other rates.
-      posterior.beta = getC19beta(posterior,posterior.R0);
+      posterior.beta = getC19beta(posterior,posterior.R0,posterior.meta.interp);
     end
     return;
   end
@@ -136,9 +136,9 @@ posterior = struct();
 
 if isempty(Nreplicas)
   % 'all'-syntax
-  for i = fsample
-    posterior.(fnames{i}) = rates.(fnames{i});
-  end
+    for i = fsample
+        posterior.(fnames{i}) = rates.(fnames{i});
+    end
 elseif Nreplicas < inf
   % sampling Nreplicas *with* replacement
 %  idout = randsample(1:size(rates.(fnames{fsample(1)}),2),Nreplicas,'true');
@@ -146,7 +146,7 @@ elseif Nreplicas < inf
   idout = randi(size(rates.(fnames{fsample(1)}),2),1,Nreplicas);
 
   for i = fsample
-    posterior.(fnames{i}) = rates.(fnames{i})(:,idout);
+      posterior.(fnames{i}) = rates.(fnames{i})(:,idout);
   end
 else
   % the average of the posterior
@@ -162,10 +162,10 @@ posterior.meta = rates.meta;
 if isfield('origo',rates.meta)
   origofile = rates.meta.origo;
   origo = posteriorenger([],[origofile '_100']);
-  
+
   % merge rates
   fnames = fieldnames(origo);
-  
+
   % when mixing, we need to know how many of each rate file to use.
   w0 = numel(origo.meta.date); % weight origo
   w = numel(posterior.meta.date); % weight posterior
@@ -190,7 +190,7 @@ if isfield('origo',rates.meta)
       end
     end
   end
-  
+
   % merge meta
   % .date
   posterior.meta.date = [origo.meta.date; posterior.meta.date];
@@ -204,7 +204,7 @@ if isfield('origo',rates.meta)
   % .hash
   posterior.meta.hash = fsetop('check',...
                                [origo.meta.hash; posterior.meta.hash]);
-  
+
 end
 
 %-----------------------------------------------------------------------

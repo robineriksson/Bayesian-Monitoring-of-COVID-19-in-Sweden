@@ -1,6 +1,7 @@
 function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, ...
                                                     burnin,jump, perRegion, useCSSS,tosave,...
-                                                    fix,slabtype,smc,id,type,fromNordic,verb)
+                                                    fix,slabtype,smc,id,type,fromNordic,verb,...
+                                                    waste)
 %RATES = SAVEPOSTERIOR saves the posterior in the correct format.
 %   SAVEPOSTERIOR formulates the posterior file that is generated using
 %   KLAM and then loaded by other functions, e.g., posteriorenger.m
@@ -45,6 +46,8 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
 %
 %   VERB if to give printed responses
 %
+%   WASTE if waste data was included in posterior
+%
 %   *Output*
 %   RATES    - the struct that is stored in the display message.
 %   RATES100 - 100 long version of (thinned) rates.
@@ -63,6 +66,7 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
         id=[];
         type={'full'};
         verb=0;
+        waste=false;
     end
 
     if verb
@@ -87,6 +91,11 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
 
     % .prorRev
     meta.priorRev = amparam.priorRev;
+
+    % .interp
+    try
+        meta.interp = amparam.hyp.interp;
+    end
 
     % .revision
     currentDate = datetime("today");
@@ -188,6 +197,11 @@ function [rates, rates100, ratesR0] = savePosterior(thetas, sl, slabs, amparam, 
         filename = [filename '_22'];
       otherwise
         error('not defined slabtype');
+    end
+
+
+    if waste
+        filename = [filename '_waste'];
     end
 
     if ~isempty(id)

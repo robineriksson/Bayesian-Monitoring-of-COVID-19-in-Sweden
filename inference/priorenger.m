@@ -1,4 +1,5 @@
 function [rates,names,c19prior] = priorenger(X,fix,nslab,hypfile)
+%
 %PRIORENGER Prior parameter distribution/density for the EngEr Covid-19 model.
 %
 %   Case 1: prior sample (X is an integer or inf).
@@ -123,11 +124,14 @@ end
 if isempty(hypfile) % use standard
   c19prior = l_gethyp();
 else % use other design
-  hyp0 = l_gethyp(); % used to fill empty 
   load(hypfile); % load c19prior
-  name0 = fieldnames(hyp0);
   nameC19 = fieldnames(c19prior);
-  
+  if isfield(c19prior,'interp')
+      hyp0 = l_gethyp(c19prior.interp); % used to fill empty
+  else
+      hyp0 = l_gethyp(); % used to fill empty
+  end
+  name0 = fieldnames(hyp0);
   exclude = {'IC_HOSP'};
   missing = name0(~fsetop('ismember',name0,nameC19));
   missing = missing(~fsetop('ismember',missing,exclude));
@@ -292,6 +296,46 @@ else % sample
   end
 end
 
+%% k change (sew)
+
+if isstruct(X) % probability
+    if any(X.k_sew < 0)
+        1;
+    end
+    rates.k_sew = l_scaledbetapdf(X.k_sew,c19prior.k_sew_Hyp(1),c19prior.k_sew_Hyp(2),...
+                                  c19prior.k_sew_PQ(1),c19prior.k_sew_PQ(2));
+
+else % sample
+  if X < inf % sample
+    rates.k_sew = c19prior.k_sew_PQ(1)+diff(c19prior.k_sew_PQ)*...
+      betarnd(c19prior.k_sew_Hyp(1),c19prior.k_sew_Hyp(2),nslab,Nreplicas);
+  %replicate over krep slabs:
+  krep = 3; % number of slabs to replicate over
+
+  size_k_sew = length(rates.k_sew(:,1));
+  for i = 1:size_k_sew-1
+     if mod(size_k_sew-(i-1),krep) == 1
+         rates.k_sew(end-i,:) = rates.k_sew(end-(i-1),:);
+     elseif mod(size_k_sew-(i-1), krep) == 2
+         rates.k_sew(end-i,:) = rates.k_sew(end-(i-1),:);
+     end
+  end
+
+  %avoid having single value at beginning:
+  if numel(rates.k_sew(:,1)) > 1
+      if rates.k_sew(1,:) ~= rates.k_sew(2,:)
+          rates.k_sew(1,:) = rates.k_sew(2,:);
+      end
+  end
+
+
+  else % mean
+      rates.k_sew = c19prior.k_sew_PQ(1)+(c19prior.k_sew_PQ(2)-c19prior.k_sew_PQ(1))*c19prior.k_sew_Hyp(1)/...
+      sum(c19prior.k_sew_Hyp);
+      rates.k_sew = repmat(rates.k_sew,nslab,1);
+  end
+end
+
 %% E2I | proportion of individuals from E -> I, where 1-F0: E -> A.
 if isstruct(X) % probability
   rates.E2I = l_scaledbetapdf(X.E2I,c19prior.E2IHyp(1),c19prior.E2IHyp(2),...
@@ -372,18 +416,20 @@ rates.F2dave = max(rates.IFR./rates.E2I-...
 rates.F2ave = repmat(rates.HOSP,nslab,1);
 
 % beta | deduced contraction rate beta
-rates.beta = rates.R0.^2./...
-  (rates.thetaE_./rates.sigma+ ...
-  (1-rates.F0ave).*rates.thetaA_./rates.gammaA+ ...
-  (rates.F0ave + (1-rates.F0ave).*rates.F1ave)./rates.gammaI);
+rates.beta = getC19beta(rates, rates.R0, c19prior.interp);
 
 names = fieldnames(rates);
 if isstruct(X) % probability of rates
   % compute the sum of the log densities.
-  rates.sumlog_dynamic = zeros(nslab,Nreplicas);
-  dynamic = {'lambda' 'R0' 'IFR'};
+    rates.sumlog_dynamic = zeros(nslab,Nreplicas);
+
+  dynamic = {'lambda' 'R0' 'IFR' 'k_sew'}; % Change (sew)
   exclude = {'lambda' 'beta' 'F0ave' 'F1ave' 'F2ave' 'F2dave' 'F3ave' ...
-    'F3dave' 'F4ave' 'beta'};
+             'F3dave' 'F4ave' 'beta'};
+  % if use sewage scaling, don't exclude k_sew
+  if any(isnan(rates.k_sew))
+      exclude = [exclude 'k_sew'];
+  end
   for j = 1:nslab
     for i = 1:numel(dynamic)
       if ~any(strcmp(dynamic{i},exclude))
@@ -392,7 +438,7 @@ if isstruct(X) % probability of rates
       end
     end
   end
-  
+
   rates.sumlog = 0;
   for i = 1:numel(names)
     if ~any(strcmp(names{i},[exclude dynamic]))
@@ -410,6 +456,7 @@ catch
   1;
 end
 rates.meta.rev = c19prior.rev;
+rates.meta.interp = c19prior.interp;
 % ----------------------------------------------------------------------
 function dens = l_scaledbetapdf(x, A, B, p, q)
 % DENS = L_SCALEDBETAPDF density of the scaled beta distribution.
@@ -466,8 +513,9 @@ inside = (xl <= x) & (x <= xr);
 dens(inside) = 1/(xr-xl);
 
 % ----------------------------------------------------------------------
-function hyp0 = l_gethyp()
-%HYP0 = L_GETHYP return the standard hyperparameters in a struct form.
+function hyp0 = l_gethyp(interp)
+%HYP0 = L_GETHYP(INTERP) return the standard hyperparameters in a struct form.
+% if INTERP is empty, not given, we assume INTERP=2
 
 %% sigma
 % https://www-acpjournals-org.ezproxy.its.uu.se/doi/pdf/10.7326%2FM20-0504
@@ -518,14 +566,31 @@ thetaEHyp = thetaAHyp;
 thetaAPQ = [0 2];
 thetaEPQ = thetaAPQ;
 
+%% R0 interpretation
+if nargin < 1
+    interp = 2;
+end
+
 %% R0
-R0Hyp = [log(1.3) 0.4];
-R0PQ = [0 4];
+if interp == 1
+    R0Hyp = [log(1.3) 0.4];
+    R0PQ = [0 4];
+elseif interp == 2
+    R0Hyp = [2*log(1.3) 2*0.4];
+    R0PQ = [0 4].^2;
+else
+    error('interp have to be 1 or 2')
+end
 
 %% IFR
 IFRHyp = [2 4];
 IFRPQ = [0 0.02]; % supp(ifr) = [0,2]%
 IFRmean = [];
+
+%% k change (sew)
+k_sew_Hyp = [2 2];
+k_sew_PQ = [0 1e-2];
+k_sew_mean = [];
 
 %% F0
 E2IPQ = [0 1]; % prior support
@@ -603,6 +668,10 @@ hyp0.IFRPQ = IFRPQ;
 hyp0.IFRHyp = IFRHyp;
 hyp0.IFRmean = IFRmean;
 
+hyp0.k_sew_PQ = k_sew_PQ;
+hyp0.k_sew_Hyp = k_sew_Hyp;
+hyp0.k_sew_mean = k_sew_mean;
+
 % sole two point estimates:
 hyp0.SIR_MORT = SIR_MORT;
 hyp0.HOSP_MORT = HOSP_MORT;
@@ -618,7 +687,9 @@ hyp0.HOSPmean = HOSPmean;
 % sampled later on the fly, but for convenience:
 hyp0.I_MORTmean = I_MORTmean;
 
+% R0 intepretation
+hyp0.interp = interp;
 
-hyp0.rev = '26-May-2021'; % latest day the prior was updated
+hyp0.rev = '12-Mar-2023'; % latest day the prior was updated
 
 % ----------------------------------------------------------------------

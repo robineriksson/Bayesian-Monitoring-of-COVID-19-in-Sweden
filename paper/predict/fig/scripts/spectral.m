@@ -23,6 +23,19 @@ if ~exist('sig','var') % when rounding, the number of significant numbers.
     sig=2;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
+
+if interp == 1
+    ending = '_1_100';
+elseif interp == 2
+    ending ='_1_100_update';
+else
+    error('Only supporting interp 1 or 2')
+end
+
+
 %%
 rng(222);
 
@@ -33,7 +46,6 @@ path = postpath;
 prefix = 'KLAM/perRegion/';
 % "super-posterior"
 date = '210531';
-ending = '_1_100';
 regionList = regions(false);
 
 regname = regionList(reg);

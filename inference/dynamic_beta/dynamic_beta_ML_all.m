@@ -1,6 +1,6 @@
 %DYNAMIC_BETA_ML_all Dynamic beta from posterior parameters for all regions
 %   Similar to DYNAMIC_BETA_ML, but loops over all regions and collects
-%   results in one file. 
+%   results in one file.
 
 % H. Runvik 2021-06-02
 
@@ -9,12 +9,17 @@ if ~exist('savetofile','var')
 end
 
 %% region list
-regionList = regions();
+regionList = regions(0);
 
 %% Options
 
-startdate = 200401;
-enddate = 210531;
+if ~exist('startdate','var')
+    startdate = 200401;
+end
+
+if ~exist('enddate','var')
+    enddate = 210531;
+end
 
 wbeta=300000;
 windowlength=150;
@@ -140,7 +145,7 @@ postrates.dataHash = Data.hash;
 postrates.beta=slambeta;
 
 %%
-savename=['dynOptPosterior' num2str(enddate) '_all_.mat'];
+savename=['dynOptPosterior' num2str(enddate) '_all'];
 savename = [savename '.mat']
 savename = [prefix 'dynOpt/' savename];
 if savetofile

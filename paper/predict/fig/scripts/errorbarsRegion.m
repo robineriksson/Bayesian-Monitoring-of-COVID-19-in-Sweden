@@ -17,6 +17,10 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp = 2;
+end
+
 
 %clear ratenames
 % load data
@@ -42,7 +46,13 @@ if ~exist('ratenames','var')
              'IC HOSP [$H \rightarrow W$, \%]' ...
              'IFR [$E \rightarrow D$, \%]'};
     postdate = '210531';
-    ending = '_1_100';
+    if interp == 1
+        ending = '_1_100';
+    elseif interp == 2
+        ending = '_1_100';
+    else
+        error('not yet supporting other intero than 1 or 2');
+    end
     [meanpost, stdpost, regionList] = l_getpost(postdate,ratenames,ending,inverted);
 
 else
@@ -99,7 +109,10 @@ end
 % polish target output size
 set(gcf,'PaperPositionMode','auto');
 %%
-set(gcf,'Position',[100 100 850 500]);
+set(gcf,'Position',[100 100 550 450]);
+% set(gcf,'PaperSize',[850 500]);
+
+
 %%
 printpath = mfilename('fullpath');
 printpath=[printpath(1:end-23) 'errorbars.pdf'];

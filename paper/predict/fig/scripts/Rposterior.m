@@ -25,11 +25,25 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('dateend_','var')
+    dateend_ = 210531;
+end
+dateend_dyn = dateend_;
+
+if ~exist('interp','var')
+    interp=2;
+end
+
+if interp == 1
+    fileend = '.mat';
+elseif interp == 2
+    fileend='_update.mat';
+else
+    error('Only supporting interp 1 or 2')
+end
 printNtest = true; % write out the number of tests in period 200805-210526
 
 % posterior dates to plot
-dateend_ = '210531';
-dateend_dyn = '210531';
 shiftstr = '_1';
 datestart = 200401; % where to start the plot
 
@@ -43,13 +57,13 @@ for rid = reg
     end
 
   % construct posterior files
-  postname = ['/slam' dateend_ '_' region '_monthly' ...
-    shiftstr '_100.mat'];
+  postname = ['/slam' num2str(dateend_) '_' region '_monthly' ...
+              shiftstr '_100' fileend];
 
 
 
   % dynamic beta data
-  dynoptname = ['dynOptPosterior' dateend_dyn '_' region];
+  dynoptname = ['dynOptPosterior' num2str(dateend_dyn) '_' region fileend];
   postname = strcat([postpath 'KLAM/perRegion/'],postname);
   dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
   load(dynoptname,'R_post','dates');
@@ -170,19 +184,32 @@ for rid = reg
   xticklabels(slabtitle);
   xtickangle(45);
 
+
+
   % yticks & -labels
-  yticklabel = split(num2str(0:0.1:2.4));
+  if interp ==  1
+      ylim_2 = 2;
+  elseif interp == 2
+      if rid == 2
+          ylim_2 = 2.4;
+      elseif rid == 8
+          ylim_2 = 4;
+      else
+          ylim_2 = 2.5;
+      end
+  end
+
+  yticklabel = split(num2str(0:0.1:ylim_2));
   yticklabel(2:2:end) = {''};
-  set(gca,'ytick',0:0.1:2.4,'yticklabel',yticklabel);
+  set(gca,'ytick',0:0.1:ylim_2,'yticklabel',yticklabel);
 
   % axis fit & legend
   grid on
-  if rid == 2 % uppsala can be tighter
-    ylim_1 = 0.5;
-  else
-    ylim_1 = 0.2;
-  end
-  axis([t(dates == datestart) t(end) ylim_1 2.0])
+  ylim_1 = 0.2;
+
+
+
+  axis([t(dates == datestart) t(end) ylim_1 ylim_2])
   legend([hbox(1) hline hFHM],'Posterior','Quasi-ML', ...
     'PHA','interpreter','latex');
 

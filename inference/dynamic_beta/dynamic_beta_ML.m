@@ -5,6 +5,11 @@
 
 % H. Runvik 2021-04-14
 
+% change (sew)
+if ~exist('waste', 'var')
+  waste = false;
+end
+
 if ~exist('savetofile','var')
     savetofile=false;
 end
@@ -34,19 +39,15 @@ if ~exist('windowlength','var')
     windowlength=150;
 end
 
-if ~exist('ntime','var')
-
-end
-
 if ~exist('horizon','var')
     horizon=false;
 end
 
 if horizon
-    ntime = 365;
+    ntime_ = 365;
     maxfunceval = 2700000;
 else
-    ntime = 1;
+    ntime_ = 1;
     maxfunceval = 1700000;
 end
 
@@ -58,25 +59,41 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('enddate','var')
+    enddate = 210531;
+end
 
+if ~exist('prevresdate','var')
+    prevresdate = 210531; % previous result for initial guess
+end
+
+if ~exist('interp','var')
+    interp=2;
+end
+
+if interp == 1
+    ending = '_100';
+elseif interp == 2
+    ending ='_100_update';
+else
+    error('Only supporting interp 1 or 2')
+end
 
 %% region list
 regionList = regions(false);
 
 for region = reg % region to estimate beta for
+    ntime = ntime_;
     if verb
         disp(['running: ' regionList{region}]);
     end
 
     startdate = 200401;
-    enddate = 210531;
     if horizon
         enddate_ = startdate;
     else
         enddate_ = enddate;
     end
-    prevresdate = 210531; % previous result for initial guess
-
 
     wbeta=300000;
     steplength=20;
@@ -87,15 +104,44 @@ for region = reg % region to estimate beta for
     %%
 
     if urdme > 0
-        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_URDME' num2str(urdme) '_100'];
+        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' ...
+                     regionList{region} '_monthly_1_URDME' num2str(urdme) ending];
+    elseif contains(register,'URDMEsew')
+        if waste
+          posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' ...
+                       regionList{region} '_monthly_1_waste_URDMEsew_100'];
+        else
+          posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' ...
+                       regionList{region} '_monthly_1_URDMEsew_100'];
+        end
+    elseif waste % change (sew)
+        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_waste_100'];
     else
-        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1_100'];
+        posterior = ['KLAM/perRegion/slam' num2str(enddate) '_' regionList{region} '_monthly_1' ending];
     end
     postrates = posteriorenger(inf,[prefix posterior]);
     slab = postrates.meta.slabs;
 
     % load filter data
-    if contains(register,'URDME') % synthetic data
+    if contains(register,'URDMEsew') % synthetic data for
+                                      % wastewater run
+        filename = mfilename('fullpath');
+        load([filename(1:end-38) 'sewage/urdme/data/sim_data_selected']);
+
+        Data = struct();
+
+        Data.regions = umod.reg;
+        Data.date = umod.DATES;
+
+        Data.H(:,region) = umod.U(5,:)';
+        Data.W(:,region) = umod.U(6,:)';
+        Data.D(:,region) = umod.U(7,:)';
+
+        Data.hash = fsetop('check',Data.D(:));
+
+        Data.rev = umod.DATES(end);
+        Data.reg = register;
+    elseif contains(register,'URDME') % synthetic data
         filename = mfilename('fullpath');
         Data_raw = load([filename(1:end-38) ...
                          'URDME/URDMEoutput/URDME_all']);
@@ -150,12 +196,74 @@ for region = reg % region to estimate beta for
     % tspan_filter = TSPAN(ixfilter); % filter output
     % tspan_data = TSPAN(ixdata);  % data used
 
-    % specify observation model
-    obsrates.states = {5 6 7}; % state #5, #6, #7
-    obsrates.nstate = 8;
-    obsrates.indobs={};
-    obsrates.R0 = ones(3,1);
-    obsrates.rdiag = (1e-3)^2*ones(3,1);
+    if waste
+      if contains(register,'URDMEsew')
+        load([filename(1:end-38) ...
+              'sewage/urdme/data/simulated_sew']);
+        phi_sew = WW_sim.phi_sew;
+        sigma_1_period1 = WW_sim.sigma_1_period1^2;
+        sigma_2_period1 = WW_sim.sigma_2_period1^2;
+        sigma_1_period2 = WW_sim.sigma_1_period2^2;
+        sigma_2_period2 = WW_sim.sigma_2_period2^2;
+
+        phi_sew_data = phi_sew(ixdata);
+        phi_sew_data = permute(phi_sew_data',[3 2 1]);
+      else % real wastewater data:
+        WW = loadData('WW');
+        ixRegion = 2; % only Uppsala for now
+        phi_sew = WW.phi(:,ixRegion);
+
+        % align phi_sew with rest of data, move to function
+        ixWW_start_index = find(Data.date == WW.date(1)); %
+                                                          % s.t. Data.date(ixWW_start_index)
+                                                          % is the
+                                                          % date of
+                                                          % first WW
+                                                          % measurement.
+
+        %index of last phi_sew that lies within data period
+        phi_sew_stop = find(WW.date <= enddate, 1, 'last');
+        %s.t. WW.date(phi_sew_stop) gives date of last WW measurement
+        %within period
+
+        ixWW_end_index = find(Data.date == WW.date(phi_sew_stop));
+        %s.t. Data.date(ixWW_end_index) gives date of last WW
+        %measurement within period
+        ixWW_start = find(ixdata == ixWW_start_index);
+        %s.t. ixdata(ixWW_start) gives starting point for WW on
+        %ixdata scale
+        ixWW_end = find(ixdata <= ixWW_end_index, 1, 'last');
+
+        phi_sew_final = NaN(length(ixdata),1);
+        phi_sew_final(ixWW_start:7:ixWW_end) = phi_sew(1:phi_sew_stop);
+
+        % Append phi_sew data
+        phi_sew_data = permute(phi_sew_final,[3 2 1]);
+      end
+        Ydata = cat(1,Ydata, phi_sew_data);
+
+        obsrates.states = {5 6 7};
+        obsrates.indobs = {4};
+        rr = priorenger(inf,true,1);
+        obsrates.indobspars = {rr.k_sew};
+        obsrates.nstate = 8;
+        load_phi_sew_noise_constants; % load sigma_1, sigma_2
+                                      % Append sigma_1 and sigma_2, see sew_plots.m
+        obsrates.rdiag = [(1e-3)^2*ones(3,1); sigma_2_period1^2];
+        obsrates.R0 = [1*ones(3,1);sigma_1_period1^2];
+
+        %after experimental method change:
+        obsrates.rdiag_p2 = [(1e-3)^2*ones(3,1); sigma_2_period2^2];
+        obsrates.R0_p2 = [1*ones(3,1);sigma_1_period2^2];
+    else % don't use sewage data.
+
+      % specify observation model
+      obsrates.states = {5 6 7}; % state #5, #6, #7
+      obsrates.nstate = 8;
+      obsrates.indobs={};
+      obsrates.R0 = ones(3,1);
+      obsrates.rdiag = (1e-3)^2*ones(3,1);
+    end
 
     G = speye(obsrates.nstate);
     D = 0;
@@ -175,10 +283,17 @@ for region = reg % region to estimate beta for
         beta0 = 0.1*ones(1,ntime);
     else
         try
-            oldres = load([prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_'...
-                           regionList{region} '.mat']);
+            dyname = [prefix 'dynOpt/dynOptPosterior' num2str(prevresdate) '_' regionList{region}];
+            if interp == 2
+                dyname = [dyname '_update'];
+            end
+            oldres = load(dyname);
             oldrates_daily = dailyrates(oldres.postrates,oldres.postrates.meta.slabs');
-            beta0 = getC19beta(oldrates_daily,oldres.R_post);
+            if isfield(oldrates_daily.meta,'interp')
+                beta0 = getC19beta(oldrates_daily,oldres.R_post,oldrates_daily.meta.interp);
+            else
+                beta0 = getC19beta(oldrates_daily,oldres.R_post,interp);
+            end
             beta0 = [beta0' beta0(end)*ones(1,ntime-numel(beta0))];
             if verb
                 disp('found old guess')
@@ -224,7 +339,11 @@ for region = reg % region to estimate beta for
     else
         rates_daily = dailyrates(postrates,slab);
         rates_daily.beta=betaOpt';
-        R_post = getC19R0(rates_daily);
+        if isfield(rates_daily.meta,'interp')
+            R_post = getC19R0(rates_daily,[],rates_daily.meta.interp);
+        else
+            R_post = getC19R0(rates_daily,[],interp);
+        end
 
         dates = Data.date(ixdata);
 
@@ -319,11 +438,23 @@ for region = reg % region to estimate beta for
         %%
         regionList_notnordic = regions(false);
         savename=['dynOptPosterior' num2str(enddate) '_' regionList{region}];
-        if urdme
-            savename = [savename '_URDME' num2str(urdme)];
+        if contains(register,'URDMEsew')
+          savename = [savename '_' register];
+        elseif contains(register,'URDME')
+            savename = [savename '_' register num2str(urdme)];
+        end
+        if waste
+          savename = [savename '_waste'];
+        end
+
+
+        if interp == 2
+            savename = [prefix 'dynOpt/' savename '_update'];
+        else
+            savename = [prefix 'dynOpt/' savename];
         end
         savename = [savename '.mat'];
-        savename = [prefix 'dynOpt/' savename];
+
         if savetofile
             save(savename,'R_post','dates','x0_post','postrates','xSim')
             if verb

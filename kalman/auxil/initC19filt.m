@@ -67,13 +67,13 @@ end
 
 if ~isempty(Y0) && ~isempty(Y0Cov) % start from provided initialization
   %warning('not yet fully defined');
-  
+
   % safety check, are they reasonble?
   ok = 1;
   % are they of correct size?
   ok = ok && isequal(size(Y0Cov),size(F));
   ok = ok && isequal(numel(Y0), size(F,1));
-  
+
   % is the starting guess in the "ball park" if the data?
   ok = ok && norm(H*Y0 - y) < 1e-2*norm(y);
   if ok
@@ -85,46 +85,46 @@ if ~isempty(Y0) && ~isempty(Y0Cov) % start from provided initialization
 else % start from scracth
   % remove cumulative states from F
   F_red = F(~CStates,~CStates);
-  
+
   % remove measurements of cumulative states (assuming directly measured,
   % i.e. not combined with other states)
   H_red = H(:,~CStates);
   H_idx = all(H_red == 0,2);
   DStates = mod(find(H(H_idx,:)')-1,size(H,2))+1;
-  
+
   % remove NaN measurement
   NaN_idx = isnan(y);
   y_red = y(~H_idx&~NaN_idx);
   H_red = H_red(~H_idx&~NaN_idx,:);
-  
+
   % find dominating eigenvalue of F
   [V,D] = eig(F_red);
   aDiag = real(diag(D)); % ignore imaginary part for now
   [~,imax] = max(aDiag);
   Vmax = V(:,imax);
-  
+
   % rescale the dominating eigenvector to fit measured data
   c = H_red*Vmax\y_red;
   Vscaled = Vmax*c;
-  
+
   % Estimated state satisfying H*xx = y, this determines xx up to a
   % vector in the nullspace of H. The remaining vector is determined so
   % that the projections of Vscaled and xx onto the nullspace coincide.
-  
+
   % Unconstrained version:
   H_null = null(full(H_red))';
   S = [H_red; H_null];
   xx_red = S\[y_red; H_null*Vscaled];
-  
+
   % With positivity constraint:
   %opts = optimoptions(@lsqlin,'Display','off');
   %xx_red = lsqlin(eye(size(F_red)),Vscaled,[],[],H_red,y_red,zeros(size(F_red,2),1),[],[],opts);
-  
+
   % Add remaining elements of xx
   xx = zeros(numel(CStates),1);
   xx(~CStates) = xx_red;
   xx(DStates) = y(H_idx);
-  
+
   % check violation of non-complex assumption
   ix = imag(xx);
   rx = real(xx);
@@ -133,7 +133,7 @@ else % start from scracth
     warning('Large imaginary part detected.');
   end
   xx = rx;
-  
+
   % covariance init
   H_p = H(~NaN_idx,:);
   observed_idx = sum(H_p,1) >= 1;

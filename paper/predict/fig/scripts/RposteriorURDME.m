@@ -15,6 +15,18 @@ if ~exist('verb','var')
     verb=false;
 end
 
+if ~exist('interp','var')
+    interp=2;
+end
+
+if interp == 1
+    fileend = '.mat';
+elseif interp == 2
+    fileend='_update.mat';
+else
+    error('Only supporting interp 1 or 2')
+end
+
 % posterior dates to plot
 dateend_ = '210531';
 
@@ -29,17 +41,17 @@ for reg = [2]
   postname = cell(4,1);
   for k = [1 2 3]
     postname{k} = ['slam' dateend_ '_' region '_monthly' ...
-      shiftstr '_URDME' num2str(k) '_100.mat'];
+      shiftstr '_URDME' num2str(k) '_100' fileend];
     postname{k} = strcat([postpath 'KLAM/perRegion/'],postname{k});
   end
 
   postname{4} = ['slam' dateend_ '_' region '_monthly' ...
-    shiftstr '_100.mat'];
+    shiftstr '_100' fileend];
   postname{4} = strcat([postpath 'KLAM/perRegion/'],postname{4});
 
   R_post_ = [];
   for k = [1 2 3]
-    dynoptname_ = ['dynOptPosterior' dateend_ '_' region '_URDME' num2str(k) '.mat'];
+    dynoptname_ = ['dynOptPosterior' dateend_ '_' region '_URDME' num2str(k) fileend];
     dynoptname_ = strcat([postpath 'dynOpt/'],dynoptname_);
     load(dynoptname_,'R_post')
     R_post_ = cat(2,R_post_,R_post);
@@ -48,7 +60,7 @@ for reg = [2]
 
 
   % dynamic beta data
-  dynoptname = ['dynOptPosterior' dateend_ '_' region '.mat'];
+  dynoptname = ['dynOptPosterior' dateend_ '_' region fileend];
   dynoptname = strcat([postpath 'dynOpt/'],dynoptname);
   load(dynoptname,'R_post','dates');
 
@@ -202,18 +214,21 @@ for reg = [2]
   xtickangle(45);
 
   % yticks & -labels
-  yticklabel = split(num2str(0:0.1:2.4));
+   % yticks & -labels
+  if interp ==  1
+      ylim_2 = 2;
+  elseif interp == 2
+      ylim_2 = 2.4;
+  end
+
+  yticklabel = split(num2str(0:0.1:ylim_2));
   yticklabel(2:2:end) = {''};
-  set(gca,'ytick',0:0.1:2.4,'yticklabel',yticklabel);
+  set(gca,'ytick',0:0.1:ylim_2,'yticklabel',yticklabel);
 
   % axis fit & legend
   grid on
-  if reg == 2 % uppsala can be tighter
-    ylim_1 = 0.5;
-  else
-    ylim_1 = 0.2;
-  end
-  axis([t(dates == datestart) t(end) ylim_1 2.0])
+  ylim_1 = 0.2;
+  axis([t(dates == datestart) t(end) ylim_1 ylim_2])
 
   %%
   legend([hbox(1) hline(1) hbox_urdme(1) hline_(1)],'Posterior','Quasi-ML', ...

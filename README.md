@@ -68,6 +68,13 @@ function includes a functionallity of referencing a list of posterior
 files and sampling from a weighted average of them, e.g., the Swedish
 national average weighted by regional population size.
 
+Note that there are two versions of each posterior file currently in
+the repository. These correspond to the two intepretations of the
+$R_0$ parameter. To access the two versions of the files, set the
+`interp` variable to `=1` or `=2`. The files share the same naming
+convention but `interp=2` has `_update` appended in the end of the
+filename. If `interp` isn't set, the default is 2.
+
 ## KLAM (/inference/KLAM/)
 We generate samples from the approximate posterior by an
 implementation of Kalman Likelihood Adaptive Metropolis (KLAM). We
